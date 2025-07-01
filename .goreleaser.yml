@@ -1,51 +1,75 @@
-# GoReleaser configuration for goinstaller
-# See documentation at http://goreleaser.com
+# yaml-language-server: $schema=https://goreleaser.com/static/schema.json
+# vim: set ts=2 sw=2 tw=0 fo=cnqoj
+
 version: 2
 
 before:
   hooks:
     - go mod tidy
-    - go generate ./...
+
+# https://goreleaser.com/customization/builds/go/
 builds:
-- env:
-  - CGO_ENABLED=0
-  goos:
-  - linux
-  - darwin
-  - windows
-  goarch:
-  - amd64
-  - arm64
-  main: ./main.go
-  binary: goinstaller
+  - env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - windows
+      - darwin
+    # ensures mod timestamp to be the commit timestamp
+    mod_timestamp: "{{ .CommitTimestamp }}"
+    ldflags:
+      # use commit date instead of current date as main.date
+      # only needed if you actually use those things in your main package, otherwise can be ignored.
+      - -s -w -X main.version={{.Version}} -X main.commit={{.Commit}} -X main.date={{ .CommitDate }}
+
+# proxies from the go mod proxy before building
+# https://goreleaser.com/customization/gomod
+gomod:
+  proxy: true
+
 archives:
-- format: tar.gz
-  name_template: >-
-    {{ .ProjectName }}_
-    {{- title .Os }}_
-    {{- if eq .Arch "amd64" }}x86_64
-    {{- else if eq .Arch "386" }}i386
-    {{- else }}{{ .Arch }}{{ end }}
-  format_overrides:
-  - goos: windows
-    format: zip
+  - formats: [tar.gz]
+    # this name template makes the OS and Arch compatible with the results of `uname`.
+    name_template: >-
+      {{ .ProjectName }}_
+      {{- title .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
+      {{- if .Arm }}v{{ .Arm }}{{ end }}
+    # use zip for windows archives
+    format_overrides:
+      - goos: windows
+        formats: [zip]
+
+# config the checksum filename
+# https://goreleaser.com/customization/checksum
 checksum:
   name_template: 'checksums.txt'
-snapshot:
-  name_template: "{{ .Tag }}-next"
-changelog:
-  sort: asc
-  filters:
-    exclude:
-    - '^docs:'
-    - '^test:'
+
+# create a source tarball
+# https://goreleaser.com/customization/source/
+source:
+  enabled: true
+
+# creates SBOMs of all archives and the source tarball using syft
+# https://goreleaser.com/customization/sbom
+sboms:
+  - artifacts: archive
+  - id: source # Two different sbom configurations need two different IDs
+    artifacts: source
+
+# signs the checksum file
+# all files (including the sboms) are included in the checksum, so we don't need to sign each one if we don't want to
+# https://goreleaser.com/customization/sign
 signs:
   - cmd: cosign
-    signature: "${artifact}.sig"
-    args: ["sign-blob", "--key=cosign.key", "--output-signature=${signature}", "${artifact}"]
+    certificate: "${artifact}.pem"
+    args:
+      - sign-blob
+      - "--output-certificate=${certificate}"
+      - "--output-signature=${signature}"
+      - "${artifact}"
+      - "--yes" # needed on cosign 2.0.0+
     artifacts: checksum
-release:
-  github:
-    owner: haya14busa
-    name: goinstaller
-  prerelease: auto
+    output: true

@@ -1,0 +1,68 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - main  # Only run on main branch pushes (PR merges)
+  pull_request:
+    types:
+      - labeled  # Run when PRs are labeled
+
+jobs:
+  verify-releaser:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Verify Trusted Tag Releaser
+        uses: actionutils/trusted-tag-verifier@v0
+        with:
+          repository: 'actionutils/trusted-go-releaser'
+          tag: 'v0'
+
+  # Post version bump information comment on PR when labeled
+  release-preview-comment:
+    if: github.event.action == 'labeled'
+    permissions:
+      pull-requests: write
+    uses: actionutils/trusted-go-releaser/.github/workflows/release-preview-comment.yml@v0
+    secrets:
+      github-token: ${{ secrets.GITHUB_TOKEN }}
+
+  # First check if a release is needed
+  release-check:
+    if: github.event.action != 'labeled'
+    permissions:
+      contents: write # Required for GitHub's generate-release-note API (notes are only displayed in job summary, not written to any file)
+      pull-requests: read
+    uses: actionutils/trusted-go-releaser/.github/workflows/release-check.yml@v0
+
+  # Environment protection job
+  release-approval:
+    needs: [release-check]
+    if: github.event.action != 'labeled' && needs.release-check.outputs.skip != 'true'
+    runs-on: ubuntu-latest
+    environment: release
+    concurrency:
+      group: "release-approval"
+      cancel-in-progress: true
+    steps:
+      - name: Approve release
+        run: echo "Release approved in the release environment"
+
+  # Use the reusable trusted tag workflow for releases if approved
+  release:
+    needs: [release-check, release-approval]
+    if: github.event.action != 'labeled' && needs.release-check.outputs.skip != 'true'
+    concurrency:
+      group: "release"
+      cancel-in-progress: false
+    permissions:
+      id-token: write    # Required for SLSA provenance
+      contents: write    # Required for release and tag creation
+      pull-requests: write # Required for bumpr commenting
+      actions: read      # Required for SLSA generator
+      attestations: write # Required for build provenance attestation
+    uses: actionutils/trusted-go-releaser/.github/workflows/trusted-release-workflow.yml@v0
+    secrets:
+      github-token: ${{ secrets.GITHUB_TOKEN }}
