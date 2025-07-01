@@ -13,10 +13,10 @@ import (
 	"text/template"
 
 	"github.com/apex/log"
+	"github.com/binary-install/binstaller/pkg/spec"
 	"github.com/goreleaser/goreleaser/v2/pkg/config"
 	gorelcontext "github.com/goreleaser/goreleaser/v2/pkg/context"
 	"github.com/goreleaser/goreleaser/v2/pkg/defaults"
-	"github.com/haya14busa/goinstaller/pkg/spec"
 	"github.com/pkg/errors"
 )
 

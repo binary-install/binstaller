@@ -7,8 +7,8 @@ import (
 	"path/filepath"
 
 	"github.com/apex/log"
-	"github.com/haya14busa/goinstaller/internal/shell" // Placeholder for script generator
-	"github.com/haya14busa/goinstaller/pkg/spec"
+	"github.com/binary-install/binstaller/internal/shell" // Placeholder for script generator
+	"github.com/binary-install/binstaller/pkg/spec"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
 )

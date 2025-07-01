@@ -10,7 +10,7 @@ import (
 
 	"github.com/aquaproj/aqua/v2/pkg/config/registry"
 	aquaexpr "github.com/aquaproj/aqua/v2/pkg/expr"
-	"github.com/haya14busa/goinstaller/pkg/spec"
+	"github.com/binary-install/binstaller/pkg/spec"
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v3"
 )

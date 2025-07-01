@@ -6,10 +6,10 @@ import (
 	"path/filepath"
 
 	"github.com/apex/log"
+	"github.com/binary-install/binstaller/pkg/checksums"
+	"github.com/binary-install/binstaller/pkg/spec"
 	"github.com/goccy/go-yaml"
 	"github.com/goccy/go-yaml/parser"
-	"github.com/haya14busa/goinstaller/pkg/checksums"
-	"github.com/haya14busa/goinstaller/pkg/spec"
 	"github.com/spf13/cobra"
 )
 

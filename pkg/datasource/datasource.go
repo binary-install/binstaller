@@ -3,7 +3,7 @@ package datasource
 import (
 	"context"
 
-	"github.com/haya14busa/goinstaller/pkg/spec"
+	"github.com/binary-install/binstaller/pkg/spec"
 )
 
 // SourceAdapter defines the interface for generating an InstallSpec
