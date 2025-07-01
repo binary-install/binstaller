@@ -75,7 +75,7 @@ graph TD
 
 ```bash
 # Install the latest version
-go install github.com/haya14busa/goinstaller@latest
+go install github.com/binary-install/binstaller@latest
 ```
 
 ### Basic Usage

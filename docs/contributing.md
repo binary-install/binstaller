@@ -57,7 +57,7 @@ Key principles:
 3. **Add the upstream remote**
 
    ```bash
-   git remote add upstream https://github.com/haya14busa/godownloader.git
+   git remote add upstream https://github.com/binary-install/binstaller.git
    ```
 
 4. **Install dependencies**

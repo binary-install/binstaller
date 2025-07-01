@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/haya14busa/goinstaller/pkg/spec"
+	"github.com/binary-install/binstaller/pkg/spec"
 )
 
 func TestParseChecksumFileInternal(t *testing.T) {
@@ -36,9 +36,9 @@ ghi789 *test-1.0.0-windows-amd64.zip
 
 	// Verify the parsed checksums
 	expected := map[string]string{
-		"test-1.0.0-linux-amd64.tar.gz":   "abc123",
-		"test-1.0.0-darwin-amd64.tar.gz":  "def456",
-		"test-1.0.0-windows-amd64.zip":    "ghi789",
+		"test-1.0.0-linux-amd64.tar.gz":  "abc123",
+		"test-1.0.0-darwin-amd64.tar.gz": "def456",
+		"test-1.0.0-windows-amd64.zip":   "ghi789",
 	}
 
 	if len(checksums) != len(expected) {
@@ -60,8 +60,8 @@ ghi789 *test-1.0.0-windows-amd64.zip
 func TestGenerateAssetFilename(t *testing.T) {
 	// Create a test spec
 	testSpec := &spec.InstallSpec{
-		Name:  "test-tool",
-		Repo:  "test-owner/test-repo",
+		Name: "test-tool",
+		Repo: "test-owner/test-repo",
 		Asset: spec.AssetConfig{
 			Template:         "${NAME}-${VERSION}-${OS}-${ARCH}${EXT}",
 			DefaultExtension: ".tar.gz",

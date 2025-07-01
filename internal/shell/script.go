@@ -6,7 +6,7 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/haya14busa/goinstaller/pkg/spec"
+	"github.com/binary-install/binstaller/pkg/spec"
 	"github.com/pkg/errors"
 )
 

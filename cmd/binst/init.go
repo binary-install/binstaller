@@ -6,7 +6,7 @@ import (
 	"os"
 
 	"github.com/apex/log"
-	"github.com/haya14busa/goinstaller/pkg/datasource"
+	"github.com/binary-install/binstaller/pkg/datasource"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
 )

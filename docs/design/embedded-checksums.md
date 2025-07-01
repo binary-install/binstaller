@@ -188,7 +188,7 @@ In `calculate` mode, the tool will:
 package main
 
 import (
-    "github.com/haya14busa/goinstaller/pkg/checksums"
+    "github.com/binary-install/binstaller/pkg/checksums"
     "github.com/spf13/cobra"
 )
 

@@ -5,9 +5,9 @@ import (
 	"os"
 	"testing"
 
+	"github.com/binary-install/binstaller/pkg/datasource"
+	"github.com/binary-install/binstaller/pkg/spec"
 	"github.com/google/go-cmp/cmp"
-	"github.com/haya14busa/goinstaller/pkg/datasource"
-	"github.com/haya14busa/goinstaller/pkg/spec"
 )
 
 // setupGoReleaserTest is a helper function to create a temporary goreleaser.yml

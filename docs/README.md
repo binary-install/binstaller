@@ -31,10 +31,10 @@ The original project has been archived since January 2022, but the core function
 
 ```bash
 # Install the latest version
-go install github.com/haya14busa/goinstaller@latest
+go install github.com/binary-install/binstaller@latest
 
 # Or install a specific version
-go install github.com/haya14busa/goinstaller@v0.1.0
+go install github.com/binary-install/binstaller@v0.1.0
 ```
 
 ### Basic Usage

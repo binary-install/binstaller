@@ -7,7 +7,7 @@ import (
 
 	"github.com/aquaproj/aqua/v2/pkg/config"
 	"github.com/aquaproj/aqua/v2/pkg/controller"
-	"github.com/haya14busa/goinstaller/pkg/spec"
+	"github.com/binary-install/binstaller/pkg/spec"
 	log "github.com/sirupsen/logrus"
 )
 

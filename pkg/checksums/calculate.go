@@ -10,7 +10,7 @@ import (
 	"sync"
 
 	"github.com/apex/log"
-	"github.com/haya14busa/goinstaller/pkg/spec"
+	"github.com/binary-install/binstaller/pkg/spec"
 )
 
 // calculateChecksums downloads assets and calculates checksums
@@ -125,7 +125,7 @@ func (e *Embedder) generateAssetFilename(osInput, archInput string) (string, err
 	// Create formatted values for template substitution
 	osValue := osMatch
 	archValue := archMatch
-	
+
 	// Apply OS/Arch naming conventions for template values
 	if e.Spec.Asset.NamingConvention != nil {
 		if e.Spec.Asset.NamingConvention.OS == "titlecase" {

@@ -17,9 +17,9 @@ import (
 	"strings"
 
 	"github.com/apex/log"
+	"github.com/binary-install/binstaller/pkg/spec"
 	"github.com/goccy/go-yaml"
 	"github.com/goccy/go-yaml/ast"
-	"github.com/haya14busa/goinstaller/pkg/spec"
 )
 
 // EmbedMode represents the checksum acquisition mode
@@ -100,7 +100,7 @@ func (e *Embedder) Embed() error {
 		}
 		embeddedChecksums = append(embeddedChecksums, ec)
 	}
-	
+
 	// Sort embedded checksums by filename for consistent output
 	slices.SortStableFunc(embeddedChecksums, func(a, b spec.EmbeddedChecksum) int {
 		return strings.Compare(a.Filename, b.Filename)

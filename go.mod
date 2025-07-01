@@ -1,4 +1,4 @@
-module github.com/haya14busa/goinstaller
+module github.com/binary-install/binstaller
 
 go 1.24.2
 

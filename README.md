@@ -5,7 +5,7 @@
   <p align="center">A modern, secure binary installer generator with enhanced security features</p>
   <p align="center">
     <a href="/LICENSE.md"><img alt="Software License" src="https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat-square"></a>
-    <a href="https://github.com/haya14busa/binstaller/releases"><img alt="Release" src="https://img.shields.io/github/release/haya14busa/binstaller.svg?style=flat-square"></a>
+    <a href="https://github.com/binary-install/binstaller/releases"><img alt="Release" src="https://img.shields.io/github/release/binary-install/binstaller.svg?style=flat-square"></a>
   </p>
 </p>
 
@@ -50,10 +50,10 @@ graph LR
 
 ```bash
 # Install the latest version
-go install github.com/haya14busa/binstaller/cmd/binst@latest
+go install github.com/binary-install/binstaller/cmd/binst@latest
 
 # Or download from GitHub releases
-curl -sfL https://raw.githubusercontent.com/haya14busa/binstaller/main/install.sh | sh
+curl -sfL https://raw.githubusercontent.com/binary-install/binstaller/main/install.sh | sh
 ```
 
 ### Basic Usage

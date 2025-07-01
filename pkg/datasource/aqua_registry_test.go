@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/haya14busa/goinstaller/pkg/spec"
+	"github.com/binary-install/binstaller/pkg/spec"
 )
 
 const sampleAquaYAML = `
