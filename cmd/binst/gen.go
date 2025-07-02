@@ -29,31 +29,20 @@ generates a POSIX-compatible shell installer script.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		log.Info("Running gen command...")
 
-		// Determine config file path
-		cfgFile := configFile // Use the global flag value
-		if cfgFile == "" {
-			// Default detection logic if global flag is not set
-			if _, err := os.Stat(DefaultConfigPathYML); err == nil {
-				cfgFile = DefaultConfigPathYML
-				log.Infof("Using default config file: %s", cfgFile)
-			} else {
-				// Try .config/binstaller.yaml as fallback
-				if _, errYaml := os.Stat(DefaultConfigPathYAML); errYaml == nil {
-					cfgFile = DefaultConfigPathYAML
-					log.Infof("Using default config file: %s", cfgFile)
-				} else {
-					err := fmt.Errorf("config file not specified via --config and default (%s or %s) not found", DefaultConfigPathYML, DefaultConfigPathYAML)
-					log.WithError(err).Error("Config file detection failed")
-					return err
-				}
-			}
+		// Determine config file path using common logic
+		cfgFile, err := resolveConfigFile(configFile)
+		if err != nil {
+			log.WithError(err).Error("Config file detection failed")
+			return err
+		}
+		if configFile == "" {
+			log.Infof("Using default config file: %s", cfgFile)
 		}
 		log.Debugf("Using config file: %s", cfgFile)
 
 		// Read the InstallSpec YAML file
 		log.Debugf("Reading InstallSpec from: %s", cfgFile)
 		var yamlData []byte
-		var err error
 		if cfgFile == "-" {
 			log.Debug("Reading install spec from stdin")
 			yamlData, err = io.ReadAll(os.Stdin)
