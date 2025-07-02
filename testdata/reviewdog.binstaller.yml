@@ -30,8 +30,6 @@ supported_platforms:
       arch: arm64
     - os: linux
       arch: armv6
-    - os: linux
-      arch: armv7
     - os: windows
       arch: "386"
     - os: windows
@@ -40,5 +38,3 @@ supported_platforms:
       arch: arm64
     - os: windows
       arch: armv6
-    - os: windows
-      arch: armv7

@@ -10,6 +10,9 @@
 //
 // This implementation provides the same functionality for our use case while avoiding
 // unnecessary dependencies that bloat the binary.
+//
+// Default values are based on the official GoReleaser documentation:
+// https://goreleaser.com/customization/builds/go/
 
 package datasource
 
@@ -41,10 +44,18 @@ func applyBuildDefaults(ctx *gorelcontext.Context) error {
 	if len(project.Builds) == 0 {
 		project.Builds = []config.Build{{
 			ID:     "default",
-			Goos:   []string{"linux", "darwin", "windows"},
-			Goarch: []string{"amd64", "arm64", "386"},
-			Goarm:  []string{"6", "7"},
+			Goos:   []string{"darwin", "linux", "windows"}, // Official GoReleaser defaults
+			Goarch: []string{"386", "amd64", "arm64"},       // Official GoReleaser defaults
+			Goarm:  []string{"6"},                           // Official GoReleaser default (only v6)
 			Binary: "{{ .ProjectName }}",
+			// Official GoReleaser default ignore rules
+			Ignore: []config.IgnoredBuild{
+				{Goos: "darwin", Goarch: "386"},
+				{Goos: "linux", Goarch: "arm", Goarm: "7"},
+				{Goarm: "mips64"},
+				{Gomips: "hardfloat"},
+				{Goamd64: "v4"},
+			},
 		}}
 		return nil
 	}
@@ -63,15 +74,42 @@ func applyBuildDefaults(ctx *gorelcontext.Context) error {
 			build.Binary = "{{ .ProjectName }}"
 		}
 
-		// Default OS/Arch if not specified
+		// Default OS/Arch if not specified (use official GoReleaser defaults)
 		if len(build.Goos) == 0 {
-			build.Goos = []string{"linux", "darwin", "windows"}
+			build.Goos = []string{"darwin", "linux", "windows"}
 		}
 		if len(build.Goarch) == 0 {
-			build.Goarch = []string{"amd64", "arm64", "386"}
+			build.Goarch = []string{"386", "amd64", "arm64"}
 		}
 		if len(build.Goarm) == 0 {
-			build.Goarm = []string{"6", "7"}
+			build.Goarm = []string{"6"} // Official GoReleaser default (only v6)
+		}
+
+		// Add official GoReleaser default ignore rules
+		// Check if ignore rules already exist to avoid duplicates
+		defaultIgnores := []config.IgnoredBuild{
+			{Goos: "darwin", Goarch: "386"},
+			{Goos: "linux", Goarch: "arm", Goarm: "7"},
+			{Goarm: "mips64"},
+			{Gomips: "hardfloat"},
+			{Goamd64: "v4"},
+		}
+		
+		for _, defaultIgnore := range defaultIgnores {
+			exists := false
+			for _, existing := range build.Ignore {
+				if existing.Goos == defaultIgnore.Goos &&
+					existing.Goarch == defaultIgnore.Goarch &&
+					existing.Goarm == defaultIgnore.Goarm &&
+					existing.Gomips == defaultIgnore.Gomips &&
+					existing.Goamd64 == defaultIgnore.Goamd64 {
+					exists = true
+					break
+				}
+			}
+			if !exists {
+				build.Ignore = append(build.Ignore, defaultIgnore)
+			}
 		}
 	}
 

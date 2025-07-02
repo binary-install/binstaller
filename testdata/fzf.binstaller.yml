@@ -32,8 +32,6 @@ supported_platforms:
     - os: linux
       arch: armv6
     - os: linux
-      arch: armv7
-    - os: linux
       arch: loong64
     - os: linux
       arch: ppc64le

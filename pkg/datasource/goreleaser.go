@@ -55,13 +55,13 @@ func (a *goreleaserAdapter) GenerateInstallSpec(ctx context.Context) (*spec.Inst
 	}
 
 	gorelCtx := gorelcontext.New(*project)
-	
+
 	// Apply our minimal defaults instead of using goreleaser's defaults package.
 	// See goreleaser_defaults.go for why we don't use the official defaults package.
 	if err := applyMinimalDefaults(gorelCtx); err != nil {
 		return nil, errors.Wrap(err, "failed to apply defaults")
 	}
-	
+
 	project = &gorelCtx.Config
 
 	// Map goreleaser config.Project to spec.InstallSpec, passing overrides
