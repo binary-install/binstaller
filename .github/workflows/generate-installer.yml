@@ -40,7 +40,21 @@ jobs:
           ./binst gen -o install.sh
           echo "✅ Install script generated successfully"
 
+      - name: Check for changes in install script
+        id: check_changes
+        run: |
+          echo "🔍 Checking if install script has changes..."
+          
+          if git diff --quiet install.sh; then
+            echo "ℹ️ No changes detected in install.sh"
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          else
+            echo "✅ Changes detected in install.sh"
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+          fi
+
       - name: Test generated script
+        if: steps.check_changes.outputs.has_changes == 'true'
         run: |
           echo "🧪 Testing generated install script..."
           
@@ -57,16 +71,19 @@ jobs:
           echo "✅ Script execution test passed"
 
       - name: Attest install script
+        if: steps.check_changes.outputs.has_changes == 'true'
         uses: actions/attest-build-provenance@v1
         id: attest
         with:
           subject-path: install.sh
 
       - name: Get current date
+        if: steps.check_changes.outputs.has_changes == 'true'
         id: date
         run: echo "date=$(date -u +'%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_OUTPUT
 
       - name: Create PR with attested script
+        if: steps.check_changes.outputs.has_changes == 'true'
         uses: peter-evans/create-pull-request@v7
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -119,6 +136,7 @@ jobs:
             attestation
 
       - name: Output summary
+        if: steps.check_changes.outputs.has_changes == 'true'
         run: |
           echo "## 🎉 Workflow Summary"
           echo ""
@@ -133,3 +151,13 @@ jobs:
           echo ""
           echo "### Verification Command"
           echo "gh attestation verify install.sh --repo ${{ github.repository }}"
+
+      - name: Report no changes
+        if: steps.check_changes.outputs.has_changes == 'false'
+        run: |
+          echo "## ℹ️ No Changes Detected" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "The generated install script is identical to the existing one." >> $GITHUB_STEP_SUMMARY
+          echo "No new attestation was created and no PR will be generated." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "This prevents duplicate attestations for the same content." >> $GITHUB_STEP_SUMMARY
