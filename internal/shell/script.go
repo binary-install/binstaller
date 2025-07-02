@@ -17,16 +17,28 @@ type templateData struct {
 	Shlib             string // The content of the shell function library
 	HashFunctions     string
 	ShellFunctions    string
+	TargetVersion     string // Fixed version when --target-version is specified
 }
 
 // Generate creates the installer shell script content based on the InstallSpec.
 // The generated script will dynamically determine OS, Arch, and Version at runtime.
 func Generate(installSpec *spec.InstallSpec) ([]byte, error) {
+	return GenerateWithVersion(installSpec, "")
+}
+
+// GenerateWithVersion creates the installer shell script content based on the InstallSpec.
+// If targetVersion is specified, the script will be generated for that specific version only.
+func GenerateWithVersion(installSpec *spec.InstallSpec, targetVersion string) ([]byte, error) {
 	if installSpec == nil {
 		return nil, errors.New("install spec cannot be nil")
 	}
 	// Apply spec defaults first
 	installSpec.SetDefaults()
+
+	// Filter embedded checksums if target version is specified
+	if targetVersion != "" {
+		installSpec = filterChecksumsForVersion(installSpec, targetVersion)
+	}
 
 	// --- Prepare Template Data ---
 	// Only pass static data known at generation time, plus the shell functions
@@ -35,6 +47,7 @@ func Generate(installSpec *spec.InstallSpec) ([]byte, error) {
 		Shlib:          shlib,
 		HashFunctions:  hashFunc(installSpec),
 		ShellFunctions: shellFunctions,
+		TargetVersion:  targetVersion,
 	}
 
 	// --- Prepare Template ---
@@ -55,6 +68,27 @@ func Generate(installSpec *spec.InstallSpec) ([]byte, error) {
 	}
 
 	return buf.Bytes(), nil
+}
+
+// filterChecksumsForVersion filters embedded checksums to only include the specified version
+// This function modifies the original installSpec to filter checksums
+func filterChecksumsForVersion(installSpec *spec.InstallSpec, targetVersion string) *spec.InstallSpec {
+	if installSpec.Checksums == nil || installSpec.Checksums.EmbeddedChecksums == nil || len(installSpec.Checksums.EmbeddedChecksums) == 0 {
+		return installSpec
+	}
+
+	// Filter embedded checksums in place - only keep the target version
+	if checksums, exists := installSpec.Checksums.EmbeddedChecksums[targetVersion]; exists {
+		// Replace the entire map with only the target version
+		installSpec.Checksums.EmbeddedChecksums = map[string][]spec.EmbeddedChecksum{
+			targetVersion: checksums,
+		}
+	} else {
+		// Target version not found, clear all embedded checksums
+		installSpec.Checksums.EmbeddedChecksums = make(map[string][]spec.EmbeddedChecksum)
+	}
+
+	return installSpec
 }
 
 func hashFunc(installSpec *spec.InstallSpec) string {
