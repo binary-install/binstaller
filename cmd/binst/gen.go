@@ -15,7 +15,8 @@ import (
 
 var (
 	// Flags for gen command
-	genOutputFile string
+	genOutputFile   string
+	genTargetVersion string
 	// Input config file is handled by the global --config flag
 )
 
@@ -79,7 +80,7 @@ generates a POSIX-compatible shell installer script.`,
 
 		// Generate the script using the internal shell generator
 		log.Info("Generating installer script...")
-		scriptBytes, err := shell.Generate(&installSpec) // Pass the loaded spec
+		scriptBytes, err := shell.GenerateWithVersion(&installSpec, genTargetVersion) // Pass the loaded spec and target version
 		if err != nil {
 			log.WithError(err).Error("Failed to generate installer script")
 			return fmt.Errorf("failed to generate installer script: %w", err)
@@ -120,4 +121,5 @@ func init() {
 	// Flags specific to gen command
 	// Input config file is handled by the global --config flag
 	genCmd.Flags().StringVarP(&genOutputFile, "output", "o", "-", "Output path for the generated script (use '-' for stdout)")
+	genCmd.Flags().StringVar(&genTargetVersion, "target-version", "", "Generate script for specific version only (disables runtime version selection)")
 }
