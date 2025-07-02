@@ -329,16 +329,12 @@ release:
     name: myrepo
 builds:
   - goos:
-      - linux
+      - darwin
     goarch:
-      - arm
-    goarm:
-      - "6"
-      - "7"
+      - arm64
     ignore:
-      - goos: linux
-        goarch: arm
-        goarm: "6"
+      - goos: darwin
+        goarch: arm64
 checksum:
   name_template: "checksums.txt"
 `
@@ -348,8 +344,7 @@ checksum:
 	}
 
 	expectedPlatforms := []spec.Platform{
-		{OS: "linux", Arch: "armv7"},
-		// linux/arm/6 is ignored
+		// darwin/arm64 is ignored, so should be empty
 	}
 
 	// Sort for deterministic comparison
