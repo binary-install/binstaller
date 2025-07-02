@@ -1,0 +1,47 @@
+name: Test Install Script Generation
+
+on:
+  pull_request:
+    branches: [main]
+    paths: ['.config/binstaller.yml']
+
+jobs:
+  test-generation-and-execution:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Build binst
+        run: go build -o binst ./cmd/binst
+
+      - name: Generate test install script
+        run: ./binst gen -o test-install.sh
+
+      - name: Validate script syntax
+        run: |
+          echo "🔍 Validating shell script syntax..."
+          if ! bash -n test-install.sh; then
+            echo "❌ Invalid shell script syntax"
+            exit 1
+          fi
+          echo "✅ Script syntax is valid"
+
+      - name: Test script execution
+        run: |
+          echo "🧪 Testing install script execution..."
+          chmod +x test-install.sh
+          ./test-install.sh
+          echo "✅ Script execution test completed successfully"
+
+      - name: Upload test script as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-install-script
+          path: test-install.sh
+          retention-days: 7
