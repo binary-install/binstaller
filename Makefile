@@ -121,7 +121,7 @@ test-clean: ## Clean up test artifacts
 
 .DEFAULT_GOAL := build
 
-.PHONY: ci help clean binst-init test-gen-configs test-gen-installers test-run-installers test-run-installers-incremental test-aqua-source test-all-platforms test-integration test-incremental test-clean
+.PHONY: ci test help clean binst-init test-gen-configs test-gen-installers test-run-installers test-run-installers-incremental test-aqua-source test-all-platforms test-integration test-incremental test-clean
 
 clean: ## clean up everything
 	go clean ./...
