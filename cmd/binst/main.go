@@ -8,6 +8,12 @@ import (
 	"github.com/spf13/cobra"
 )
 
+const (
+	// Default config file paths
+	DefaultConfigPathYML  = ".config/binstaller.yml"
+	DefaultConfigPathYAML = ".config/binstaller.yaml"
+)
+
 var (
 	// Version and Commit are set during build
 	version = "dev"
@@ -58,7 +64,7 @@ func Execute() {
 
 func init() {
 	// Add global flags
-	rootCmd.PersistentFlags().StringVarP(&configFile, "config", "c", "", "Path to InstallSpec config file (default: .binstaller.yml)")
+	rootCmd.PersistentFlags().StringVarP(&configFile, "config", "c", "", "Path to InstallSpec config file (default: "+DefaultConfigPathYML+")")
 	rootCmd.PersistentFlags().BoolVar(&dryRun, "dry-run", false, "Print actions without performing network or FS writes")
 	rootCmd.PersistentFlags().BoolVar(&verbose, "verbose", false, "Increase log verbosity")
 	rootCmd.PersistentFlags().BoolVar(&quiet, "quiet", false, "Suppress progress output")
