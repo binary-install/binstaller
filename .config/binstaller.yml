@@ -1,4 +1,5 @@
 # Configuration for binstaller install script generation
+# Updated to test duplicate attestation prevention
 schema: v1
 name: binst
 repo: binary-install/binstaller
