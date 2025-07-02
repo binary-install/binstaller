@@ -1,7 +1,6 @@
 schema: v1
 name: fzf
 repo: junegunn/fzf
-default_version: latest
 asset:
     template: ${NAME}-${VERSION}-${OS}_${ARCH}${EXT}
     default_extension: .tar.gz
@@ -13,9 +12,11 @@ asset:
         os: lowercase
         arch: lowercase
 checksums:
-    template: ${NAME}_${VERSION}_checksums.txt
     algorithm: sha256
+    template: ${NAME}_${VERSION}_checksums.txt
 supported_platforms:
+    - os: android
+      arch: arm64
     - os: darwin
       arch: amd64
     - os: darwin
@@ -30,8 +31,6 @@ supported_platforms:
       arch: armv5
     - os: linux
       arch: armv6
-    - os: linux
-      arch: armv7
     - os: linux
       arch: loong64
     - os: linux

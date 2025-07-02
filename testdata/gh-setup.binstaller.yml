@@ -1,18 +1,6 @@
 schema: v1
 name: gh-setup
 repo: k1LoW/gh-setup
-supported_platforms:
-    - os: darwin
-      arch: arm64
-    - os: windows
-      arch: amd64
-    - os: linux
-      arch: amd64
-    - os: linux
-      arch: arm64
-    - os: darwin
-      arch: amd64
-default_version: latest
 asset:
     template: ${NAME}_v${VERSION}_${OS}_${ARCH}${EXT}
     default_extension: .tar.gz
@@ -24,7 +12,16 @@ asset:
         os: lowercase
         arch: lowercase
 checksums:
-    template: checksums.txt
     algorithm: sha256
-unpack:
-    strip_components: 0
+    template: checksums.txt
+supported_platforms:
+    - os: darwin
+      arch: amd64
+    - os: darwin
+      arch: arm64
+    - os: linux
+      arch: amd64
+    - os: linux
+      arch: arm64
+    - os: windows
+      arch: amd64
