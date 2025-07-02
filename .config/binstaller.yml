@@ -1,5 +1,4 @@
 # Configuration for binstaller install script generation
-# Updated to test the fixed diff check logic with git add
 schema: v1
 name: binst
 repo: binary-install/binstaller

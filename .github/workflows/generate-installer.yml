@@ -134,10 +134,6 @@ jobs:
             🤖 This PR was created automatically and requires attestation verification before merge.
           branch: auto/update-install-script
           delete-branch: true
-          labels: |
-            automated
-            security
-            attestation
 
       - name: Output summary
         if: steps.check_changes.outputs.has_changes == 'true'
