@@ -68,11 +68,11 @@ parse_args() {
 
 tag_to_version() {
   {{- if .TargetVersion }}
-  # Fixed version mode - target version is set at generation time
+  # Target version is set at generation time
   REALTAG="{{ .TargetVersion }}"
   VERSION=${REALTAG#v} # Strip leading 'v'
   TAG="$REALTAG"
-  log_info "Fixed version mode: ${VERSION} (tag: ${TAG})"
+  log_info "Installing ${NAME} version ${VERSION}"
   {{- else }}
   if [ "$TAG" = "latest" ]; then
     log_info "checking GitHub for latest tag"

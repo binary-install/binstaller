@@ -191,9 +191,9 @@ supported_platforms:
 			t.Error("Generated script should contain fixed TAG=v1.2.3")
 		}
 
-		// Verify fixed version mode message
-		if !bytes.Contains(scriptContent, []byte("Fixed version mode")) {
-			t.Error("Generated script should contain 'Fixed version mode' message")
+		// Verify installing message with version
+		if !bytes.Contains(scriptContent, []byte("Installing ${NAME} version ${VERSION}")) {
+			t.Error("Generated script should contain 'Installing' message with version")
 		}
 
 		// Verify usage message mentions the fixed version
@@ -251,9 +251,9 @@ supported_platforms:
 			t.Error("Normal script should contain v1.2.4 checksums")
 		}
 
-		// Verify no fixed version mode
-		if bytes.Contains(scriptContent, []byte("Fixed version mode")) {
-			t.Error("Normal script should not contain 'Fixed version mode' message")
+		// Verify no fixed version installing message
+		if bytes.Contains(scriptContent, []byte("Installing ${NAME} version ${VERSION}")) {
+			t.Error("Normal script should not contain fixed version installing message")
 		}
 
 		t.Logf("Successfully generated normal dynamic script")

@@ -33,7 +33,7 @@ func TestGenerateWithVersion(t *testing.T) {
 			},
 			wantNotContain: []string{
 				`TAG="v1.2.3"`,
-				`Fixed version mode`,
+				`Installing ${NAME} version ${VERSION}`,
 			},
 		},
 		{
@@ -50,7 +50,7 @@ func TestGenerateWithVersion(t *testing.T) {
 			wantSubstrings: []string{
 				`TAG="v1.2.3"`,
 				`REALTAG="v1.2.3"`,
-				`Fixed version mode: ${VERSION} (tag: ${TAG})`,
+				`Installing ${NAME} version ${VERSION}`,
 				`This installer is configured for v1.2.3 only.`,
 			},
 			wantNotContain: []string{
