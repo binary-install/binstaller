@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/apex/log"
 	"github.com/apex/log/handlers/cli"
@@ -13,6 +14,25 @@ const (
 	DefaultConfigPathYML  = ".config/binstaller.yml"
 	DefaultConfigPathYAML = ".config/binstaller.yaml"
 )
+
+// resolveConfigFile determines the config file path to use.
+// If configFile is not empty, it returns configFile.
+// Otherwise, it tries to find default config files in order.
+func resolveConfigFile(configFile string) (string, error) {
+	if configFile != "" {
+		return configFile, nil
+	}
+
+	// Try default paths in order
+	candidates := []string{DefaultConfigPathYML, DefaultConfigPathYAML}
+	for _, candidate := range candidates {
+		if _, err := os.Stat(candidate); err == nil {
+			return candidate, nil
+		}
+	}
+
+	return "", fmt.Errorf("config file not specified via --config and default (%s or %s) not found", DefaultConfigPathYML, DefaultConfigPathYAML)
+}
 
 var (
 	// Version and Commit are set during build

@@ -28,7 +28,7 @@ var (
 var initCmd = &cobra.Command{
 	Use:   "init",
 	Short: "Generate an InstallSpec config file from various sources",
-	Long: `Initializes a binstaller configuration file (.binstaller.yml) by detecting
+	Long: `Initializes a binstaller configuration file (.config/binstaller.yml) by detecting
 settings from a source like a GoReleaser config file or a GitHub repository.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		log.Infof("Running init command...")

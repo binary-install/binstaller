@@ -34,26 +34,14 @@ This command supports three modes of operation:
 	RunE: func(cmd *cobra.Command, args []string) error {
 		log.Info("Running embed-checksums command...")
 
-		// Determine config file path
-		cfgFile := configFile // Use the global flag value
-		if cfgFile == "" {
-			// Default detection logic if global flag is not set
-			defaultPath := ".binstaller.yml"
-			if _, err := os.Stat(defaultPath); err == nil {
-				cfgFile = defaultPath
-				log.Infof("Using default config file: %s", cfgFile)
-			} else {
-				// Try .binstaller.yaml as fallback
-				defaultPathYaml := ".binstaller.yaml"
-				if _, errYaml := os.Stat(defaultPathYaml); errYaml == nil {
-					cfgFile = defaultPathYaml
-					log.Infof("Using default config file: %s", cfgFile)
-				} else {
-					err := fmt.Errorf("config file not specified via --config and default (.binstaller.yml or .binstaller.yaml) not found")
-					log.WithError(err).Error("Config file detection failed")
-					return err
-				}
-			}
+		// Determine config file path using common logic
+		cfgFile, err := resolveConfigFile(configFile)
+		if err != nil {
+			log.WithError(err).Error("Config file detection failed")
+			return err
+		}
+		if configFile == "" {
+			log.Infof("Using default config file: %s", cfgFile)
 		}
 		log.Debugf("Using config file: %s", cfgFile)
 
