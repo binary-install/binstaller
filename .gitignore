@@ -9,7 +9,6 @@ treeout
 coverage.txt
 .vscode/
 /binst
-install.sh
 .testdata-timestamp
 
 **/.claude/settings.local.json
