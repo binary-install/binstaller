@@ -76,3 +76,6 @@ signs:
       - "--yes" # needed on cosign 2.0.0+
     artifacts: checksum
     output: true
+
+changelog:
+  use: github-native
