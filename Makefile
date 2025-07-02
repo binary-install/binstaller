@@ -40,6 +40,9 @@ setup: bin/golangci-lint bin/shellcheck ## Install all the build and lint depend
 install: ## build and install
 	go install $(LDFLAGS) ./cmd/binst
 
+binst-init: binst ## generate .config/binstaller.yml from .config/goreleaser.yml
+	./binst init --source goreleaser --file .config/goreleaser.yml --repo binary-install/binstaller
+
 test: ## Run all the tests
 	go test $(TEST_OPTIONS) -failfast -race -coverpkg=./... -covermode=atomic -coverprofile=coverage.txt $(SOURCE_FILES) -run $(TEST_PATTERN) -timeout=2m
 
@@ -118,7 +121,7 @@ test-clean: ## Clean up test artifacts
 
 .DEFAULT_GOAL := build
 
-.PHONY: ci help clean test-gen-configs test-gen-installers test-run-installers test-run-installers-incremental test-aqua-source test-all-platforms test-integration test-incremental test-clean
+.PHONY: ci help clean binst-init test-gen-configs test-gen-installers test-run-installers test-run-installers-incremental test-aqua-source test-all-platforms test-integration test-incremental test-clean
 
 clean: ## clean up everything
 	go clean ./...
