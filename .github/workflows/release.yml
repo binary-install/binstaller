@@ -22,6 +22,7 @@ jobs:
 
   # Post version bump information comment on PR when labeled
   release-preview-comment:
+    needs: [verify-releaser]
     if: github.event.action == 'labeled'
     permissions:
       pull-requests: write
@@ -31,6 +32,7 @@ jobs:
 
   # First check if a release is needed
   release-check:
+    needs: [verify-releaser]
     if: github.event.action != 'labeled'
     permissions:
       contents: write # Required for GitHub's generate-release-note API (notes are only displayed in job summary, not written to any file)
@@ -39,7 +41,7 @@ jobs:
 
   # Environment protection job
   release-approval:
-    needs: [release-check]
+    needs: [verify-releaser, release-check]
     if: github.event.action != 'labeled' && needs.release-check.outputs.skip != 'true'
     runs-on: ubuntu-latest
     environment: release
@@ -52,7 +54,7 @@ jobs:
 
   # Use the reusable trusted tag workflow for releases if approved
   release:
-    needs: [release-check, release-approval]
+    needs: [verify-releaser, release-check, release-approval]
     if: github.event.action != 'labeled' && needs.release-check.outputs.skip != 'true'
     concurrency:
       group: "release"
