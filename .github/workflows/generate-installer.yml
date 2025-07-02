@@ -25,6 +25,9 @@ jobs:
         with:
           go-version-file: go.mod
 
+      - name: Setup gitsign
+        uses: chainguard-dev/actions/setup-gitsign@0cda751b114eb55c388e88f7479292668165602a # v1.0.2
+
       - name: Build binst
         run: |
           echo "🔨 Building binst..."
@@ -64,9 +67,11 @@ jobs:
         run: echo "date=$(date -u +'%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_OUTPUT
 
       - name: Create PR with attested script
-        uses: peter-evans/create-pull-request@v6
+        uses: peter-evans/create-pull-request@v7
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+          add-paths: |
+            install.sh
           commit-message: |
             🔒 Update official install script with attestation
 
