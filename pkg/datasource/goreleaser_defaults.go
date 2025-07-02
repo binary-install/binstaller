@@ -119,6 +119,7 @@ func applyArchiveDefaults(ctx *gorelcontext.Context) {
 		}
 
 		// Default formats
+		//nolint:staticcheck // archive.Format is deprecated but we need to check it for compatibility
 		if len(archive.Formats) == 0 && archive.Format == "" {
 			archive.Formats = []string{"tar.gz", "zip"}
 		}
