@@ -32,18 +32,16 @@ generates a POSIX-compatible shell installer script.`,
 		cfgFile := configFile // Use the global flag value
 		if cfgFile == "" {
 			// Default detection logic if global flag is not set
-			defaultPath := ".config/binstaller.yml"
-			if _, err := os.Stat(defaultPath); err == nil {
-				cfgFile = defaultPath
+			if _, err := os.Stat(DefaultConfigPathYML); err == nil {
+				cfgFile = DefaultConfigPathYML
 				log.Infof("Using default config file: %s", cfgFile)
 			} else {
 				// Try .config/binstaller.yaml as fallback
-				defaultPathYaml := ".config/binstaller.yaml"
-				if _, errYaml := os.Stat(defaultPathYaml); errYaml == nil {
-					cfgFile = defaultPathYaml
+				if _, errYaml := os.Stat(DefaultConfigPathYAML); errYaml == nil {
+					cfgFile = DefaultConfigPathYAML
 					log.Infof("Using default config file: %s", cfgFile)
 				} else {
-					err := fmt.Errorf("config file not specified via --config and default (.config/binstaller.yml or .config/binstaller.yaml) not found")
+					err := fmt.Errorf("config file not specified via --config and default (%s or %s) not found", DefaultConfigPathYML, DefaultConfigPathYAML)
 					log.WithError(err).Error("Config file detection failed")
 					return err
 				}

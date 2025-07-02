@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/apex/log"
 	"github.com/binary-install/binstaller/pkg/datasource"
@@ -102,6 +103,14 @@ settings from a source like a GoReleaser config file or a GitHub repository.`,
 		} else {
 			// Write to file
 			log.Infof("Writing InstallSpec YAML to file: %s", initOutputFile)
+			
+			// Ensure the output directory exists
+			outputDir := filepath.Dir(initOutputFile)
+			if err := os.MkdirAll(outputDir, 0755); err != nil {
+				log.WithError(err).Errorf("Failed to create output directory: %s", outputDir)
+				return fmt.Errorf("failed to create output directory %s: %w", outputDir, err)
+			}
+			
 			err = os.WriteFile(initOutputFile, yamlData, 0644) // Use standard file permissions
 			if err != nil {
 				log.WithError(err).Errorf("Failed to write InstallSpec to file: %s", initOutputFile)
@@ -128,7 +137,7 @@ func init() {
 	initCmd.Flags().StringVar(&initTag, "tag", "", "Release tag/ref to inspect (for source 'github')")
 	initCmd.Flags().StringVar(&initCommitSHA, "sha", "", "Commit SHA for source 'goreleaser'")
 	initCmd.Flags().StringVar(&initAssetPattern, "asset-pattern", "", "Template for asset file names (for source 'cli')") // TODO: Implement usage
-	initCmd.Flags().StringVarP(&initOutputFile, "output", "o", ".config/binstaller.yml", "Write spec to file instead of stdout (use '-' for stdout)")
+	initCmd.Flags().StringVarP(&initOutputFile, "output", "o", DefaultConfigPathYML, "Write spec to file instead of stdout (use '-' for stdout)")
 
 	// TODO: Add dependencies between flags (e.g., --file required if --source goreleaser and no --repo)
 }
