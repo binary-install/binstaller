@@ -16,7 +16,6 @@ import (
 	"github.com/binary-install/binstaller/pkg/spec"
 	"github.com/goreleaser/goreleaser/v2/pkg/config"
 	gorelcontext "github.com/goreleaser/goreleaser/v2/pkg/context"
-	"github.com/goreleaser/goreleaser/v2/pkg/defaults"
 	"github.com/pkg/errors"
 )
 
@@ -56,26 +55,13 @@ func (a *goreleaserAdapter) GenerateInstallSpec(ctx context.Context) (*spec.Inst
 	}
 
 	gorelCtx := gorelcontext.New(*project)
-	needs := map[string]bool{
-		"building binaries":     true,
-		"calculating checksums": true,
-		"archives":              true,
+	
+	// Apply our minimal defaults instead of using goreleaser's defaults package.
+	// See goreleaser_defaults.go for why we don't use the official defaults package.
+	if err := applyMinimalDefaults(gorelCtx); err != nil {
+		return nil, errors.Wrap(err, "failed to apply defaults")
 	}
-	for _, defaulter := range defaults.Defaulters {
-		// Call building binaries defaulter to fill default build config
-		// to populate correct supported_platforms.
-		//
-		// We should not call needless defaulter, especially "project name" because
-		// it fills project name with git remote data and breaks config if
-		// binstaller is called outside the target repo.
-		if !needs[defaulter.String()] {
-			continue
-		}
-		log.Debugf("setting defaults for %s", defaulter)
-		if err := defaulter.Default(gorelCtx); err != nil {
-			return nil, errors.Wrap(err, "failed to set defaults")
-		}
-	}
+	
 	project = &gorelCtx.Config
 
 	// Map goreleaser config.Project to spec.InstallSpec, passing overrides

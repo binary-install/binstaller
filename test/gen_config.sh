@@ -3,6 +3,8 @@ set -e
 # Test goreleaser source
 ./binst init --source goreleaser --repo reviewdog/reviewdog -o=testdata/reviewdog.binstaller.yml --sha='7e05fa3e78ba7f2be4999ca2d35b00a3fd92a783'
 ./binst init --source goreleaser --repo actionutils/sigspy -o=testdata/sigspy.binstaller.yml --sha='3e1c6f32072cd4b8309d00bd31f498903f71c422'
+./binst init --source goreleaser --repo junegunn/fzf -o=testdata/fzf.binstaller.yml --sha='ce95adc66c27d97b8f1bb56f139b7efd3f53e5c4'
+./binst init --source goreleaser --repo k1LoW/gh-setup -o=testdata/gh-setup.binstaller.yml --sha='f59adf10c4c7ed2b673a9f0a96fc1f8a37a735bd'
 # Test aqua source
 ./binst init --source aqua --repo zyedidia/micro --output=testdata/micro.binstaller.yml --sha='1436b9b02096f39ace945d9c56adb7a5b11df186'
 ./binst init --source aqua --repo houseabsolute/ubi --output=testdata/ubi.binstaller.yml --sha='1436b9b02096f39ace945d9c56adb7a5b11df186'
