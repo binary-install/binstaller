@@ -58,7 +58,7 @@ func Execute() {
 
 func init() {
 	// Add global flags
-	rootCmd.PersistentFlags().StringVarP(&configFile, "config", "c", "", "Path to InstallSpec config file (default: .binstaller.yml)")
+	rootCmd.PersistentFlags().StringVarP(&configFile, "config", "c", "", "Path to InstallSpec config file (default: .config/binstaller.yml)")
 	rootCmd.PersistentFlags().BoolVar(&dryRun, "dry-run", false, "Print actions without performing network or FS writes")
 	rootCmd.PersistentFlags().BoolVar(&verbose, "verbose", false, "Increase log verbosity")
 	rootCmd.PersistentFlags().BoolVar(&quiet, "quiet", false, "Suppress progress output")

@@ -128,7 +128,7 @@ func init() {
 	initCmd.Flags().StringVar(&initTag, "tag", "", "Release tag/ref to inspect (for source 'github')")
 	initCmd.Flags().StringVar(&initCommitSHA, "sha", "", "Commit SHA for source 'goreleaser'")
 	initCmd.Flags().StringVar(&initAssetPattern, "asset-pattern", "", "Template for asset file names (for source 'cli')") // TODO: Implement usage
-	initCmd.Flags().StringVarP(&initOutputFile, "output", "o", ".binstaller.yml", "Write spec to file instead of stdout (use '-' for stdout)")
+	initCmd.Flags().StringVarP(&initOutputFile, "output", "o", ".config/binstaller.yml", "Write spec to file instead of stdout (use '-' for stdout)")
 
 	// TODO: Add dependencies between flags (e.g., --file required if --source goreleaser and no --repo)
 }
