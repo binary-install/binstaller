@@ -8,7 +8,7 @@ usage() {
 $this: download ${NAME} from ${REPO}
 
 Usage: $this [-b bindir] [-d] [tag]
-  -b sets bindir or installation directory, Defaults to ./bin
+  -b sets bindir or installation directory, Defaults to ${BINSTALLER_BIN:-${HOME}/.local/bin}
   -d turns on debug logging
    [tag] is a tag from
    https://github.com/int128/kauthproxy/releases
