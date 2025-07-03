@@ -8,7 +8,7 @@ usage() {
 $this: download ${NAME} from ${REPO}
 
 Usage: $this [-b bindir] [-d]{{- if not .TargetVersion }} [tag]{{- end }}
-  -b sets bindir or installation directory, Defaults to ./bin
+  -b sets bindir or installation directory, Defaults to {{ .DefaultBinDir }}
   -d turns on debug logging
   {{- if .TargetVersion }}
    This installer is configured for {{ .TargetVersion }} only.
