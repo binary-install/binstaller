@@ -41,11 +41,8 @@ var (
 
 	// Global flags
 	configFile string
-	dryRun     bool
 	verbose    bool
 	quiet      bool
-	yes        bool
-	timeout    string // TODO: Parse duration
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -68,7 +65,6 @@ It supports generating the spec from sources like GoReleaser config or GitHub re
 			log.SetLevel(log.InfoLevel)
 		}
 		log.Debugf("Config file: %s", configFile)
-		// TODO: Parse timeout duration
 	},
 }
 
@@ -85,11 +81,8 @@ func Execute() {
 func init() {
 	// Add global flags
 	rootCmd.PersistentFlags().StringVarP(&configFile, "config", "c", "", "Path to InstallSpec config file (default: "+DefaultConfigPathYML+")")
-	rootCmd.PersistentFlags().BoolVar(&dryRun, "dry-run", false, "Print actions without performing network or FS writes")
 	rootCmd.PersistentFlags().BoolVar(&verbose, "verbose", false, "Increase log verbosity")
 	rootCmd.PersistentFlags().BoolVar(&quiet, "quiet", false, "Suppress progress output")
-	rootCmd.PersistentFlags().BoolVarP(&yes, "yes", "y", false, "Assume \"yes\" on interactive prompts")
-	rootCmd.PersistentFlags().StringVar(&timeout, "timeout", "5m", "HTTP / process timeout (e.g. 30s, 2m)")
 
 	// Mark 'config' flag for auto-detection? Cobra doesn't directly support this.
 	// We'll handle default detection logic within commands if the flag is empty.

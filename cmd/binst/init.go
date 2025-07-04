@@ -20,7 +20,6 @@ var (
 	initName         string // Explicit override for binary name
 	initTag          string
 	initCommitSHA    string
-	initAssetPattern string
 	initOutputFile   string
 )
 
@@ -67,7 +66,7 @@ settings from a source like a GoReleaser config file or a GitHub repository.`,
 				adapter = datasource.NewAquaRegistryAdapterFromReader(f)
 			}
 		default:
-			err := fmt.Errorf("unknown source specified: %s. Valid sources are: goreleaser, github, cli, file", initSource)
+			err := fmt.Errorf("unknown source specified: %s. Valid sources are: goreleaser, github, aqua", initSource)
 			log.WithError(err).Error("invalid source")
 			return err
 		}
@@ -136,7 +135,6 @@ func init() {
 	initCmd.Flags().StringVar(&initName, "name", "", "Explicit binary name override")
 	initCmd.Flags().StringVar(&initTag, "tag", "", "Release tag/ref to inspect (for source 'github')")
 	initCmd.Flags().StringVar(&initCommitSHA, "sha", "", "Commit SHA for source 'goreleaser'")
-	initCmd.Flags().StringVar(&initAssetPattern, "asset-pattern", "", "Template for asset file names (for source 'cli')") // TODO: Implement usage
 	initCmd.Flags().StringVarP(&initOutputFile, "output", "o", DefaultConfigPathYML, "Write spec to file instead of stdout (use '-' for stdout)")
 
 	// TODO: Add dependencies between flags (e.g., --file required if --source goreleaser and no --repo)
