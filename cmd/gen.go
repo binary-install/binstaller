@@ -1,4 +1,4 @@
-package main
+package cmd
 
 import (
 	"fmt"
@@ -20,8 +20,8 @@ var (
 	// Input config file is handled by the global --config flag
 )
 
-// genCmd represents the gen command
-var genCmd = &cobra.Command{
+// GenCommand represents the gen command
+var GenCommand = &cobra.Command{
 	Use:   "gen",
 	Short: "Generate an installer script from an InstallSpec config file",
 	Long: `Reads an InstallSpec configuration file (e.g., .binstaller.yml) and
@@ -105,10 +105,8 @@ generates a POSIX-compatible shell installer script.`,
 }
 
 func init() {
-	rootCmd.AddCommand(genCmd)
-
 	// Flags specific to gen command
 	// Input config file is handled by the global --config flag
-	genCmd.Flags().StringVarP(&genOutputFile, "output", "o", "-", "Output path for the generated script (use '-' for stdout)")
-	genCmd.Flags().StringVar(&genTargetVersion, "target-version", "", "Generate script for specific version only (disables runtime version selection)")
+	GenCommand.Flags().StringVarP(&genOutputFile, "output", "o", "-", "Output path for the generated script (use '-' for stdout)")
+	GenCommand.Flags().StringVar(&genTargetVersion, "target-version", "", "Generate script for specific version only (disables runtime version selection)")
 }
