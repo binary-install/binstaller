@@ -1,4 +1,4 @@
-package main
+package cmd
 
 import (
 	"context"
@@ -23,8 +23,8 @@ var (
 	initOutputFile   string
 )
 
-// initCmd represents the init command
-var initCmd = &cobra.Command{
+// InitCommand represents the init command
+var InitCommand = &cobra.Command{
 	Use:   "init",
 	Short: "Generate an InstallSpec config file from various sources",
 	Long: `Initializes a binstaller configuration file (.config/binstaller.yml) by detecting
@@ -123,19 +123,17 @@ settings from a source like a GoReleaser config file or a GitHub repository.`,
 }
 
 func init() {
-	rootCmd.AddCommand(initCmd)
-
 	// Required flags
-	initCmd.Flags().StringVar(&initSource, "source", "", "Source type to detect spec from (required: goreleaser, aqua, github)")
-	_ = initCmd.MarkFlagRequired("source")
+	InitCommand.Flags().StringVar(&initSource, "source", "", "Source type to detect spec from (required: goreleaser, aqua, github)")
+	_ = InitCommand.MarkFlagRequired("source")
 
 	// Optional flags (depending on source)
-	initCmd.Flags().StringVar(&initSourceFile, "file", "", "Path to source file (e.g., .goreleaser.yml)")
-	initCmd.Flags().StringVar(&initRepo, "repo", "", "GitHub repository (owner/repo) for source 'goreleaser'/'github', or explicit override")
-	initCmd.Flags().StringVar(&initName, "name", "", "Explicit binary name override")
-	initCmd.Flags().StringVar(&initTag, "tag", "", "Release tag/ref to inspect (for source 'github')")
-	initCmd.Flags().StringVar(&initCommitSHA, "sha", "", "Commit SHA for source 'goreleaser'")
-	initCmd.Flags().StringVarP(&initOutputFile, "output", "o", DefaultConfigPathYML, "Write spec to file instead of stdout (use '-' for stdout)")
+	InitCommand.Flags().StringVar(&initSourceFile, "file", "", "Path to source file (e.g., .goreleaser.yml)")
+	InitCommand.Flags().StringVar(&initRepo, "repo", "", "GitHub repository (owner/repo) for source 'goreleaser'/'github', or explicit override")
+	InitCommand.Flags().StringVar(&initName, "name", "", "Explicit binary name override")
+	InitCommand.Flags().StringVar(&initTag, "tag", "", "Release tag/ref to inspect (for source 'github')")
+	InitCommand.Flags().StringVar(&initCommitSHA, "sha", "", "Commit SHA for source 'goreleaser'")
+	InitCommand.Flags().StringVarP(&initOutputFile, "output", "o", DefaultConfigPathYML, "Write spec to file instead of stdout (use '-' for stdout)")
 
 	// TODO: Add dependencies between flags (e.g., --file required if --source goreleaser and no --repo)
 }

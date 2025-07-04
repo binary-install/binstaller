@@ -1,4 +1,4 @@
-package main
+package cmd
 
 import (
 	"fmt"
@@ -22,8 +22,8 @@ var (
 	embedAllPlatforms bool
 )
 
-// embedChecksumsCmd represents the embed-checksums command
-var embedChecksumsCmd = &cobra.Command{
+// EmbedChecksumsCommand represents the embed-checksums command
+var EmbedChecksumsCommand = &cobra.Command{
 	Use:   "embed-checksums",
 	Short: "Embed checksums for release assets into a binstaller configuration",
 	Long: `Reads an InstallSpec configuration file and embeds checksums for the assets.
@@ -132,15 +132,13 @@ This command supports three modes of operation:
 }
 
 func init() {
-	rootCmd.AddCommand(embedChecksumsCmd)
-
 	// Flags specific to embed-checksums command
-	embedChecksumsCmd.Flags().StringVarP(&embedVersion, "version", "v", "", "Version to embed checksums for (default: latest)")
-	embedChecksumsCmd.Flags().StringVarP(&embedOutput, "output", "o", "", "Output path for the updated InstallSpec (default: overwrite input file)")
-	embedChecksumsCmd.Flags().StringVarP(&embedMode, "mode", "m", "download", "Checksums acquisition mode (download, checksum-file, calculate)")
-	embedChecksumsCmd.Flags().StringVarP(&embedFile, "file", "f", "", "Path to checksum file (required for checksum-file mode)")
-	embedChecksumsCmd.Flags().BoolVar(&embedAllPlatforms, "all-platforms", false, "Generate checksums for all supported platforms (for calculate mode)")
+	EmbedChecksumsCommand.Flags().StringVarP(&embedVersion, "version", "v", "", "Version to embed checksums for (default: latest)")
+	EmbedChecksumsCommand.Flags().StringVarP(&embedOutput, "output", "o", "", "Output path for the updated InstallSpec (default: overwrite input file)")
+	EmbedChecksumsCommand.Flags().StringVarP(&embedMode, "mode", "m", "download", "Checksums acquisition mode (download, checksum-file, calculate)")
+	EmbedChecksumsCommand.Flags().StringVarP(&embedFile, "file", "f", "", "Path to checksum file (required for checksum-file mode)")
+	EmbedChecksumsCommand.Flags().BoolVar(&embedAllPlatforms, "all-platforms", false, "Generate checksums for all supported platforms (for calculate mode)")
 
 	// Mark required flags
-	embedChecksumsCmd.MarkFlagRequired("mode")
+	EmbedChecksumsCommand.MarkFlagRequired("mode")
 }
