@@ -23,15 +23,15 @@ graph LR
     B[GitHub releases] --> |binst init| C
     D[Aqua registry] --> |binst init| C
     E[Manual editing] --> C
-    
+
     C --> |binst gen| F[Installation script]
-    
+
     style C fill:#e1f5fe
     style F fill:#f3e5f5
 ```
 
-**Step 1:** `binst init` - Generate a `.binstaller.yml` config from various sources  
-**Step 2 (Optional):** `binst embed-checksums` - Embed checksums into the config for enhanced security  
+**Step 1:** `binst init` - Generate a `.binstaller.yml` config from various sources
+**Step 2 (Optional):** `binst embed-checksums` - Embed checksums into the config for enhanced security
 **Step 3:** `binst gen` - Generate the final installation script
 
 ## ✨ Key Features
@@ -187,10 +187,16 @@ binstaller provides a modern, secure approach to binary installation:
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## 🙏 Acknowledgments
 
 * Original [GoDownloader](https://github.com/goreleaser/godownloader) project by the GoReleaser team
 * [Aqua](https://aquaproj.github.io/) project for package management inspiration
 * All contributors who have helped improve this project
+
+## 🐦️ Author
+
+| | |
+|---|---|
+| <img src="https://github.com/haya14busa.png" width="60" height="60" alt="haya14busa" /> | **haya14busa**<br/>[![GitHub followers](https://img.shields.io/github/followers/haya14busa.svg?style=flat&label=Follow&logo=github)](https://github.com/haya14busa) [![GitHub Sponsors](https://img.shields.io/badge/Sponsor-EA4AAA?style=flat&logo=github-sponsors&logoColor=white)](https://github.com/sponsors/haya14busa) |
