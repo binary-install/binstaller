@@ -148,7 +148,7 @@ The workflow in action:
 binst init --source=github --repo=owner/repo -o .binstaller.yml
 
 # Step 2 (Optional): Embed checksums for enhanced security
-binst embed-checksums --config .binstaller.yml
+binst embed-checksums --config .binstaller.yml --version v1.0.0 --mode download
 
 # Step 3: Generate installation script
 binst gen -o install.sh
@@ -166,7 +166,7 @@ binst init --source=goreleaser --file=.goreleaser.yml | binst gen > install.sh
 binst init --source=goreleaser --file=.goreleaser.yml -o .binstaller.yml
 
 # Step 2 (Optional): Embed checksums for enhanced security
-binst embed-checksums --config .binstaller.yml
+binst embed-checksums --config .binstaller.yml --version v1.0.0 --mode download
 
 # Step 3: Generate installer script
 binst gen --config=.binstaller.yml -o install.sh
@@ -179,7 +179,7 @@ binst gen --config=.binstaller.yml -o install.sh
 binst init --source=github --repo=junegunn/fzf -o fzf.binstaller.yml
 
 # Step 2 (Optional): Embed checksums for enhanced security
-binst embed-checksums --config fzf.binstaller.yml
+binst embed-checksums --config fzf.binstaller.yml --version 0.44.1 --mode download
 
 # Step 3: Generate installer
 binst gen --config=fzf.binstaller.yml -o fzf-install.sh
@@ -194,7 +194,7 @@ Use configurations from [Aqua](https://aquaproj.github.io/)'s [standard registry
 binst init --source=aqua --repo=junegunn/fzf -o fzf.binstaller.yml
 
 # Step 2 (Optional): Embed checksums for enhanced security
-binst embed-checksums --config fzf.binstaller.yml
+binst embed-checksums --config fzf.binstaller.yml --version 0.44.1 --mode download
 
 # Step 3: Generate installer
 binst gen --config=fzf.binstaller.yml -o fzf-install.sh
@@ -207,7 +207,7 @@ binst gen --config=fzf.binstaller.yml -o fzf-install.sh
 vim .binstaller.yml
 
 # Step 2 (Optional): Embed checksums for enhanced security
-binst embed-checksums --config .binstaller.yml
+binst embed-checksums --config .binstaller.yml --version v1.0.0 --mode download
 
 # Step 3: Generate installer script
 binst gen -o install.sh
