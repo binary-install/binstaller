@@ -44,17 +44,71 @@ graph LR
 * 🔁 **Reproducible Builds**: Generate consistent installation scripts with source traceability
 * 🌐 **Universal Support**: Works with any static binary on GitHub releases (Go, Rust, C++, etc.)
 
-## 🚀 Quick Start
+## 📦 Installation
 
-### Installation
+### Release Installer
+
+#### Install (Latest)
 
 ```bash
-# Install the latest version
+# With GitHub Attestation verification (recommended)
+curl -sL https://github.com/binary-install/binstaller/releases/latest/download/install.sh | \
+    (tmpfile=$(mktemp); cat > "$tmpfile"; \
+     gh attestation verify --repo=binary-install/binstaller --signer-workflow='actionutils/trusted-go-releaser/.github/workflows/trusted-release-workflow.yml' "$tmpfile" && \
+     sh "$tmpfile"; rm -f "$tmpfile")
+```
+
+#### Install (Specific Version)
+
+```bash
+# Set the desired version
+VERSION="v0.1.0"
+
+# Install with attestation verification
+curl -sL "https://github.com/binary-install/binstaller/releases/download/${VERSION}/install.sh" | \
+    (tmpfile=$(mktemp); cat > "$tmpfile"; \
+     gh attestation verify --repo=binary-install/binstaller --signer-workflow='actionutils/trusted-go-releaser/.github/workflows/trusted-release-workflow.yml' "$tmpfile" && \
+     sh "$tmpfile"; rm -f "$tmpfile")
+```
+
+### Generic Installer
+
+```bash
+# Optional: Set version (latest if empty)
+VERSION="" # e.g., "v0.1.0" or leave empty for latest
+
+# Install from main branch with attestation verification
+curl -sL https://raw.githubusercontent.com/binary-install/binstaller/main/install.sh | \
+    (tmpfile=$(mktemp); cat > "$tmpfile"; \
+     gh attestation verify --repo=binary-install/binstaller --cert-identity-regex='.github/workflows/generate-installer.yml@refs/heads/main' "$tmpfile" && \
+     sh "$tmpfile" $VERSION; rm -f "$tmpfile")
+```
+
+### GitHub Actions
+
+```yaml
+- uses: actionutils/trusted-tag-verifier@v0
+  with:
+    verify: 'binary-install/setup-x@v1'
+
+- name: Install binstaller
+  uses: binary-install/setup-x@v1
+  with:
+    script_url: https://github.com/binary-install/binstaller/releases/latest/download/install.sh
+    gh_attestations_verify_flags: --repo=binary-install/binstaller --signer-workflow=actionutils/trusted-go-releaser/.github/workflows/trusted-release-workflow.yml
+```
+
+### Go Install
+
+```bash
+# Latest version
 go install github.com/binary-install/binstaller/cmd/binst@latest
 
-# Or download from GitHub releases
-curl -sfL https://raw.githubusercontent.com/binary-install/binstaller/main/install.sh | sh
+# Specific version
+go install github.com/binary-install/binstaller/cmd/binst@v0.1.0
 ```
+
+## 🚀 Quick Start
 
 ### Basic Usage
 
