@@ -118,6 +118,73 @@ func TestGenerateAssetFilename(t *testing.T) {
 	}
 }
 
+func TestGenerateAssetFilenameMultipleRules(t *testing.T) {
+	// Test the bug fix where multiple rules should apply cumulatively
+	testSpec := &spec.InstallSpec{
+		Name: "binst",
+		Repo: "binary-install/binstaller",
+		Asset: spec.AssetConfig{
+			Template:         "${NAME}_${OS}_${ARCH}${EXT}",
+			DefaultExtension: ".tar.gz",
+			NamingConvention: &spec.NamingConvention{
+				OS:   "titlecase",
+				Arch: "lowercase",
+			},
+			Rules: []spec.AssetRule{
+				// First rule: transform amd64 to x86_64
+				{
+					When: spec.PlatformCondition{
+						Arch: "amd64",
+					},
+					Arch: "x86_64",
+				},
+				// Second rule: Windows uses .zip extension
+				{
+					When: spec.PlatformCondition{
+						OS: "windows",
+					},
+					Ext: ".zip",
+				},
+			},
+		},
+	}
+
+	embedder := &Embedder{
+		Spec:    testSpec,
+		Version: "v0.1.0",
+	}
+
+	// Test Windows amd64 - should apply BOTH rules
+	filename, err := embedder.generateAssetFilename("windows", "amd64")
+	if err != nil {
+		t.Fatalf("generateAssetFilename failed: %v", err)
+	}
+	expected := "binst_Windows_x86_64.zip"
+	if filename != expected {
+		t.Errorf("Expected filename %s, got %s", expected, filename)
+	}
+
+	// Test Linux amd64 - should only apply the arch transformation rule
+	filename, err = embedder.generateAssetFilename("linux", "amd64")
+	if err != nil {
+		t.Fatalf("generateAssetFilename failed: %v", err)
+	}
+	expected = "binst_Linux_x86_64.tar.gz"
+	if filename != expected {
+		t.Errorf("Expected filename %s, got %s", expected, filename)
+	}
+
+	// Test Windows 386 - should only apply the extension rule
+	filename, err = embedder.generateAssetFilename("windows", "386")
+	if err != nil {
+		t.Fatalf("generateAssetFilename failed: %v", err)
+	}
+	expected = "binst_Windows_386.zip"
+	if filename != expected {
+		t.Errorf("Expected filename %s, got %s", expected, filename)
+	}
+}
+
 func TestComputeHash(t *testing.T) {
 	// Create a temporary file with known content
 	tempDir, err := os.MkdirTemp("", "checksums-hash-test")
