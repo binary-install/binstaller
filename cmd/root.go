@@ -35,25 +35,20 @@ func resolveConfigFile(configFile string) (string, error) {
 }
 
 var (
-	// Version and Commit are set during build
-	Version = "dev"
-	Commit  = "none"
-
 	// Global flags
 	configFile string
 	verbose    bool
 	quiet      bool
 )
 
-// rootCmd represents the base command when called without any subcommands
-var rootCmd = &cobra.Command{
+// RootCmd represents the base command when called without any subcommands
+var RootCmd = &cobra.Command{
 	Use:   "binst",
 	Short: "binst installs binaries from various sources using a spec file.",
 	Long: `binstaller (binst) is a tool to generate installer scripts or directly
 install binaries based on an InstallSpec configuration file.
 
 It supports generating the spec from sources like GoReleaser config or GitHub releases.`,
-	Version: fmt.Sprintf("%s (commit: %s)", Version, Commit),
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
 		log.SetHandler(cli.Default)
 		if verbose {
@@ -69,9 +64,9 @@ It supports generating the spec from sources like GoReleaser config or GitHub re
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
-// This is called by main.main(). It only needs to happen once to the rootCmd.
+// This is called by main.main(). It only needs to happen once to the RootCmd.
 func Execute() {
-	err := rootCmd.Execute()
+	err := RootCmd.Execute()
 	if err != nil {
 		log.WithError(err).Fatal("command execution failed")
 		// os.Exit(1) // log.Fatal exits automatically
@@ -80,18 +75,15 @@ func Execute() {
 
 func init() {
 	// Add global flags
-	rootCmd.PersistentFlags().StringVarP(&configFile, "config", "c", "", "Path to InstallSpec config file (default: "+DefaultConfigPathYML+")")
-	rootCmd.PersistentFlags().BoolVar(&verbose, "verbose", false, "Increase log verbosity")
-	rootCmd.PersistentFlags().BoolVar(&quiet, "quiet", false, "Suppress progress output")
+	RootCmd.PersistentFlags().StringVarP(&configFile, "config", "c", "", "Path to InstallSpec config file (default: "+DefaultConfigPathYML+")")
+	RootCmd.PersistentFlags().BoolVar(&verbose, "verbose", false, "Increase log verbosity")
+	RootCmd.PersistentFlags().BoolVar(&quiet, "quiet", false, "Suppress progress output")
 
 	// Mark 'config' flag for auto-detection? Cobra doesn't directly support this.
 	// We'll handle default detection logic within commands if the flag is empty.
 
-	// Set version template
-	rootCmd.SetVersionTemplate(`{{printf "%s version %s\n" .Name .Version}}`)
-
 	// Add subcommands
-	rootCmd.AddCommand(InitCommand)
-	rootCmd.AddCommand(GenCommand)
-	rootCmd.AddCommand(EmbedChecksumsCommand)
+	RootCmd.AddCommand(InitCommand)
+	RootCmd.AddCommand(GenCommand)
+	RootCmd.AddCommand(EmbedChecksumsCommand)
 }
