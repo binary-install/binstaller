@@ -187,15 +187,17 @@ binst gen --config=fzf.binstaller.yml -o fzf-install.sh
 
 ### From Aqua Registry
 
+Use configurations from [Aqua](https://aquaproj.github.io/)'s [standard registry](https://github.com/aquaproj/aqua-registry) to initialize binstaller config:
+
 ```bash
-# Step 1: Convert from Aqua package definition
-binst init --source=aqua --repo=aquaproj/aqua-registry --file=pkgs/g/golangci-lint.yaml -o golangci-lint.binstaller.yml
+# Step 1: Initialize from Aqua's standard registry configuration
+binst init --source=aqua --repo=junegunn/fzf -o fzf.binstaller.yml
 
 # Step 2 (Optional): Embed checksums for enhanced security
-binst embed-checksums --config golangci-lint.binstaller.yml
+binst embed-checksums --config fzf.binstaller.yml
 
 # Step 3: Generate installer
-binst gen --config=golangci-lint.binstaller.yml -o golangci-lint-install.sh
+binst gen --config=fzf.binstaller.yml -o fzf-install.sh
 ```
 
 ### Manual Configuration
