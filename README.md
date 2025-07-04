@@ -81,6 +81,23 @@ curl -sL "https://github.com/binary-install/binstaller/releases/download/${VERSI
      sh "$tmpfile"; rm -f "$tmpfile")
 ```
 
+#### Install (Custom Directory)
+
+```bash
+# Set installation directory (defaults to ${BINSTALLER_BIN:-${HOME}/.local/bin})
+INSTALL_DIR="/usr/local/bin"  # or any custom directory
+
+# With GitHub Attestation verification
+curl -sL https://github.com/binary-install/binstaller/releases/latest/download/install.sh | \
+    (tmpfile=$(mktemp); cat > "$tmpfile"; \
+     gh attestation verify --repo=binary-install/binstaller --signer-workflow='actionutils/trusted-go-releaser/.github/workflows/trusted-release-workflow.yml' "$tmpfile" && \
+     sh "$tmpfile" -b "$INSTALL_DIR"; rm -f "$tmpfile")
+```
+
+**Note**: By default, binaries are installed to:
+- `$BINSTALLER_BIN` if set, otherwise
+- `$HOME/.local/bin` (following XDG Base Directory Specification)
+
 ### Generic Installer
 
 ```bash
