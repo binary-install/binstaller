@@ -1,0 +1,15 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "UnpackConfig.json",
+    "type": "object",
+    "properties": {
+        "strip_components": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 2147483647,
+            "default": 0,
+            "description": "Number of leading path components to strip when extracting"
+        }
+    },
+    "description": "Archive extraction configuration"
+}

@@ -12,3 +12,12 @@ coverage.txt
 .testdata-timestamp
 
 **/.claude/settings.local.json
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# TypeSpec output (keep the generated schema)
+# schema/output/

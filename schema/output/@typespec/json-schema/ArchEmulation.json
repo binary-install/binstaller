@@ -1,0 +1,13 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "ArchEmulation.json",
+    "type": "object",
+    "properties": {
+        "rosetta2": {
+            "type": "boolean",
+            "default": false,
+            "description": "Use amd64 instead of arm64 when Rosetta 2 is available on macOS"
+        }
+    },
+    "description": "Architecture emulation configuration"
+}

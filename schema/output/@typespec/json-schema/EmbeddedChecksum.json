@@ -1,0 +1,20 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "EmbeddedChecksum.json",
+    "type": "object",
+    "properties": {
+        "filename": {
+            "type": "string",
+            "description": "Asset filename"
+        },
+        "hash": {
+            "type": "string",
+            "description": "Checksum hash value"
+        }
+    },
+    "required": [
+        "filename",
+        "hash"
+    ],
+    "description": "Pre-verified checksum for a specific asset"
+}

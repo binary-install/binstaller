@@ -1,0 +1,16 @@
+{
+  "name": "binstaller-schema",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "compile": "tsp compile .",
+    "watch": "tsp compile . --watch",
+    "gen:schema": "npm run compile",
+    "gen:go": "quicktype -s schema -o ../pkg/spec/generated.go --src output/@typespec/json-schema/InstallSpec.json --lang go --package spec --all-properties-optional --go-package-name spec"
+  },
+  "devDependencies": {
+    "@typespec/compiler": "latest",
+    "@typespec/json-schema": "latest",
+    "quicktype": "latest"
+  }
+}
