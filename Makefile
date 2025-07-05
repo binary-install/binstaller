@@ -137,6 +137,8 @@ gen-go: $(GENERATED_GO) ## Generate Go structs from JSON Schema
 gen: gen-schema gen-go ## Generate both JSON Schema and Go structs
 
 schema-lint: ## Format and lint TypeSpec schema files
+	@echo "Installing schema dependencies..."
+	@cd $(SCHEMA_DIR) && npm install --silent
 	@echo "Formatting and linting schema files..."
 	@cd $(SCHEMA_DIR) && npm run format && npm run deno:check
 
