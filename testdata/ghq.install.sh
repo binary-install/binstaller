@@ -362,7 +362,7 @@ resolve_asset_filename() {
 }
 
 execute() {
-  STRIP_COMPONENTS=0
+  STRIP_COMPONENTS=1
   CHECKSUM_FILENAME="SHASUMS"
 
   # --- Construct URLs ---
@@ -415,7 +415,7 @@ execute() {
   if [ -z "${EXT}" ] || [ "${EXT}" = ".exe" ]; then
     BINARY_PATH="${TMPDIR}/${ASSET_FILENAME}"
   else
-    BINARY_PATH="${TMPDIR}/${ASSET_FILENAME}"
+    BINARY_PATH="${TMPDIR}/ghq"
   fi
 
   if [ "${UNAME_OS}" = "windows" ]; then
@@ -445,7 +445,7 @@ execute() {
 # --- Configuration  ---
 NAME='ghq'
 REPO='x-motemen/ghq'
-EXT=''
+EXT='.zip'
 
 # use in logging routines
 log_prefix() {

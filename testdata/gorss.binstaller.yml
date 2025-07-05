@@ -1,29 +1,19 @@
-asset:
-    archemulation:
-        rosetta2: true
-    binaries:
-        - name: gorss
-          path: dist/gorss_${OS}
-    defaultextension: .tar.gz
-    namingconvention: null
-    rules:
-        - arch: null
-          binaries: []
-          ext: null
-          os: osx
-          template: null
-          when:
-            arch: null
-            os: darwin
-    template: gorss_${OS}.tar.gz
-attestation: null
-checksums: null
-defaultbindir: null
-defaultversion: null
+# yaml-language-server: $schema=https://raw.githubusercontent.com/binary-install/binstaller/main/schema/output/@typespec/json-schema/InstallSpec.json
+schema: v1
 name: gorss
 repo: Lallassu/gorss
-schema: v1
-supportedplatforms:
-    - arch: amd64
-      os: linux
-unpack: null
+asset:
+  template: gorss_${OS}.tar.gz
+  default_extension: .tar.gz
+  binaries:
+  - name: gorss
+    path: dist/gorss_${OS}
+  rules:
+  - when:
+      os: darwin
+    os: osx
+  arch_emulation:
+    rosetta2: true
+supported_platforms:
+- os: linux
+  arch: amd64

@@ -31,10 +31,13 @@ else
     echo "✅ Using existing build"
 fi
 
+# Add quicktypePropertyOrder to JSON Schema
+echo "📝 Adding quicktypePropertyOrder to JSON Schema..."
+cd "$SCRIPT_DIR"
+node add-quicktype-property-order.js
+
 # Generate Go structs
 echo "🚀 Generating Go structs..."
-cd "$SCRIPT_DIR"
-
 node "$QUICKTYPE_DIR/dist/index.js" \
     --src "output/@typespec/json-schema/InstallSpec.json" \
     --src-lang schema \

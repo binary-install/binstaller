@@ -374,7 +374,7 @@ resolve_asset_filename() {
 }
 
 execute() {
-  STRIP_COMPONENTS=0
+  STRIP_COMPONENTS=1
   CHECKSUM_FILENAME=""
 
   # --- Construct URLs ---
@@ -427,7 +427,7 @@ execute() {
   if [ -z "${EXT}" ] || [ "${EXT}" = ".exe" ]; then
     BINARY_PATH="${TMPDIR}/${ASSET_FILENAME}"
   else
-    BINARY_PATH="${TMPDIR}/${ASSET_FILENAME}"
+    BINARY_PATH="${TMPDIR}/shellcheck"
   fi
 
   if [ "${UNAME_OS}" = "windows" ]; then
@@ -457,7 +457,7 @@ execute() {
 # --- Configuration  ---
 NAME='shellcheck'
 REPO='koalaman/shellcheck'
-EXT=''
+EXT='.tar.xz'
 
 # use in logging routines
 log_prefix() {

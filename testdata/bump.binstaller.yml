@@ -1,46 +1,24 @@
-asset:
-    archemulation:
-        rosetta2: true
-    binaries: []
-    defaultextension: .tar.gz
-    namingconvention: null
-    rules:
-        - arch: x86_64
-          binaries: []
-          ext: null
-          os: null
-          template: null
-          when:
-            arch: amd64
-            os: null
-        - arch: null
-          binaries: []
-          ext: null
-          os: Darwin
-          template: null
-          when:
-            arch: null
-            os: darwin
-        - arch: null
-          binaries: []
-          ext: null
-          os: Linux
-          template: null
-          when:
-            arch: null
-            os: linux
-    template: bump_${VERSION}_${OS}_${ARCH}${EXT}
-attestation: null
-checksums:
-    algorithm: sha256
-    embeddedchecksums: {}
-    template: checksums.txt
-defaultbindir: null
-defaultversion: null
-name: null
-repo: haya14busa/bump
+# yaml-language-server: $schema=https://raw.githubusercontent.com/binary-install/binstaller/main/schema/output/@typespec/json-schema/InstallSpec.json
 schema: v1
-supportedplatforms:
-    - arch: amd64
+repo: haya14busa/bump
+asset:
+  template: bump_${VERSION}_${OS}_${ARCH}${EXT}
+  default_extension: .tar.gz
+  rules:
+  - when:
+      arch: amd64
+    arch: x86_64
+  - when:
+      os: darwin
+    os: Darwin
+  - when:
       os: linux
-unpack: null
+    os: Linux
+  arch_emulation:
+    rosetta2: true
+checksums:
+  algorithm: sha256
+  template: checksums.txt
+supported_platforms:
+- os: linux
+  arch: amd64

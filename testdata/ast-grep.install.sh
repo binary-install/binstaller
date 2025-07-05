@@ -439,7 +439,7 @@ execute() {
   if [ -z "${EXT}" ] || [ "${EXT}" = ".exe" ]; then
     BINARY_PATH="${TMPDIR}/${ASSET_FILENAME}"
   else
-    BINARY_PATH="${TMPDIR}/${ASSET_FILENAME}"
+    BINARY_PATH="${TMPDIR}/sg"
   fi
 
   if [ "${UNAME_OS}" = "windows" ]; then
@@ -469,7 +469,7 @@ execute() {
 # --- Configuration  ---
 NAME='sg'
 REPO='ast-grep/ast-grep'
-EXT=''
+EXT='.zip'
 
 # use in logging routines
 log_prefix() {

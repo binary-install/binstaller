@@ -1,74 +1,38 @@
-asset:
-    archemulation: null
-    binaries:
-        - name: micro
-          path: micro-${VERSION}/micro
-    defaultextension: .tgz
-    namingconvention: null
-    rules:
-        - arch: null
-          binaries: []
-          ext: null
-          os: win64
-          template: null
-          when:
-            arch: null
-            os: windows
-        - arch: null
-          binaries: []
-          ext: null
-          os: null
-          template: micro-${VERSION}-${OS}64-static${EXT}
-          when:
-            arch: amd64
-            os: linux
-        - arch: null
-          binaries: []
-          ext: null
-          os: null
-          template: micro-${VERSION}-${OS}-${ARCH}${EXT}
-          when:
-            arch: arm64
-            os: linux
-        - arch: null
-          binaries: []
-          ext: null
-          os: osx
-          template: null
-          when:
-            arch: amd64
-            os: darwin
-        - arch: null
-          binaries: []
-          ext: null
-          os: macos
-          template: null
-          when:
-            arch: arm64
-            os: darwin
-        - arch: null
-          binaries: []
-          ext: null
-          os: null
-          template: micro-${VERSION}-${OS}-${ARCH}${EXT}
-          when:
-            arch: arm64
-            os: darwin
-        - arch: null
-          binaries: []
-          ext: .zip
-          os: null
-          template: null
-          when:
-            arch: ""
-            os: windows
-    template: micro-${VERSION}-${OS}${EXT}
-attestation: null
-checksums: null
-defaultbindir: null
-defaultversion: null
+# yaml-language-server: $schema=https://raw.githubusercontent.com/binary-install/binstaller/main/schema/output/@typespec/json-schema/InstallSpec.json
+schema: v1
 name: micro
 repo: zyedidia/micro
-schema: v1
-supportedplatforms: []
-unpack: null
+asset:
+  template: micro-${VERSION}-${OS}${EXT}
+  default_extension: .tgz
+  binaries:
+  - name: micro
+    path: micro-${VERSION}/micro
+  rules:
+  - when:
+      os: windows
+    os: win64
+  - when:
+      os: linux
+      arch: amd64
+    template: micro-${VERSION}-${OS}64-static${EXT}
+  - when:
+      os: linux
+      arch: arm64
+    template: micro-${VERSION}-${OS}-${ARCH}${EXT}
+  - when:
+      os: darwin
+      arch: amd64
+    os: osx
+  - when:
+      os: darwin
+      arch: arm64
+    os: macos
+  - when:
+      os: darwin
+      arch: arm64
+    template: micro-${VERSION}-${OS}-${ARCH}${EXT}
+  - when:
+      os: windows
+      arch: ""
+    ext: .zip

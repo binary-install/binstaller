@@ -1,67 +1,31 @@
-asset:
-    archemulation: null
-    binaries: []
-    defaultextension: .tar.gz
-    namingconvention: null
-    rules:
-        - arch: x86_64
-          binaries: []
-          ext: null
-          os: null
-          template: null
-          when:
-            arch: amd64
-            os: null
-        - arch: null
-          binaries: []
-          ext: null
-          os: macOS
-          template: null
-          when:
-            arch: null
-            os: darwin
-        - arch: null
-          binaries: []
-          ext: null
-          os: Linux
-          template: null
-          when:
-            arch: null
-            os: linux
-        - arch: null
-          binaries: []
-          ext: null
-          os: Windows
-          template: null
-          when:
-            arch: null
-            os: windows
-        - arch: null
-          binaries: []
-          ext: null
-          os: null
-          template: ubi-${OS}-${ARCH}${EXT}
-          when:
-            arch: ""
-            os: darwin
-        - arch: null
-          binaries: []
-          ext: .zip
-          os: null
-          template: ubi-${OS}-msvc-${ARCH}${EXT}
-          when:
-            arch: ""
-            os: windows
-    template: ubi-${OS}-musl-${ARCH}${EXT}
-attestation: null
-checksums:
-    algorithm: sha256
-    embeddedchecksums: {}
-    template: ${ASSET_FILENAME}.sha256
-defaultbindir: null
-defaultversion: null
-name: null
-repo: houseabsolute/ubi
+# yaml-language-server: $schema=https://raw.githubusercontent.com/binary-install/binstaller/main/schema/output/@typespec/json-schema/InstallSpec.json
 schema: v1
-supportedplatforms: []
-unpack: null
+repo: houseabsolute/ubi
+asset:
+  template: ubi-${OS}-musl-${ARCH}${EXT}
+  default_extension: .tar.gz
+  rules:
+  - when:
+      arch: amd64
+    arch: x86_64
+  - when:
+      os: darwin
+    os: macOS
+  - when:
+      os: linux
+    os: Linux
+  - when:
+      os: windows
+    os: Windows
+  - when:
+      os: darwin
+      arch: ""
+    template: ubi-${OS}-${ARCH}${EXT}
+  - when:
+      os: windows
+      arch: ""
+    template: ubi-${OS}-msvc-${ARCH}${EXT}
+    ext: .zip
+checksums:
+  algorithm: sha256
+  template: ${ASSET_FILENAME}.sha256

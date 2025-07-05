@@ -1,58 +1,27 @@
-asset:
-    archemulation: null
-    binaries: []
-    defaultextension: null
-    namingconvention: null
-    rules:
-        - arch: x64
-          binaries: []
-          ext: null
-          os: null
-          template: null
-          when:
-            arch: amd64
-            os: null
-        - arch: null
-          binaries: []
-          ext: null
-          os: macos
-          template: null
-          when:
-            arch: null
-            os: darwin
-        - arch: amd64
-          binaries: []
-          ext: null
-          os: null
-          template: null
-          when:
-            arch: amd64
-            os: darwin
-        - arch: null
-          binaries: []
-          ext: null
-          os: null
-          template: dotter-${OS}-${ARCH}.arm${EXT}
-          when:
-            arch: ""
-            os: darwin
-        - arch: null
-          binaries: []
-          ext: null
-          os: null
-          template: dotter-${OS}-${ARCH}-msvc${EXT}
-          when:
-            arch: ""
-            os: windows
-    template: dotter-${OS}-${ARCH}-musl${EXT}
-attestation: null
-checksums: null
-defaultbindir: null
-defaultversion: null
-name: null
-repo: SuperCuber/dotter
+# yaml-language-server: $schema=https://raw.githubusercontent.com/binary-install/binstaller/main/schema/output/@typespec/json-schema/InstallSpec.json
 schema: v1
-supportedplatforms:
-    - arch: arm64
+repo: SuperCuber/dotter
+asset:
+  template: dotter-${OS}-${ARCH}-musl${EXT}
+  rules:
+  - when:
+      arch: amd64
+    arch: x64
+  - when:
       os: darwin
-unpack: null
+    os: macos
+  - when:
+      os: darwin
+      arch: amd64
+    arch: amd64
+  - when:
+      os: darwin
+      arch: ""
+    template: dotter-${OS}-${ARCH}.arm${EXT}
+  - when:
+      os: windows
+      arch: ""
+    template: dotter-${OS}-${ARCH}-msvc${EXT}
+supported_platforms:
+- os: darwin
+  arch: arm64

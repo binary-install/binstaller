@@ -370,7 +370,7 @@ resolve_asset_filename() {
 }
 
 execute() {
-  STRIP_COMPONENTS=0
+  STRIP_COMPONENTS=1
   CHECKSUM_FILENAME="${NAME}_${VERSION}_checksums.txt"
 
   # --- Construct URLs ---
@@ -453,7 +453,7 @@ execute() {
 # --- Configuration  ---
 NAME='gh'
 REPO='cli/cli'
-EXT=''
+EXT='.tar.gz'
 
 # use in logging routines
 log_prefix() {

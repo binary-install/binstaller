@@ -1,30 +1,18 @@
-asset:
-    archemulation:
-        rosetta2: true
-    binaries: []
-    defaultextension: .tar.gz
-    namingconvention: null
-    rules:
-        - arch: x86_64
-          binaries: []
-          ext: null
-          os: null
-          template: null
-          when:
-            arch: amd64
-            os: null
-    template: git-bump_${OS}_${ARCH}${EXT}
-attestation: null
-checksums:
-    algorithm: sha256
-    embeddedchecksums: {}
-    template: git-bump_${VERSION}_checksums.txt
-defaultbindir: null
-defaultversion: null
-name: null
-repo: babarot/git-bump
+# yaml-language-server: $schema=https://raw.githubusercontent.com/binary-install/binstaller/main/schema/output/@typespec/json-schema/InstallSpec.json
 schema: v1
-supportedplatforms:
-    - arch: amd64
-      os: linux
-unpack: null
+repo: babarot/git-bump
+asset:
+  template: git-bump_${OS}_${ARCH}${EXT}
+  default_extension: .tar.gz
+  rules:
+  - when:
+      arch: amd64
+    arch: x86_64
+  arch_emulation:
+    rosetta2: true
+checksums:
+  algorithm: sha256
+  template: git-bump_${VERSION}_checksums.txt
+supported_platforms:
+- os: linux
+  arch: amd64

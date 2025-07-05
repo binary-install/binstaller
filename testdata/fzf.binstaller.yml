@@ -1,63 +1,49 @@
-asset:
-    archemulation: null
-    binaries: []
-    defaultextension: .tar.gz
-    namingconvention:
-        arch: lowercase
-        os: lowercase
-    rules:
-        - arch: null
-          binaries: []
-          ext: .zip
-          os: null
-          template: null
-          when:
-            arch: null
-            os: windows
-    template: ${NAME}-${VERSION}-${OS}_${ARCH}${EXT}
-attestation: null
-checksums:
-    algorithm: sha256
-    embeddedchecksums: {}
-    template: ${NAME}_${VERSION}_checksums.txt
-defaultbindir: null
-defaultversion: null
+# yaml-language-server: $schema=https://raw.githubusercontent.com/binary-install/binstaller/main/schema/output/@typespec/json-schema/InstallSpec.json
+schema: v1
 name: fzf
 repo: junegunn/fzf
-schema: v1
-supportedplatforms:
-    - arch: arm64
-      os: android
-    - arch: amd64
-      os: darwin
-    - arch: arm64
-      os: darwin
-    - arch: amd64
-      os: freebsd
-    - arch: null
-      os: linux
-    - arch: null
-      os: linux
-    - arch: amd64
-      os: linux
-    - arch: arm
-      os: linux
-    - arch: arm64
-      os: linux
-    - arch: ppc64le
-      os: linux
-    - arch: s390x
-      os: linux
-    - arch: amd64
-      os: openbsd
-    - arch: null
+asset:
+  template: ${NAME}-${VERSION}-${OS}_${ARCH}${EXT}
+  default_extension: .tar.gz
+  rules:
+  - when:
       os: windows
-    - arch: amd64
-      os: windows
-    - arch: arm
-      os: windows
-    - arch: arm
-      os: windows
-    - arch: arm64
-      os: windows
-unpack: null
+    ext: .zip
+  naming_convention:
+    os: lowercase
+    arch: lowercase
+checksums:
+  algorithm: sha256
+  template: ${NAME}_${VERSION}_checksums.txt
+supported_platforms:
+- os: android
+  arch: arm64
+- os: darwin
+  arch: amd64
+- os: darwin
+  arch: arm64
+- os: freebsd
+  arch: amd64
+- os: linux
+- os: linux
+- os: linux
+  arch: amd64
+- os: linux
+  arch: arm
+- os: linux
+  arch: arm64
+- os: linux
+  arch: ppc64le
+- os: linux
+  arch: s390x
+- os: openbsd
+  arch: amd64
+- os: windows
+- os: windows
+  arch: amd64
+- os: windows
+  arch: arm
+- os: windows
+  arch: arm
+- os: windows
+  arch: arm64

@@ -1,34 +1,17 @@
-asset:
-    archemulation: null
-    binaries:
-        - name: tree-sitter
-          path: tree-sitter-${OS}-${ARCH}
-    defaultextension: .gz
-    namingconvention: null
-    rules:
-        - arch: x64
-          binaries: []
-          ext: null
-          os: null
-          template: null
-          when:
-            arch: amd64
-            os: null
-        - arch: null
-          binaries: []
-          ext: null
-          os: macos
-          template: null
-          when:
-            arch: null
-            os: darwin
-    template: tree-sitter-${OS}-${ARCH}${EXT}
-attestation: null
-checksums: null
-defaultbindir: null
-defaultversion: null
+# yaml-language-server: $schema=https://raw.githubusercontent.com/binary-install/binstaller/main/schema/output/@typespec/json-schema/InstallSpec.json
+schema: v1
 name: tree-sitter
 repo: tree-sitter/tree-sitter
-schema: v1
-supportedplatforms: []
-unpack: null
+asset:
+  template: tree-sitter-${OS}-${ARCH}${EXT}
+  default_extension: .gz
+  binaries:
+  - name: tree-sitter
+    path: tree-sitter-${OS}-${ARCH}
+  rules:
+  - when:
+      arch: amd64
+    arch: x64
+  - when:
+      os: darwin
+    os: macos

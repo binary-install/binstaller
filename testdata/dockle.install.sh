@@ -459,7 +459,7 @@ execute() {
   if [ -z "${EXT}" ] || [ "${EXT}" = ".exe" ]; then
     BINARY_PATH="${TMPDIR}/${ASSET_FILENAME}"
   else
-    BINARY_PATH="${TMPDIR}/${ASSET_FILENAME}"
+    BINARY_PATH="${TMPDIR}/dockle"
   fi
 
   if [ "${UNAME_OS}" = "windows" ]; then
@@ -489,7 +489,7 @@ execute() {
 # --- Configuration  ---
 NAME='dockle'
 REPO='goodwithtech/dockle'
-EXT=''
+EXT='.tar.gz'
 
 # use in logging routines
 log_prefix() {

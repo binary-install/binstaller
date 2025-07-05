@@ -87,6 +87,14 @@
                     "description": "Architecture emulation configuration"
                 }
             },
+            "quicktypePropertyOrder": [
+                "template",
+                "default_extension",
+                "binaries",
+                "rules",
+                "naming_convention",
+                "arch_emulation"
+            ],
             "required": [
                 "template"
             ],
@@ -126,6 +134,11 @@
                     "description": "Pre-verified checksums organized by version.\n\nUse 'binst embed-checksums' command to automatically populate this.\nThe key is the version string (includes 'v' prefix if present in tag).\nThe value is an array of filename/hash pairs.\n\nThis allows offline installation and protects against\ncompromised checksum files."
                 }
             },
+            "quicktypePropertyOrder": [
+                "algorithm",
+                "template",
+                "embedded_checksums"
+            ],
             "description": "Checksum verification configuration.\n\nBinstaller verifies downloaded files using checksums to ensure integrity.\nIt can either download checksum files from the release or use pre-verified\nchecksums embedded in the configuration.\n\nExample:\n```yaml\nchecksums:\n  algorithm: sha256\n  template: \"${NAME}_${VERSION}_checksums.txt\"\n  embedded_checksums:\n    \"1.0.0\":\n      - filename: \"mytool_1.0.0_linux_amd64.tar.gz\"\n        hash: \"abc123...\"\n      - filename: \"mytool_1.0.0_darwin_amd64.tar.gz\"\n        hash: \"def456...\"\n```"
         },
         "UnpackConfig": {
@@ -139,6 +152,9 @@
                     "description": "Number of leading path components to strip when extracting.\n\nSimilar to tar's --strip-components option.\nUseful when archives have an extra top-level directory.\n\nExamples:\n- 0 (default): Extract as-is\n- 1: Remove first directory level (e.g., \"mytool-v1.0.0/bin/mytool\" → \"bin/mytool\")\n- 2: Remove first two directory levels"
                 }
             },
+            "quicktypePropertyOrder": [
+                "strip_components"
+            ],
             "description": "Archive extraction configuration.\n\nControls how archives are extracted during installation.\nPrimarily used to handle archives with unnecessary directory nesting.\n\nExample:\n```yaml\n# Archive structure: mytool-v1.0.0/bin/mytool\n# We want just: bin/mytool\nunpack:\n  strip_components: 1\n```"
         },
         "Platform": {
@@ -239,6 +255,10 @@
                     "description": "CPU architecture identifier.\n\nCommon values:\n- \"amd64 (x86_64)\" - 64-bit x86\n- \"arm64 (aarch64)\" - 64-bit ARM\n- \"386\" - 32-bit x86\n- \"arm\" - 32-bit ARM\n\nLess common:\n- \"ppc64\", \"ppc64le\" - PowerPC 64-bit\n- \"mips\", \"mipsle\", \"mips64\", \"mips64le\" - MIPS architectures\n- \"s390x\" - IBM Z architecture\n- \"riscv64\" - RISC-V 64-bit"
                 }
             },
+            "quicktypePropertyOrder": [
+                "os",
+                "arch"
+            ],
             "required": [
                 "os",
                 "arch"
@@ -257,6 +277,10 @@
                     "description": "Path to the binary within the extracted archive.\n\nThe path relative to the archive root.\n\nExamples:\n- \"mytool\" - Binary at archive root\n- \"bin/mytool\" - Binary in bin subdirectory"
                 }
             },
+            "quicktypePropertyOrder": [
+                "name",
+                "path"
+            ],
             "required": [
                 "name",
                 "path"
@@ -294,6 +318,14 @@
                     "description": "Override binary configuration for matching platforms.\nThis replaces the default binary configuration when the rule matches.\nUseful when different platforms have different binary names or paths."
                 }
             },
+            "quicktypePropertyOrder": [
+                "when",
+                "template",
+                "os",
+                "arch",
+                "ext",
+                "binaries"
+            ],
             "required": [
                 "when"
             ],
@@ -323,6 +355,10 @@
                     "description": "Casing for ${ARCH} placeholder.\n\nCurrently only supports lowercase.\nValues like \"amd64\", \"arm64\", \"386\"."
                 }
             },
+            "quicktypePropertyOrder": [
+                "os",
+                "arch"
+            ],
             "description": "Controls the casing of template placeholders.\n\nSome projects use different casing conventions in their release filenames.\nThis provides a simpler alternative to using rules for common cases like\ntitlecase OS names.\n\nExample:\n```yaml\nnaming_convention:\n  os: titlecase  # \"Darwin\" instead of \"darwin\"\n  arch: lowercase  # \"amd64\" (default)\n```"
         },
         "ArchEmulation": {
@@ -334,6 +370,9 @@
                     "description": "Use amd64 binaries instead of arm64 when Rosetta 2 is available on macOS.\n\nUseful when:\n- arm64 binaries are not available\n- x86_64 binaries are more stable or feature-complete\n- You need compatibility with x86_64-only dependencies\n\nThe installer will detect Rosetta 2 and download amd64 binaries\non Apple Silicon Macs when this is enabled."
                 }
             },
+            "quicktypePropertyOrder": [
+                "rosetta2"
+            ],
             "description": "Architecture emulation configuration.\n\nHandles cases where binaries can run on different architectures\nthrough emulation layers.\n\nExample:\n```yaml\narch_emulation:\n  rosetta2: true  # Use x86_64 binaries on Apple Silicon Macs\n```"
         },
         "RecordArrayEmbeddedChecksum": {
@@ -358,6 +397,10 @@
                     "description": "Match specific architecture.\n\nIf specified, the rule only applies when the runtime architecture matches.\nIf omitted, the rule matches any architecture.\n\nCan be any string value to support custom architecture identifiers."
                 }
             },
+            "quicktypePropertyOrder": [
+                "os",
+                "arch"
+            ],
             "description": "Condition for matching specific platforms in rules.\n\nUsed in the 'when' clause of asset rules to specify which\nplatforms the rule should apply to. Note that matching uses\nthe original OS and architecture values, not any overridden\nvalues from previous rules.\n\nExample:\n```yaml\nwhen:\n  os: darwin\n  arch: arm64\n```"
         },
         "EmbeddedChecksum": {
@@ -372,11 +415,26 @@
                     "description": "Checksum hash value in hexadecimal format.\nThe format depends on the algorithm specified in ChecksumConfig.\nFor sha256: 64 hex characters, for sha512: 128 hex characters, etc."
                 }
             },
+            "quicktypePropertyOrder": [
+                "filename",
+                "hash"
+            ],
             "required": [
                 "filename",
                 "hash"
             ],
             "description": "Pre-verified checksum for a specific asset.\n\nStores the checksum hash for a specific file.\nThese are typically populated using 'binst embed-checksums' command.\n\nExample:\n```yaml\nfilename: \"mytool_1.0.0_linux_amd64.tar.gz\"\nhash: \"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\"\n```"
         }
-    }
+    },
+    "quicktypePropertyOrder": [
+        "schema",
+        "name",
+        "repo",
+        "default_version",
+        "default_bin_dir",
+        "asset",
+        "checksums",
+        "unpack",
+        "supported_platforms"
+    ]
 }

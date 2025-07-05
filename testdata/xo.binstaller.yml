@@ -1,24 +1,11 @@
-asset:
-    archemulation: null
-    binaries: []
-    defaultextension: .tar.bz2
-    namingconvention: null
-    rules:
-        - arch: null
-          binaries: []
-          ext: .zip
-          os: null
-          template: null
-          when:
-            arch: ""
-            os: windows
-    template: xo-${VERSION}-${OS}-${ARCH}${EXT}
-attestation: null
-checksums: null
-defaultbindir: null
-defaultversion: null
-name: null
-repo: xo/xo
+# yaml-language-server: $schema=https://raw.githubusercontent.com/binary-install/binstaller/main/schema/output/@typespec/json-schema/InstallSpec.json
 schema: v1
-supportedplatforms: []
-unpack: null
+repo: xo/xo
+asset:
+  template: xo-${VERSION}-${OS}-${ARCH}${EXT}
+  default_extension: .tar.bz2
+  rules:
+  - when:
+      os: windows
+      arch: ""
+    ext: .zip

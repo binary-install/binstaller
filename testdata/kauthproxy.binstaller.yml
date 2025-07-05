@@ -1,23 +1,15 @@
-asset:
-    archemulation: null
-    binaries:
-        - name: kauthproxy
-          path: kauthproxy
-        - name: kubectl-auth_proxy
-          path: kauthproxy
-    defaultextension: .zip
-    namingconvention: null
-    rules: []
-    template: kauthproxy_${OS}_${ARCH}${EXT}
-attestation: null
-checksums:
-    algorithm: sha256
-    embeddedchecksums: {}
-    template: ${ASSET_FILENAME}.sha256
-defaultbindir: null
-defaultversion: null
+# yaml-language-server: $schema=https://raw.githubusercontent.com/binary-install/binstaller/main/schema/output/@typespec/json-schema/InstallSpec.json
+schema: v1
 name: kauthproxy
 repo: int128/kauthproxy
-schema: v1
-supportedplatforms: []
-unpack: null
+asset:
+  template: kauthproxy_${OS}_${ARCH}${EXT}
+  default_extension: .zip
+  binaries:
+  - name: kauthproxy
+    path: kauthproxy
+  - name: kubectl-auth_proxy
+    path: kauthproxy
+checksums:
+  algorithm: sha256
+  template: ${ASSET_FILENAME}.sha256
