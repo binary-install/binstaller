@@ -19,7 +19,7 @@ binstaller follows a simple two-step workflow:
 
 ```mermaid
 graph LR
-    A[GoReleaser config] --> |binst init| C[.binstaller.yml]
+    A[GoReleaser config] --> |binst init| C[.config/binstaller.yml]
     B[GitHub releases] --> |binst init| C
     D[Aqua registry] --> |binst init| C
     E[Manual editing] --> C
@@ -30,19 +30,31 @@ graph LR
     style F fill:#f3e5f5
 ```
 
-**Step 1:** `binst init` - Generate a `.binstaller.yml` config from various sources
-**Step 2 (Optional):** `binst embed-checksums` - Embed checksums into the config for enhanced security
-**Step 3:** `binst gen` - Generate the final installation script
+1. **Step 1:** `binst init` - Generate a `.config/binstaller.yml` config from various sources
+2. **Step 2 (Optional):** `binst embed-checksums` - Embed checksums into the config for enhanced security
+3. **Step 3:** `binst gen` - Generate the final installation script
 
 ## ✨ Key Features
 
-* 🛡️ **Enhanced Security**: Optional checksum embedding for enhanced verification
-* 🔧 **Multiple Sources**: Support for GoReleaser, GitHub releases, and Aqua registry
-* 📦 **Flexible Configuration**: YAML-based `.binstaller.yml` configuration files
-* 🎯 **Cross-Platform**: Works across Linux, macOS, Windows, and other Unix-like systems
-* ⚡ **Fast Installation**: Dramatically faster than `go install` (up to 100x improvement)
-* 🔁 **Reproducible Builds**: Generate consistent installation scripts with source traceability
-* 🌐 **Universal Support**: Works with any static binary on GitHub releases (Go, Rust, C++, etc.)
+### 📝 Configuration-Based Installer Generation
+- Generate installer scripts from a **simple YAML config** (`.config/binstaller.yml`)
+- Auto-generate configs from **GoReleaser**, **Aqua Registry**, or **GitHub Releases**
+- Hand-edit configs to customize installation behavior
+- **Sustainable design** - Uses an intermediate config format that can be maintained independently
+  
+  > **Why this matters:** [GoDownloader](https://github.com/goreleaser/godownloader) directly generated scripts from GoReleaser configs. As GoReleaser evolved and added new features, maintaining compatibility became increasingly difficult, ultimately leading to the project being archived. By using an intermediate config format, binstaller can adapt to changes in source formats without breaking existing functionality.
+
+### 🔁 Security Through Reproducible Generation
+- Same config always generates the **exact same installer script**
+- No random elements or timestamps - fully deterministic output
+- Enables **cryptographic signing and verification** (e.g., GitHub Attestation, Cosign)
+- Tamper-resistant with cryptographic verification - any modification to installer script is detectable
+
+### 🛡️ Chain of Trust with Embedded Checksums
+- Embed binary checksums directly into installer scripts
+- When you trust the installer script, you automatically trust the binary
+- No need for separate checksum files that could be tampered with
+- Complete verification chain: **attestation → installer → binary**
 
 ## 📦 Installation
 
@@ -145,10 +157,10 @@ The workflow in action:
 
 ```bash
 # Step 1: Initialize configuration from a source
-binst init --source=github --repo=owner/repo -o .binstaller.yml
+binst init --source=github --repo=owner/repo -o .config/binstaller.yml
 
 # Step 2 (Optional): Embed checksums for enhanced security
-binst embed-checksums --config .binstaller.yml --version v1.0.0 --mode download
+binst embed-checksums --config .config/binstaller.yml --version v1.0.0 --mode download
 
 # Step 3: Generate installation script
 binst gen -o install.sh
@@ -163,13 +175,13 @@ binst init --source=goreleaser --file=.goreleaser.yml | binst gen > install.sh
 
 ```bash
 # Step 1: Extract config from GoReleaser YAML
-binst init --source=goreleaser --file=.goreleaser.yml -o .binstaller.yml
+binst init --source=goreleaser --file=.goreleaser.yml -o .config/binstaller.yml
 
 # Step 2 (Optional): Embed checksums for enhanced security
-binst embed-checksums --config .binstaller.yml --version v1.0.0 --mode download
+binst embed-checksums --config .config/binstaller.yml --version v1.0.0 --mode download
 
 # Step 3: Generate installer script
-binst gen --config=.binstaller.yml -o install.sh
+binst gen --config=.config/binstaller.yml -o install.sh
 ```
 
 ### From GitHub Repository
@@ -203,11 +215,11 @@ binst gen --config=fzf.binstaller.yml -o fzf-install.sh
 ### Manual Configuration
 
 ```bash
-# Step 1: Create or edit .binstaller.yml manually
-vim .binstaller.yml
+# Step 1: Create or edit .config/binstaller.yml manually
+vim .config/binstaller.yml
 
 # Step 2 (Optional): Embed checksums for enhanced security
-binst embed-checksums --config .binstaller.yml --version v1.0.0 --mode download
+binst embed-checksums --config .config/binstaller.yml --version v1.0.0 --mode download
 
 # Step 3: Generate installer script
 binst gen -o install.sh
@@ -215,7 +227,7 @@ binst gen -o install.sh
 
 ## ⚙️ Configuration Format
 
-The `.binstaller.yml` configuration file uses a simple, declarative format:
+The `.config/binstaller.yml` configuration file uses a simple, declarative format:
 
 ```yaml
 schema: v1
