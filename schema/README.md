@@ -132,3 +132,18 @@ To modify the schema:
 3. Test with sample configuration files
 
 The TypeSpec language provides excellent type safety and documentation capabilities. See the [TypeSpec documentation](https://typespec.io/) for more information.
+
+## Go Code Generation
+
+You can generate Go structs from the JSON Schema using a forked version of quicktype that properly handles `unevaluatedProperties`:
+
+```bash
+npm run gen:go
+```
+
+This will:
+1. Clone/update the forked quicktype with `unevaluatedProperties` support
+2. Build quicktype if needed (cached for subsequent runs)
+3. Generate Go structs with proper types (including `map[string][]EmbeddedChecksum` for embedded checksums)
+
+The generated Go code uses JSON tags, which are compatible with the YAML library used in binstaller (gopkg.in/yaml.v3 supports JSON tags). The generated structs can be used directly in the binstaller codebase.
