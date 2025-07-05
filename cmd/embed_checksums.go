@@ -15,11 +15,10 @@ import (
 
 var (
 	// Flags for embed-checksums command
-	embedVersion      string
-	embedOutput       string
-	embedMode         string
-	embedFile         string
-	embedAllPlatforms bool
+	embedVersion string
+	embedOutput  string
+	embedMode    string
+	embedFile    string
 )
 
 // EmbedChecksumsCommand represents the embed-checksums command
@@ -93,7 +92,6 @@ This command supports three modes of operation:
 			Spec:         &installSpec,
 			SpecAST:      ast,
 			ChecksumFile: embedFile,
-			AllPlatforms: embedAllPlatforms,
 		}
 
 		// Embed the checksums
@@ -137,7 +135,6 @@ func init() {
 	EmbedChecksumsCommand.Flags().StringVarP(&embedOutput, "output", "o", "", "Output path for the updated InstallSpec (default: overwrite input file)")
 	EmbedChecksumsCommand.Flags().StringVarP(&embedMode, "mode", "m", "download", "Checksums acquisition mode (download, checksum-file, calculate)")
 	EmbedChecksumsCommand.Flags().StringVarP(&embedFile, "file", "f", "", "Path to checksum file (required for checksum-file mode)")
-	EmbedChecksumsCommand.Flags().BoolVar(&embedAllPlatforms, "all-platforms", false, "Generate checksums for all supported platforms (for calculate mode)")
 
 	// Mark required flags
 	EmbedChecksumsCommand.MarkFlagRequired("mode")
