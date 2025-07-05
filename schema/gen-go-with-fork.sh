@@ -34,7 +34,15 @@ fi
 # Add quicktypePropertyOrder to JSON Schema
 echo "📝 Adding quicktypePropertyOrder to JSON Schema..."
 cd "$SCRIPT_DIR"
-node add-quicktype-property-order.js
+
+# Check if deno is installed
+if ! command -v deno &> /dev/null; then
+    echo "❌ Deno is not installed. Please install Deno first."
+    echo "Visit: https://deno.land/manual/getting_started/installation"
+    exit 1
+fi
+
+deno run --allow-read --allow-write add-quicktype-property-order.ts
 
 # Generate Go structs
 echo "🚀 Generating Go structs..."
