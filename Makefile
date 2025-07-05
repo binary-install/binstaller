@@ -11,6 +11,12 @@ TESTDATA_DIR := testdata
 BINSTALLER_CONFIGS := $(wildcard $(TESTDATA_DIR)/*.binstaller.yml)
 INSTALL_SCRIPTS := $(BINSTALLER_CONFIGS:.binstaller.yml=.install.sh)
 
+# Schema files
+SCHEMA_DIR := schema
+TYPESPEC_SOURCES := $(SCHEMA_DIR)/main.tsp $(SCHEMA_DIR)/tspconfig.yaml
+JSON_SCHEMA := $(SCHEMA_DIR)/output/@typespec/json-schema/InstallSpec.json
+GENERATED_GO := pkg/spec/generated.go
+
 export PATH := ./bin:$(PATH)
 export GO111MODULE := on
 # enable consistent Go 1.12/1.13 GOPROXY behavior.
@@ -61,8 +67,8 @@ ci: build test lint ## travis-ci entrypoint
 build: ## Build a beta version of binstaller
 	go build $(LDFLAGS) ./cmd/binst
 
-# Binary with dependency tracking (includes embedded shell templates)
-binst: $(GO_SOURCES) $(SHELL_TEMPLATES) go.mod go.sum
+# Binary with dependency tracking (includes embedded shell templates and generated types)
+binst: $(GO_SOURCES) $(SHELL_TEMPLATES) $(GENERATED_GO) go.mod go.sum
 	@echo "Building binst binary..."
 	go build $(LDFLAGS) -o binst ./cmd/binst
 
@@ -115,13 +121,30 @@ test-integration: test-gen-configs test-gen-installers test-run-installers ## Ru
 test-incremental: test-gen-installers test-run-installers-incremental ## Run incremental tests (only changed files)
 	@echo "Incremental tests completed"
 
+# Schema generation targets
+$(JSON_SCHEMA): $(TYPESPEC_SOURCES)
+	@echo "Generating JSON Schema from TypeSpec..."
+	@cd $(SCHEMA_DIR) && npm install --silent && npm run gen:schema
+
+$(GENERATED_GO): $(JSON_SCHEMA)
+	@echo "Generating Go structs from JSON Schema..."
+	@cd $(SCHEMA_DIR) && npm run gen:go
+	@echo "Formatting generated Go code..."
+	@gofmt -w $(GENERATED_GO)
+
+gen-schema: $(JSON_SCHEMA) ## Generate JSON Schema from TypeSpec definitions
+
+gen-go: $(GENERATED_GO) ## Generate Go structs from JSON Schema
+
+gen: gen-schema gen-go ## Generate both JSON Schema and Go structs
+
 test-clean: ## Clean up test artifacts
 	@echo "Cleaning test artifacts..."
 	@rm -f $(TESTDATA_DIR)/*.install.sh .testdata-timestamp
 
 .DEFAULT_GOAL := build
 
-.PHONY: ci test help clean binst-init test-gen-configs test-gen-installers test-run-installers test-run-installers-incremental test-aqua-source test-all-platforms test-integration test-incremental test-clean
+.PHONY: ci test help clean binst-init test-gen-configs test-gen-installers test-run-installers test-run-installers-incremental test-aqua-source test-all-platforms test-integration test-incremental test-clean gen-schema gen-go gen
 
 clean: ## clean up everything
 	go clean ./...
