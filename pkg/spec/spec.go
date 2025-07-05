@@ -35,7 +35,7 @@ func (s *InstallSpec) SetDefaults() {
 			s.Name = &sp[1]
 		}
 	}
-	if s.Asset != nil && s.Asset.Binaries == nil && s.Name != nil && *s.Name != "" {
+	if s.Asset != nil && (s.Asset.Binaries == nil || len(s.Asset.Binaries) == 0) && s.Name != nil && *s.Name != "" {
 		if s.Asset.DefaultExtension != nil && *s.Asset.DefaultExtension != "" {
 			s.Asset.Binaries = []BinaryElement{
 				{Name: s.Name, Path: s.Name},

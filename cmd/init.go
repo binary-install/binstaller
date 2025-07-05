@@ -10,7 +10,7 @@ import (
 	"github.com/binary-install/binstaller/pkg/datasource"
 	"github.com/binary-install/binstaller/pkg/spec"
 	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v3"
+	"github.com/goccy/go-yaml"
 )
 
 var (
