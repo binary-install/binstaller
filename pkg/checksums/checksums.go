@@ -41,7 +41,6 @@ type Embedder struct {
 	Spec         *spec.InstallSpec
 	SpecAST      *ast.File
 	ChecksumFile string
-	AllPlatforms bool
 }
 
 // Embed performs the checksum embedding process and returns the updated spec
