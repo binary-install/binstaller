@@ -5,7 +5,8 @@
   "scripts": {
     "compile": "tsp compile .",
     "watch": "tsp compile . --watch",
-    "gen:schema": "npm run compile",
+    "format": "tsp format **/*.tsp",
+    "gen:schema": "npm run format && npm run compile",
     "gen:go": "./gen-go-with-fork.sh"
   },
   "devDependencies": {
