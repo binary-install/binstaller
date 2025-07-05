@@ -1,6 +1,7 @@
 #!/usr/bin/env -S deno run --allow-read --allow-write
 
 import { compile, navigateProgram, NodeHost, Model } from "npm:@typespec/compiler";
+import { parse } from "https://deno.land/std@0.224.0/flags/mod.ts";
 
 interface JsonSchemaObject {
   type?: string;
@@ -55,24 +56,22 @@ async function parseTypeSpecFile(filePath: string): Promise<TypeSpecModel[]> {
 }
 
 /**
- * Map TypeSpec model names to JSON Schema definition names
+ * Find the TypeSpec model that matches the root schema properties
  */
-function mapModelNameToSchemaName(modelName: string): string | null {
-  const mapping: Record<string, string> = {
-    'InstallSpec': '.',  // Root schema
-    'Platform': 'Platform',
-    'AssetConfig': 'AssetConfig',
-    'AssetRule': 'AssetRule',
-    'Binary': 'Binary',
-    'PlatformCondition': 'PlatformCondition',
-    'NamingConvention': 'NamingConvention',
-    'ArchEmulation': 'ArchEmulation',
-    'ChecksumConfig': 'ChecksumConfig',
-    'EmbeddedChecksum': 'EmbeddedChecksum',
-    'UnpackConfig': 'UnpackConfig'
-  };
+function findRootModel(schema: JsonSchemaObject, models: TypeSpecModel[]): string | null {
+  if (!schema.properties) return null;
   
-  return mapping[modelName] || null;
+  const rootPropNames = Object.keys(schema.properties);
+  
+  // Find the model that has the same properties as the root schema
+  for (const model of models) {
+    if (model.properties.length === rootPropNames.length &&
+        model.properties.every(prop => rootPropNames.includes(prop))) {
+      return model.name;
+    }
+  }
+  
+  return null;
 }
 
 /**
@@ -109,17 +108,29 @@ function addPropertyOrder(schema: JsonSchemaObject, propertyOrder: string[]): Js
 /**
  * Process JSON Schema file and add quicktypePropertyOrder based on TypeSpec models
  */
-async function processJsonSchema(jsonSchemaPath: string, typespecModels: TypeSpecModel[]): Promise<void> {
+async function processJsonSchema(jsonSchemaPath: string, typespecModels: TypeSpecModel[], rootModelName?: string): Promise<void> {
   // Read JSON Schema
   const schemaContent = await Deno.readTextFile(jsonSchemaPath);
   const schema: JsonSchemaObject = JSON.parse(schemaContent);
   
+  // Auto-detect or use provided root model name
+  const detectedRootModel = rootModelName || findRootModel(schema, typespecModels);
+  
+  if (!detectedRootModel && !rootModelName) {
+    console.warn('⚠️  Could not auto-detect root model. Properties may not be ordered correctly for root schema.');
+  } else if (!rootModelName) {
+    console.log(`🔍 Auto-detected root model: ${detectedRootModel}`);
+  }
+  
   // Create a map of schema names to property orders
   const propertyOrderMap: Record<string, string[]> = {};
   for (const model of typespecModels) {
-    const schemaName = mapModelNameToSchemaName(model.name);
-    if (schemaName) {
-      propertyOrderMap[schemaName] = model.properties;
+    if (model.name === detectedRootModel) {
+      // Map root model to '.'
+      propertyOrderMap['.'] = model.properties;
+    } else {
+      // Use model name as-is for definitions
+      propertyOrderMap[model.name] = model.properties;
     }
   }
   
@@ -144,9 +155,22 @@ async function processJsonSchema(jsonSchemaPath: string, typespecModels: TypeSpe
 
 // Main execution
 async function main() {
+  const args = parse(Deno.args, {
+    string: ['typespec', 'schema', 'root'],
+    alias: {
+      t: 'typespec',
+      s: 'schema',
+      r: 'root',
+    },
+    default: {
+      typespec: 'main.tsp',
+      schema: 'output/@typespec/json-schema/InstallSpec.json',
+    },
+  });
+
   const scriptDir = new URL('.', import.meta.url).pathname;
-  const typespecPath = `${scriptDir}main.tsp`;
-  const jsonSchemaPath = `${scriptDir}output/@typespec/json-schema/InstallSpec.json`;
+  const typespecPath = args.typespec.startsWith('/') ? args.typespec : `${scriptDir}${args.typespec}`;
+  const jsonSchemaPath = args.schema.startsWith('/') ? args.schema : `${scriptDir}${args.schema}`;
   
   try {
     await Deno.stat(typespecPath);
@@ -168,9 +192,22 @@ async function main() {
   console.log(`Found ${models.length} models`);
   
   console.log('🔧 Processing JSON Schema...');
-  await processJsonSchema(jsonSchemaPath, models);
+  await processJsonSchema(jsonSchemaPath, models, args.root as string | undefined);
   
   console.log('✨ Done!');
+  
+  // Show usage if needed
+  if (args.help) {
+    console.log(`
+Usage: deno run --allow-read --allow-write add-quicktype-property-order.ts [options]
+
+Options:
+  -t, --typespec <path>   Path to TypeSpec file (default: main.tsp)
+  -s, --schema <path>     Path to JSON Schema file (default: output/@typespec/json-schema/InstallSpec.json)
+  -r, --root <name>       Root model name (auto-detected if not provided)
+  --help                  Show this help message
+`);
+  }
 }
 
 // Run if called directly
