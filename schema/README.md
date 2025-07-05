@@ -216,7 +216,7 @@ npx ajv validate -s schema/output/@typespec/json-schema/InstallSpec.json -d .con
 Many IDEs support JSON Schema validation for YAML files. Add this to your `.config/binstaller.yml`:
 
 ```yaml
-# yaml-language-server: $schema=../schema/output/@typespec/json-schema/InstallSpec.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/binary-install/binstaller/main/schema/output/@typespec/json-schema/InstallSpec.json
 schema: v1
 repo: owner/repo
 # ... rest of config

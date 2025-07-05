@@ -94,6 +94,10 @@ settings from a source like a GoReleaser config file or a GitHub repository.`,
 			return fmt.Errorf("failed to marshal install spec to YAML: %w", err)
 		}
 
+		// Add schema reference comment for IDE support
+		schemaComment := "# yaml-language-server: $schema=https://raw.githubusercontent.com/binary-install/binstaller/main/schema/output/@typespec/json-schema/InstallSpec.json\n"
+		yamlData = append([]byte(schemaComment), yamlData...)
+
 		// Write the output
 		if initOutputFile == "" || initOutputFile == "-" {
 			// Write to stdout
