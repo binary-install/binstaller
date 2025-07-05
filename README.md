@@ -253,35 +253,6 @@ supported_platforms:
     arch: amd64
 ```
 
-## 🔧 Advanced Features
-
-### Security Features
-
-* **Embedded Checksums**: Use `binst embed-checksums` to embed checksums directly into the configuration for enhanced security
-* **Automatic Verification**: When checksums are embedded, downloaded binaries are automatically verified
-* **Reproducible Scripts**: Generated scripts are deterministic and traceable
-* **Flexible Security**: Choose between external checksum files or embedded checksums based on your needs
-
-### CI/CD Integration
-
-Perfect for CI/CD pipelines where you need fast, reliable binary installations:
-
-```yaml
-# GitHub Actions example
-- name: Install tool
-  run: |
-    curl -sfL https://raw.githubusercontent.com/your-org/your-tool/main/install.sh | sh
-    echo "./bin" >> $GITHUB_PATH
-```
-
-## 🎯 Why binstaller?
-
-binstaller provides a modern, secure approach to binary installation:
-
-* **Universal Support**: Unlike tools focused only on Go, works with any static binary on GitHub
-* **Enhanced Security**: Embedded checksums provide better security than traditional approaches
-* **Flexible Configuration**: YAML-based configuration is more maintainable than command-line flags
-
 ## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
