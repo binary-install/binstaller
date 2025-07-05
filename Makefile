@@ -58,7 +58,7 @@ cover: test ## Run all the tests and opens the coverage report
 fmt: ## gofmt and goimports all go files
 	find . -name '*.go' -not -wholename './vendor/*' | while read -r file; do gofmt -w -s "$$file"; goimports -w "$$file"; done
 
-lint: bin/golangci-lint ## Run all the linters
+lint: bin/golangci-lint schema-lint ## Run all the linters
 	./bin/golangci-lint run ./... --disable errcheck
 
 ci: build test lint ## travis-ci entrypoint
@@ -137,6 +137,10 @@ gen-schema: $(JSON_SCHEMA) ## Generate JSON Schema from TypeSpec definitions
 gen-go: $(GENERATED_GO) ## Generate Go structs from JSON Schema
 
 gen: gen-schema gen-go ## Generate both JSON Schema and Go structs
+
+schema-lint: ## Format and lint TypeSpec schema files
+	@echo "Formatting and linting schema files..."
+	@cd $(SCHEMA_DIR) && npm run format && npm run deno:check
 
 test-clean: ## Clean up test artifacts
 	@echo "Cleaning test artifacts..."
