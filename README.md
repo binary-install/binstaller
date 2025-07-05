@@ -164,9 +164,6 @@ binst embed-checksums --config .config/binstaller.yml --version v1.0.0 --mode do
 
 # Step 3: Generate installation script
 binst gen -o install.sh
-
-# Or without embedded checksums
-binst init --source=goreleaser --file=.goreleaser.yml | binst gen > install.sh
 ```
 
 ## 📖 Usage Examples
