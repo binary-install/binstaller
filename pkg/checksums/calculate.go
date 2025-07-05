@@ -153,7 +153,6 @@ func (e *Embedder) generateAssetFilename(osInput, archInput string) (string, err
 			if rule.Template != "" {
 				template = rule.Template
 			}
-			break
 		}
 	}
 
