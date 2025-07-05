@@ -94,7 +94,7 @@ func filterChecksumsForVersion(installSpec *spec.InstallSpec, targetVersion stri
 func hashFunc(installSpec *spec.InstallSpec) string {
 	algo := ""
 	if installSpec.Checksums != nil {
-		algo = installSpec.Checksums.Algorithm
+		algo = spec.AlgorithmString(installSpec.Checksums.Algorithm)
 	}
 	switch algo {
 	case "sha1":
@@ -129,6 +129,41 @@ func createFuncMap() template.FuncMap {
 		},
 		"trimPrefix": func(s, prefix string) string {
 			return strings.TrimPrefix(s, prefix)
+		},
+		"deref": func(ptr interface{}) interface{} {
+			// Helper function to safely dereference pointers for template comparisons
+			if ptr == nil {
+				return ""
+			}
+			switch v := ptr.(type) {
+			case *spec.NamingConventionOS:
+				if v == nil {
+					return ""
+				}
+				return string(*v)
+			case *spec.NamingConventionArch:
+				if v == nil {
+					return ""
+				}
+				return string(*v)
+			case *string:
+				if v == nil {
+					return ""
+				}
+				return *v
+			case *int64:
+				if v == nil {
+					return int64(0)
+				}
+				return *v
+			case *bool:
+				if v == nil {
+					return false
+				}
+				return *v
+			default:
+				return fmt.Sprintf("%v", ptr)
+			}
 		},
 	}
 }

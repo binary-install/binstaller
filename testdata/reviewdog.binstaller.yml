@@ -1,40 +1,57 @@
-schema: v1
-name: reviewdog
-repo: reviewdog/reviewdog
 asset:
-    template: ${NAME}_${VERSION}_${OS}_${ARCH}${EXT}
-    default_extension: .tar.gz
-    rules:
-        - when:
-            arch: amd64
-          arch: x86_64
-        - when:
-            arch: "386"
-          arch: i386
-    naming_convention:
-        os: titlecase
+    archemulation: null
+    binaries: []
+    defaultextension: .tar.gz
+    namingconvention:
         arch: lowercase
+        os: titlecase
+    rules:
+        - arch: x86_64
+          binaries: []
+          ext: null
+          os: null
+          template: null
+          when:
+            arch: amd64
+            os: null
+        - arch: i386
+          binaries: []
+          ext: null
+          os: null
+          template: null
+          when:
+            arch: "386"
+            os: null
+    template: ${NAME}_${VERSION}_${OS}_${ARCH}${EXT}
+attestation: null
 checksums:
     algorithm: sha256
+    embeddedchecksums: {}
     template: checksums.txt
-supported_platforms:
-    - os: darwin
-      arch: amd64
-    - os: darwin
-      arch: arm64
-    - os: linux
-      arch: "386"
-    - os: linux
-      arch: amd64
-    - os: linux
-      arch: arm64
-    - os: linux
-      arch: armv6
-    - os: windows
-      arch: "386"
-    - os: windows
-      arch: amd64
-    - os: windows
-      arch: arm64
-    - os: windows
-      arch: armv6
+defaultbindir: null
+defaultversion: null
+name: reviewdog
+repo: reviewdog/reviewdog
+schema: v1
+supportedplatforms:
+    - arch: amd64
+      os: darwin
+    - arch: arm64
+      os: darwin
+    - arch: "386"
+      os: linux
+    - arch: amd64
+      os: linux
+    - arch: arm
+      os: linux
+    - arch: arm64
+      os: linux
+    - arch: "386"
+      os: windows
+    - arch: amd64
+      os: windows
+    - arch: arm
+      os: windows
+    - arch: arm64
+      os: windows
+unpack: null

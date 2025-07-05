@@ -381,7 +381,7 @@ resolve_asset_filename() {
   then
     OS='pc-windows-msvc'
   fi
-  if [ "${UNAME_OS}" = 'windows' ] && true
+  if [ "${UNAME_OS}" = 'windows' ] && [ "${UNAME_ARCH}" = '' ] && true
   then
     EXT='.zip'
   fi

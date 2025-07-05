@@ -1,23 +1,46 @@
-schema: v1
-repo: haya14busa/bump
 asset:
-    template: bump_${VERSION}_${OS}_${ARCH}${EXT}
-    default_extension: .tar.gz
-    rules:
-        - when:
-            arch: amd64
-          arch: x86_64
-        - when:
-            os: darwin
-          os: Darwin
-        - when:
-            os: linux
-          os: Linux
-    arch_emulation:
+    archemulation:
         rosetta2: true
+    binaries: []
+    defaultextension: .tar.gz
+    namingconvention: null
+    rules:
+        - arch: x86_64
+          binaries: []
+          ext: null
+          os: null
+          template: null
+          when:
+            arch: amd64
+            os: null
+        - arch: null
+          binaries: []
+          ext: null
+          os: Darwin
+          template: null
+          when:
+            arch: null
+            os: darwin
+        - arch: null
+          binaries: []
+          ext: null
+          os: Linux
+          template: null
+          when:
+            arch: null
+            os: linux
+    template: bump_${VERSION}_${OS}_${ARCH}${EXT}
+attestation: null
 checksums:
     algorithm: sha256
+    embeddedchecksums: {}
     template: checksums.txt
-supported_platforms:
-    - os: linux
-      arch: amd64
+defaultbindir: null
+defaultversion: null
+name: null
+repo: haya14busa/bump
+schema: v1
+supportedplatforms:
+    - arch: amd64
+      os: linux
+unpack: null

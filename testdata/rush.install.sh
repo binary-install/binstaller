@@ -319,7 +319,7 @@ parse_args() {
     esac
   done
   shift $((OPTIND - 1))
-  TAG="${1:-v0.6.1}"
+  TAG="${1:-latest}"
 }
 
 tag_to_version() {
@@ -412,7 +412,7 @@ execute() {
   if [ -z "${EXT}" ] || [ "${EXT}" = ".exe" ]; then
     BINARY_PATH="${TMPDIR}/${ASSET_FILENAME}"
   else
-    BINARY_PATH="${TMPDIR}/rush"
+    BINARY_PATH="${TMPDIR}/${ASSET_FILENAME}"
   fi
 
   if [ "${UNAME_OS}" = "windows" ]; then
@@ -442,7 +442,7 @@ execute() {
 # --- Configuration  ---
 NAME='rush'
 REPO='shenwei356/rush'
-EXT='.tar.gz'
+EXT=''
 
 # use in logging routines
 log_prefix() {

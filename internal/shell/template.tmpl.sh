@@ -8,13 +8,13 @@ usage() {
 $this: download ${NAME} from ${REPO}
 
 Usage: $this [-b bindir] [-d]{{- if not .TargetVersion }} [tag]{{- end }}
-  -b sets bindir or installation directory, Defaults to {{ .DefaultBinDir }}
+  -b sets bindir or installation directory, Defaults to {{ deref .DefaultBinDir }}
   -d turns on debug logging
   {{- if .TargetVersion }}
    This installer is configured for {{ .TargetVersion }} only.
   {{- else }}
    [tag] is a tag from
-   https://github.com/{{ .Repo }}/releases
+   https://github.com/{{ deref .Repo }}/releases
    If tag is missing, then the latest will be used.
   {{- end }}
 
@@ -35,7 +35,7 @@ EMBEDDED_CHECKSUMS="
 {{- if .Checksums -}}
 {{- range $version, $checksums := .Checksums.EmbeddedChecksums }}
 {{- range $checksum := $checksums }}
-{{ trimPrefix $version "v" }}:{{ $checksum.Filename }}:{{ $checksum.Hash }}
+{{ trimPrefix $version "v" }}:{{ deref $checksum.Filename }}:{{ deref $checksum.Hash }}
 {{- end }}
 {{- end }}
 {{- end }}"
@@ -48,7 +48,7 @@ find_embedded_checksum() {
 }
 
 parse_args() {
-  BINDIR="{{ .DefaultBinDir }}"
+  BINDIR="{{ deref .DefaultBinDir }}"
   while getopts "b:dqh?x" arg; do
     case "$arg" in
     b) BINDIR="$OPTARG" ;;
@@ -62,7 +62,7 @@ parse_args() {
   {{- if .TargetVersion }}
   TAG="{{ .TargetVersion }}"
   {{- else }}
-  TAG="${1:-{{- .DefaultVersion | default "latest" -}}}"
+  TAG="${1:-{{- deref .DefaultVersion | default "latest" -}}}"
   {{- end }}
 }
 
@@ -94,7 +94,7 @@ tag_to_version() {
   log_info "Resolved version: ${VERSION} (tag: ${TAG})"
   {{- end }}
 }
-{{ if eq .Asset.NamingConvention.OS "titlecase" }}
+{{ if eq (deref .Asset.NamingConvention.OS) "titlecase" }}
 capitalize() {
   input="$1"
   first_char=$(printf "%s" "$input" | cut -c1)
@@ -102,7 +102,7 @@ capitalize() {
   printf "%s%s\n" "$first_upper" "$(printf "%s" "$input" | cut -c2-)"
 }
 {{- end }}
-{{ if and .Asset.ArchEmulation .Asset.ArchEmulation.Rosetta2 }}
+{{ if and .Asset.ArchEmulation (deref .Asset.ArchEmulation.Rosetta2) }}
 is_rosetta2_available() {
   [ "$(uname -s)" = Darwin ]  || return 1
   [ "$(uname -m)" = arm64 ]   || return 1
@@ -111,7 +111,7 @@ is_rosetta2_available() {
 {{- end }}
 
 resolve_asset_filename() {
-  {{ if eq .Asset.NamingConvention.OS "titlecase" -}}
+  {{ if eq (deref .Asset.NamingConvention.OS) "titlecase" -}}
   OS="$(capitalize "${OS}")"
   {{- end }}
   # --- Apply Rules ---
@@ -119,30 +119,30 @@ resolve_asset_filename() {
   {{- with .Asset.Rules }}
   {{- range . }}
   if
-    {{- if .When.OS }} [ "${UNAME_OS}" = '{{.When.OS}}' ] && {{- end }}
-    {{- if .When.Arch }} [ "${UNAME_ARCH}" = '{{.When.Arch}}' ] && {{- end }}
+    {{- if .When.OS }} [ "${UNAME_OS}" = '{{deref .When.OS}}' ] && {{- end }}
+    {{- if .When.Arch }} [ "${UNAME_ARCH}" = '{{deref .When.Arch}}' ] && {{- end }}
     {{- " true" }}
   then
     {{- "\n   " -}}
-    {{- if .OS }} OS='{{ .OS }}' {{- end }}
-    {{- if .Arch }} ARCH='{{ .Arch }}' {{- end }}
-    {{- if .Ext }} EXT='{{ .Ext }}' {{- end }}
-    {{- if .Template }} ASSET_FILENAME="{{ .Template }}" {{- end }}
+    {{- if .OS }} OS='{{ deref .OS }}' {{- end }}
+    {{- if .Arch }} ARCH='{{ deref .Arch }}' {{- end }}
+    {{- if .EXT }} EXT='{{ deref .EXT }}' {{- end }}
+    {{- if .Template }} ASSET_FILENAME="{{ deref .Template }}" {{- end }}
     {{- range $i, $binary := .Binaries }}
-    BINARY_NAME_{{ $i }}={{ $binary.Name }}
-    BINARY_PATH_{{ $i }}={{ $binary.Path }}
+    BINARY_NAME_{{ $i }}={{ deref $binary.Name }}
+    BINARY_PATH_{{ $i }}={{ deref $binary.Path }}
     {{- end }}
   fi
   {{- end }}
   {{- end }}
   if [ -z "${ASSET_FILENAME}" ]; then
-    ASSET_FILENAME="{{ .Asset.Template }}"
+    ASSET_FILENAME="{{ deref .Asset.Template }}"
   fi
 }
 
 execute() {
-  STRIP_COMPONENTS={{ if .Unpack }}{{ .Unpack.StripComponents | default 0 }}{{ else }}0{{ end }}
-  CHECKSUM_FILENAME="{{ if .Checksums }}{{ .Checksums.Template }}{{ end }}"
+  STRIP_COMPONENTS={{ if .Unpack }}{{ deref .Unpack.StripComponents | default 0 }}{{ else }}0{{ end }}
+  CHECKSUM_FILENAME="{{ if .Checksums }}{{ deref .Checksums.Template }}{{ end }}"
 
   # --- Construct URLs ---
   GITHUB_DOWNLOAD="https://github.com/${REPO}/releases/download"
@@ -192,11 +192,11 @@ execute() {
   fi
 
   {{- range $i, $binary := .Asset.Binaries }}
-  BINARY_NAME='{{ $binary.Name }}'
+  BINARY_NAME='{{ deref $binary.Name }}'
   if [ -z "${EXT}" ] || [ "${EXT}" = ".exe" ]; then
     BINARY_PATH="${TMPDIR}/${ASSET_FILENAME}"
   else
-    BINARY_PATH="${TMPDIR}/{{ $binary.Path }}"
+    BINARY_PATH="${TMPDIR}/{{ deref $binary.Path }}"
   fi
   {{- if (hasBinaryOverride $.Asset) }}
   if [ -n "$BINARY_NAME_{{ $i }}" ]; then
@@ -233,9 +233,9 @@ execute() {
 }
 
 # --- Configuration  ---
-NAME='{{ .Name }}'
-REPO='{{ .Repo }}'
-EXT='{{ .Asset.DefaultExtension }}'
+NAME='{{ deref .Name }}'
+REPO='{{ deref .Repo }}'
+EXT='{{ deref .Asset.DefaultExtension }}'
 
 # use in logging routines
 log_prefix() {
@@ -247,7 +247,7 @@ parse_args "$@"
 # --- Determine target platform ---
 OS="${BINSTALLER_OS:-$(uname_os)}"
 UNAME_OS="${OS}"
-{{ if and .Asset.ArchEmulation .Asset.ArchEmulation.Rosetta2 }}
+{{ if and .Asset.ArchEmulation (deref .Asset.ArchEmulation.Rosetta2) }}
 if is_rosetta2_available; then
   log_info 'Apple Silicon with Rosetta 2 found: using amd64 as ARCH'
 	ARCH="${BINSTALLER_ARCH:-amd64}"

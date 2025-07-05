@@ -1,26 +1,54 @@
-schema: v1
-repo: charmbracelet/gum
 asset:
-  template: gum_${VERSION}_${OS}_${ARCH}${EXT}
-  default_extension: .tar.gz
+  archemulation: null
+  binaries: []
+  defaultextension: .tar.gz
+  namingconvention: null
   rules:
-    - when:
+    - arch: x86_64
+      binaries: []
+      ext: null
+      os: null
+      template: null
+      when:
         arch: amd64
-      arch: x86_64
-    - when:
-        os: darwin
+        os: null
+    - arch: null
+      binaries: []
+      ext: null
       os: Darwin
-    - when:
-        os: linux
+      template: null
+      when:
+        arch: null
+        os: darwin
+    - arch: null
+      binaries: []
+      ext: null
       os: Linux
-    - when:
-        os: windows
+      template: null
+      when:
+        arch: null
+        os: linux
+    - arch: null
+      binaries: []
+      ext: null
       os: Windows
-    - when:
+      template: null
+      when:
+        arch: null
         os: windows
+    - arch: null
+      binaries: []
       ext: .zip
+      os: null
+      template: null
+      when:
+        arch: ""
+        os: windows
+  template: gum_${VERSION}_${OS}_${ARCH}${EXT}
+attestation: null
 checksums:
   algorithm: sha256
+  embeddedchecksums: {}
   template: checksums.txt
   embedded_checksums:
     v0.15.0:
@@ -285,9 +313,15 @@ checksums:
       hash: 0a464fab41626ec9548caf79a2080d6dc55bf806f1749280981263aa9efda9a6
     - filename: gum_0.16.0_x86_64.apk
       hash: 3ec90054a510d3889d37c198d36ee006ea72abb38eb7040f3da97fddd838604c
-# --- manually added ---
-
+defaultbindir: null
+defaultversion: null
+name: null
+repo: charmbracelet/gum
+schema: v1
+supportedplatforms: []
 unpack:
   strip_components: 1
+# --- manually added ---
+
 default_bindir: ./bin
 default_version: v0.16.0

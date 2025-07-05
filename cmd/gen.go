@@ -15,7 +15,7 @@ import (
 
 var (
 	// Flags for gen command
-	genOutputFile   string
+	genOutputFile    string
 	genTargetVersion string
 	// Input config file is handled by the global --config flag
 )

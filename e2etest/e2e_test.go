@@ -185,7 +185,6 @@ supported_platforms:
 			t.Fatalf("Failed to read generated script: %v", err)
 		}
 
-
 		// Verify target version is embedded
 		if !bytes.Contains(scriptContent, []byte(`TAG="v1.2.3"`)) {
 			t.Error("Generated script should contain fixed TAG=v1.2.3")

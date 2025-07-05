@@ -1,27 +1,39 @@
-schema: v1
-name: gh-setup
-repo: k1LoW/gh-setup
 asset:
-    template: ${NAME}_v${VERSION}_${OS}_${ARCH}${EXT}
-    default_extension: .tar.gz
-    rules:
-        - when:
-            os: darwin
-          ext: .zip
-    naming_convention:
-        os: lowercase
+    archemulation: null
+    binaries: []
+    defaultextension: .tar.gz
+    namingconvention:
         arch: lowercase
+        os: lowercase
+    rules:
+        - arch: null
+          binaries: []
+          ext: .zip
+          os: null
+          template: null
+          when:
+            arch: null
+            os: darwin
+    template: ${NAME}_v${VERSION}_${OS}_${ARCH}${EXT}
+attestation: null
 checksums:
     algorithm: sha256
+    embeddedchecksums: {}
     template: checksums.txt
-supported_platforms:
-    - os: darwin
-      arch: amd64
-    - os: darwin
-      arch: arm64
-    - os: linux
-      arch: amd64
-    - os: linux
-      arch: arm64
-    - os: windows
-      arch: amd64
+defaultbindir: null
+defaultversion: null
+name: gh-setup
+repo: k1LoW/gh-setup
+schema: v1
+supportedplatforms:
+    - arch: amd64
+      os: darwin
+    - arch: arm64
+      os: darwin
+    - arch: amd64
+      os: linux
+    - arch: arm64
+      os: linux
+    - arch: amd64
+      os: windows
+unpack: null

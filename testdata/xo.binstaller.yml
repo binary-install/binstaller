@@ -1,9 +1,24 @@
-schema: v1
-repo: xo/xo
 asset:
-    template: xo-${VERSION}-${OS}-${ARCH}${EXT}
-    default_extension: .tar.bz2
+    archemulation: null
+    binaries: []
+    defaultextension: .tar.bz2
+    namingconvention: null
     rules:
-        - when:
-            os: windows
+        - arch: null
+          binaries: []
           ext: .zip
+          os: null
+          template: null
+          when:
+            arch: ""
+            os: windows
+    template: xo-${VERSION}-${OS}-${ARCH}${EXT}
+attestation: null
+checksums: null
+defaultbindir: null
+defaultversion: null
+name: null
+repo: xo/xo
+schema: v1
+supportedplatforms: []
+unpack: null

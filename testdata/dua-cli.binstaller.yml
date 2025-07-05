@@ -1,31 +1,67 @@
-schema: v1
-name: dua
-repo: Byron/dua-cli
 asset:
-    template: dua-${TAG}-${ARCH}-${OS}${EXT}
-    default_extension: .tar.gz
+    archemulation:
+        rosetta2: true
     binaries:
         - name: dua
           path: dua-${TAG}-${ARCH}-${OS}/dua
+    defaultextension: .tar.gz
+    namingconvention: null
     rules:
-        - when:
+        - arch: x86_64
+          binaries: []
+          ext: null
+          os: null
+          template: null
+          when:
             arch: amd64
-          arch: x86_64
-        - when:
-            os: darwin
+            os: null
+        - arch: null
+          binaries: []
+          ext: null
           os: apple-darwin
-        - when:
-            os: linux
+          template: null
+          when:
+            arch: null
+            os: darwin
+        - arch: null
+          binaries: []
+          ext: null
           os: unknown-linux-musl
-        - when:
-            os: windows
-          os: pc-windows-msvc
-        - when:
+          template: null
+          when:
+            arch: null
             os: linux
-            arch: arm64
-          arch: aarch64
-        - when:
+        - arch: null
+          binaries: []
+          ext: null
+          os: pc-windows-msvc
+          template: null
+          when:
+            arch: null
             os: windows
+        - arch: aarch64
+          binaries: []
+          ext: null
+          os: null
+          template: null
+          when:
+            arch: arm64
+            os: linux
+        - arch: null
+          binaries: []
           ext: .zip
-    arch_emulation:
-        rosetta2: true
+          os: null
+          template: null
+          when:
+            arch: ""
+            os: windows
+    template: dua-${TAG}-${ARCH}-${OS}${EXT}
+attestation: null
+checksums: null
+defaultbindir: null
+defaultversion: null
+name: dua
+repo: Byron/dua-cli
+schema: v1
+supportedplatforms: []
+unpack: null

@@ -1,14 +1,23 @@
-schema: v1
-name: kauthproxy
-repo: int128/kauthproxy
 asset:
-    template: kauthproxy_${OS}_${ARCH}${EXT}
-    default_extension: .zip
+    archemulation: null
     binaries:
         - name: kauthproxy
           path: kauthproxy
         - name: kubectl-auth_proxy
           path: kauthproxy
+    defaultextension: .zip
+    namingconvention: null
+    rules: []
+    template: kauthproxy_${OS}_${ARCH}${EXT}
+attestation: null
 checksums:
     algorithm: sha256
+    embeddedchecksums: {}
     template: ${ASSET_FILENAME}.sha256
+defaultbindir: null
+defaultversion: null
+name: kauthproxy
+repo: int128/kauthproxy
+schema: v1
+supportedplatforms: []
+unpack: null

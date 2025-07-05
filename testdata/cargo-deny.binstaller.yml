@@ -1,28 +1,61 @@
-schema: v1
-name: cargo-deny
-repo: EmbarkStudios/cargo-deny
 asset:
-    template: cargo-deny-${TAG}-${ARCH}-${OS}${EXT}
-    default_extension: .tar.gz
+    archemulation: null
     binaries:
         - name: cargo-deny
           path: cargo-deny-${TAG}-${ARCH}-${OS}/cargo-deny
+    defaultextension: .tar.gz
+    namingconvention: null
     rules:
-        - when:
+        - arch: x86_64
+          binaries: []
+          ext: null
+          os: null
+          template: null
+          when:
             arch: amd64
-          arch: x86_64
-        - when:
+            os: null
+        - arch: aarch64
+          binaries: []
+          ext: null
+          os: null
+          template: null
+          when:
             arch: arm64
-          arch: aarch64
-        - when:
-            os: darwin
+            os: null
+        - arch: null
+          binaries: []
+          ext: null
           os: apple-darwin
-        - when:
-            os: linux
+          template: null
+          when:
+            arch: null
+            os: darwin
+        - arch: null
+          binaries: []
+          ext: null
           os: unknown-linux-musl
-        - when:
-            os: windows
+          template: null
+          when:
+            arch: null
+            os: linux
+        - arch: null
+          binaries: []
+          ext: null
           os: pc-windows-msvc
+          template: null
+          when:
+            arch: null
+            os: windows
+    template: cargo-deny-${TAG}-${ARCH}-${OS}${EXT}
+attestation: null
 checksums:
     algorithm: sha256
+    embeddedchecksums: {}
     template: ${ASSET_FILENAME}.sha256
+defaultbindir: null
+defaultversion: null
+name: cargo-deny
+repo: EmbarkStudios/cargo-deny
+schema: v1
+supportedplatforms: []
+unpack: null

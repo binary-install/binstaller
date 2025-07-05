@@ -1,16 +1,34 @@
-schema: v1
-name: tree-sitter
-repo: tree-sitter/tree-sitter
 asset:
-    template: tree-sitter-${OS}-${ARCH}${EXT}
-    default_extension: .gz
+    archemulation: null
     binaries:
         - name: tree-sitter
           path: tree-sitter-${OS}-${ARCH}
+    defaultextension: .gz
+    namingconvention: null
     rules:
-        - when:
+        - arch: x64
+          binaries: []
+          ext: null
+          os: null
+          template: null
+          when:
             arch: amd64
-          arch: x64
-        - when:
-            os: darwin
+            os: null
+        - arch: null
+          binaries: []
+          ext: null
           os: macos
+          template: null
+          when:
+            arch: null
+            os: darwin
+    template: tree-sitter-${OS}-${ARCH}${EXT}
+attestation: null
+checksums: null
+defaultbindir: null
+defaultversion: null
+name: tree-sitter
+repo: tree-sitter/tree-sitter
+schema: v1
+supportedplatforms: []
+unpack: null

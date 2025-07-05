@@ -103,45 +103,48 @@ func newTestInstallSpecWithOverrides(t *testing.T) *spec.InstallSpec {
 func TestAquaRegistryAdapter_Name(t *testing.T) {
 	installSpec := newTestInstallSpec(t)
 	want := "gh"
-	if installSpec.Name != want {
-		t.Errorf("Name: got %q, want %q", installSpec.Name, want)
+	if spec.StringValue(installSpec.Name) != want {
+		t.Errorf("Name: got %q, want %q", spec.StringValue(installSpec.Name), want)
 	}
 }
 
 func TestAquaRegistryAdapter_Repo(t *testing.T) {
 	installSpec := newTestInstallSpec(t)
 	want := "cli/cli"
-	if installSpec.Repo != want {
-		t.Errorf("Repo: got %q, want %q", installSpec.Repo, want)
+	if spec.StringValue(installSpec.Repo) != want {
+		t.Errorf("Repo: got %q, want %q", spec.StringValue(installSpec.Repo), want)
 	}
 }
 
 func TestAquaRegistryAdapter_AssetTemplate(t *testing.T) {
 	installSpec := newTestInstallSpec(t)
 	want := "gh_${TAG}_${OS}_${ARCH}.tar.gz"
-	if installSpec.Asset.Template != want {
-		t.Errorf("Asset.Template: got %q, want %q", installSpec.Asset.Template, want)
+	if spec.StringValue(installSpec.Asset.Template) != want {
+		t.Errorf("Asset.Template: got %q, want %q", spec.StringValue(installSpec.Asset.Template), want)
 	}
 }
 
 func TestAquaRegistryAdapter_DefaultExtension(t *testing.T) {
 	installSpec := newTestInstallSpec(t)
 	want := ".tar.gz"
-	if installSpec.Asset.DefaultExtension != want {
-		t.Errorf("Asset.DefaultExtension: got %q, want %q", installSpec.Asset.DefaultExtension, want)
+	if spec.StringValue(installSpec.Asset.DefaultExtension) != want {
+		t.Errorf("Asset.DefaultExtension: got %q, want %q", spec.StringValue(installSpec.Asset.DefaultExtension), want)
 	}
 }
 
 func TestAquaRegistryAdapter_SupportedPlatforms(t *testing.T) {
 	installSpec := newTestInstallSpec(t)
+	linuxOS := spec.Linux
+	amd64Arch := spec.Amd64
 	want := []spec.Platform{
-		{OS: "linux", Arch: "amd64"},
+		{OS: &linuxOS, Arch: &amd64Arch},
 	}
 	if len(installSpec.SupportedPlatforms) != len(want) {
 		t.Fatalf("SupportedPlatforms: got %d, want %d", len(installSpec.SupportedPlatforms), len(want))
 	}
 	for i, p := range want {
-		if installSpec.SupportedPlatforms[i] != p {
+		if spec.PlatformOSString(installSpec.SupportedPlatforms[i].OS) != spec.PlatformOSString(p.OS) ||
+			spec.PlatformArchString(installSpec.SupportedPlatforms[i].Arch) != spec.PlatformArchString(p.Arch) {
 			t.Errorf("SupportedPlatforms[%d]: got %+v, want %+v", i, installSpec.SupportedPlatforms[i], p)
 		}
 	}
@@ -153,19 +156,19 @@ func TestAquaRegistryAdapter_Checksums(t *testing.T) {
 		t.Fatal("Checksums: got nil, want non-nil")
 	}
 	want := "gh_${TAG}_${OS}_${ARCH}.sha256"
-	if installSpec.Checksums.Template != want {
-		t.Errorf("Checksums.Template: got %q, want %q", installSpec.Checksums.Template, want)
+	if spec.StringValue(installSpec.Checksums.Template) != want {
+		t.Errorf("Checksums.Template: got %q, want %q", spec.StringValue(installSpec.Checksums.Template), want)
 	}
-	if installSpec.Checksums.Algorithm != "sha256" {
-		t.Errorf("Checksums.Algorithm: got %q, want %q", installSpec.Checksums.Algorithm, "sha256")
+	if spec.AlgorithmString(installSpec.Checksums.Algorithm) != "sha256" {
+		t.Errorf("Checksums.Algorithm: got %q, want %q", spec.AlgorithmString(installSpec.Checksums.Algorithm), "sha256")
 	}
 }
 
 func TestAquaRegistryAdapter_Checksums_TemplateWithAsset(t *testing.T) {
 	installSpec := newTestInstallSpecChecksumTemplate(t)
 	want := "${ASSET_FILENAME}.sha256"
-	if installSpec.Checksums.Template != want {
-		t.Errorf("Checksums.Template: got %q, want %q", installSpec.Checksums.Template, want)
+	if spec.StringValue(installSpec.Checksums.Template) != want {
+		t.Errorf("Checksums.Template: got %q, want %q", spec.StringValue(installSpec.Checksums.Template), want)
 	}
 }
 
@@ -173,7 +176,7 @@ func TestAquaRegistryAdapter_Binaries(t *testing.T) {
 	installSpec := newTestInstallSpec(t)
 	binaries := installSpec.Asset.Binaries
 	wantPath := "gh_${TAG}_${OS}_${ARCH}_bin"
-	if len(binaries) != 1 || binaries[0].Name != "gh" || binaries[0].Path != wantPath {
+	if len(binaries) != 1 || spec.StringValue(binaries[0].Name) != "gh" || spec.StringValue(binaries[0].Path) != wantPath {
 		t.Errorf("Asset.Binaries: got %+v, want [{Name: \"gh\", Path: %q}]", binaries, wantPath)
 	}
 }
@@ -189,8 +192,8 @@ func TestAquaRegistryAdapter_Overrides(t *testing.T) {
 	installSpec := newTestInstallSpecWithOverrides(t)
 	found := false
 	for _, rule := range installSpec.Asset.Rules {
-		if rule.When.OS == "darwin" && rule.When.Arch == "arm64" &&
-			rule.Ext == ".zip" && rule.Template == "gh_${TAG}_darwin_arm64.zip" {
+		if spec.StringValue(rule.When.OS) == "darwin" && spec.StringValue(rule.When.Arch) == "arm64" &&
+			spec.StringValue(rule.EXT) == ".zip" && spec.StringValue(rule.Template) == "gh_${TAG}_darwin_arm64.zip" {
 			found = true
 			break
 		}
@@ -213,13 +216,13 @@ func newTestInstallSpecWithAssetWithoutExt(t *testing.T) *spec.InstallSpec {
 func TestAquaRegistryAdapter_AssetWithoutExt(t *testing.T) {
 	installSpec := newTestInstallSpecWithAssetWithoutExt(t)
 	wantChecksum := "gh_${TAG}_${OS}_${ARCH}.sha256"
-	if installSpec.Checksums.Template != wantChecksum {
-		t.Errorf("Checksums.Template: got %q, want %q", installSpec.Checksums.Template, wantChecksum)
+	if spec.StringValue(installSpec.Checksums.Template) != wantChecksum {
+		t.Errorf("Checksums.Template: got %q, want %q", spec.StringValue(installSpec.Checksums.Template), wantChecksum)
 	}
 	binaries := installSpec.Asset.Binaries
 	wantBinaryPath := "gh_${TAG}_${OS}_${ARCH}_bin"
-	if len(binaries) != 1 || binaries[0].Path != wantBinaryPath {
-		t.Errorf("Asset.Binaries[0].Path: got %q, want %q", binaries[0].Path, wantBinaryPath)
+	if len(binaries) != 1 || spec.StringValue(binaries[0].Path) != wantBinaryPath {
+		t.Errorf("Asset.Binaries[0].Path: got %q, want %q", spec.StringValue(binaries[0].Path), wantBinaryPath)
 	}
 }
 

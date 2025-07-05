@@ -1,17 +1,30 @@
-schema: v1
-repo: babarot/git-bump
 asset:
-    template: git-bump_${OS}_${ARCH}${EXT}
-    default_extension: .tar.gz
-    rules:
-        - when:
-            arch: amd64
-          arch: x86_64
-    arch_emulation:
+    archemulation:
         rosetta2: true
+    binaries: []
+    defaultextension: .tar.gz
+    namingconvention: null
+    rules:
+        - arch: x86_64
+          binaries: []
+          ext: null
+          os: null
+          template: null
+          when:
+            arch: amd64
+            os: null
+    template: git-bump_${OS}_${ARCH}${EXT}
+attestation: null
 checksums:
     algorithm: sha256
+    embeddedchecksums: {}
     template: git-bump_${VERSION}_checksums.txt
-supported_platforms:
-    - os: linux
-      arch: amd64
+defaultbindir: null
+defaultversion: null
+name: null
+repo: babarot/git-bump
+schema: v1
+supportedplatforms:
+    - arch: amd64
+      os: linux
+unpack: null

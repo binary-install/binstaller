@@ -59,15 +59,17 @@ ghi789 *test-1.0.0-windows-amd64.zip
 
 func TestGenerateAssetFilename(t *testing.T) {
 	// Create a test spec
+	osLowercase := spec.OSLowercase
+	archLowercase := spec.ArchLowercase
 	testSpec := &spec.InstallSpec{
-		Name: "test-tool",
-		Repo: "test-owner/test-repo",
-		Asset: spec.AssetConfig{
-			Template:         "${NAME}-${VERSION}-${OS}-${ARCH}${EXT}",
-			DefaultExtension: ".tar.gz",
+		Name: spec.StringPtr("test-tool"),
+		Repo: spec.StringPtr("test-owner/test-repo"),
+		Asset: &spec.AssetConfig{
+			Template:         spec.StringPtr("${NAME}-${VERSION}-${OS}-${ARCH}${EXT}"),
+			DefaultExtension: spec.StringPtr(".tar.gz"),
 			NamingConvention: &spec.NamingConvention{
-				OS:   "lowercase",
-				Arch: "lowercase",
+				OS:   &osLowercase,
+				Arch: &archLowercase,
 			},
 		},
 	}
@@ -89,7 +91,8 @@ func TestGenerateAssetFilename(t *testing.T) {
 	}
 
 	// Test with titlecase OS
-	testSpec.Asset.NamingConvention.OS = "titlecase"
+	titlecase := spec.Titlecase
+	testSpec.Asset.NamingConvention.OS = &titlecase
 	filename, err = embedder.generateAssetFilename("linux", "amd64")
 	if err != nil {
 		t.Fatalf("generateAssetFilename failed: %v", err)
@@ -102,10 +105,10 @@ func TestGenerateAssetFilename(t *testing.T) {
 	// Test with rules
 	testSpec.Asset.Rules = []spec.AssetRule{
 		{
-			When: spec.PlatformCondition{
-				OS: "windows",
+			When: &spec.PlatformCondition{
+				OS: spec.StringPtr("windows"),
 			},
-			Ext: ".zip",
+			EXT: spec.StringPtr(".zip"),
 		},
 	}
 	filename, err = embedder.generateAssetFilename("windows", "amd64")
@@ -120,30 +123,32 @@ func TestGenerateAssetFilename(t *testing.T) {
 
 func TestGenerateAssetFilenameMultipleRules(t *testing.T) {
 	// Test the bug fix where multiple rules should apply cumulatively
+	titlecase := spec.Titlecase
+	archLowercase := spec.ArchLowercase
 	testSpec := &spec.InstallSpec{
-		Name: "binst",
-		Repo: "binary-install/binstaller",
-		Asset: spec.AssetConfig{
-			Template:         "${NAME}_${OS}_${ARCH}${EXT}",
-			DefaultExtension: ".tar.gz",
+		Name: spec.StringPtr("binst"),
+		Repo: spec.StringPtr("binary-install/binstaller"),
+		Asset: &spec.AssetConfig{
+			Template:         spec.StringPtr("${NAME}_${OS}_${ARCH}${EXT}"),
+			DefaultExtension: spec.StringPtr(".tar.gz"),
 			NamingConvention: &spec.NamingConvention{
-				OS:   "titlecase",
-				Arch: "lowercase",
+				OS:   &titlecase,
+				Arch: &archLowercase,
 			},
 			Rules: []spec.AssetRule{
 				// First rule: transform amd64 to x86_64
 				{
-					When: spec.PlatformCondition{
-						Arch: "amd64",
+					When: &spec.PlatformCondition{
+						Arch: spec.StringPtr("amd64"),
 					},
-					Arch: "x86_64",
+					Arch: spec.StringPtr("x86_64"),
 				},
 				// Second rule: Windows uses .zip extension
 				{
-					When: spec.PlatformCondition{
-						OS: "windows",
+					When: &spec.PlatformCondition{
+						OS: spec.StringPtr("windows"),
 					},
-					Ext: ".zip",
+					EXT: spec.StringPtr(".zip"),
 				},
 			},
 		},

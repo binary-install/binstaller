@@ -49,27 +49,33 @@ func isVersionConstraintSatisfiedForLatest(constraint string) bool {
 func mapToInstallSpec(p registry.PackageInfo) (*spec.InstallSpec, error) {
 	installSpec := &spec.InstallSpec{}
 	if p.Name != "" {
-		installSpec.Name = p.Name
+		installSpec.Name = spec.StringPtr(p.Name)
 	} else if len(p.Files) > 0 && p.Files[0].Name != "" {
-		installSpec.Name = p.Files[0].Name
+		installSpec.Name = spec.StringPtr(p.Files[0].Name)
 	}
 	if p.RepoOwner != "" && p.RepoName != "" {
-		installSpec.Repo = p.RepoOwner + "/" + p.RepoName
+		installSpec.Repo = spec.StringPtr(p.RepoOwner + "/" + p.RepoName)
 	}
 	if checkTitleCase(&p) {
+		installSpec.Asset = &spec.Asset{}
 		installSpec.Asset.NamingConvention = &spec.NamingConvention{
-			OS: "titlecase",
+			OS: spec.NamingConventionOSPtr("titlecase"),
 		}
 	}
 	assetTmpl, err := convertAssetTemplate(p.Asset)
 	if err != nil {
 		return nil, err
 	}
-	installSpec.Asset.Template = assetTmpl
+	if installSpec.Asset == nil {
+		installSpec.Asset = &spec.Asset{}
+	}
+	installSpec.Asset.Template = spec.StringPtr(assetTmpl)
 	tmplVars := map[string]string{"AssetWithoutExt": assetWithoutExtension(assetTmpl)}
-	installSpec.Asset.DefaultExtension = formatToExtension(p.Format)
-	if installSpec.Asset.DefaultExtension == "" && hasExtensions(assetTmpl) {
-		installSpec.Asset.DefaultExtension = extractExtension(assetTmpl)
+	ext := formatToExtension(p.Format)
+	if ext != "" {
+		installSpec.Asset.DefaultExtension = spec.StringPtr(ext)
+	} else if hasExtensions(assetTmpl) {
+		installSpec.Asset.DefaultExtension = spec.StringPtr(extractExtension(assetTmpl))
 	}
 	installSpec.SupportedPlatforms = convertSupportedEnvs(p.SupportedEnvs)
 	if p.Checksum != nil {
@@ -78,14 +84,18 @@ func mapToInstallSpec(p registry.PackageInfo) (*spec.InstallSpec, error) {
 			return nil, err
 		}
 		installSpec.Checksums = &spec.ChecksumConfig{
-			Template:  convertedChecksum,
-			Algorithm: p.Checksum.Algorithm,
+			Template:  spec.StringPtr(convertedChecksum),
+			Algorithm: spec.AlgorithmPtr(p.Checksum.Algorithm),
 		}
 	}
 
 	if p.Rosetta2 {
+		if installSpec.Asset == nil {
+			installSpec.Asset = &spec.Asset{}
+		}
+		true_ := true
 		installSpec.Asset.ArchEmulation = &spec.ArchEmulation{
-			Rosetta2: true,
+			Rosetta2: &true_,
 		}
 	}
 
@@ -95,8 +105,11 @@ func mapToInstallSpec(p registry.PackageInfo) (*spec.InstallSpec, error) {
 			continue
 		}
 		rule := spec.AssetRule{
-			When: spec.PlatformCondition{OS: fo.GOOS},
-			Ext:  formatToExtension(fo.Format),
+			When: &spec.PlatformCondition{OS: spec.StringPtr(fo.GOOS)},
+		}
+		ext := formatToExtension(fo.Format)
+		if ext != "" {
+			rule.EXT = spec.StringPtr(ext)
 		}
 		installSpec.Asset.Rules = append(installSpec.Asset.Rules, rule)
 	}
@@ -116,7 +129,7 @@ func mapToInstallSpec(p registry.PackageInfo) (*spec.InstallSpec, error) {
 			continue
 		}
 		rule := spec.AssetRule{
-			When: spec.PlatformCondition{OS: ov.GOOS, Arch: ov.GOArch},
+			When: &spec.PlatformCondition{OS: spec.StringPtr(ov.GOOS), Arch: spec.StringPtr(ov.GOArch)},
 		}
 
 		// copy tmplVar for overrides
@@ -125,23 +138,28 @@ func mapToInstallSpec(p registry.PackageInfo) (*spec.InstallSpec, error) {
 		if len(ov.Replacements) > 0 {
 			rules := convertReplacementsToRules(ov.Replacements)
 			for _, ruleRep := range rules {
-				if ruleRep.When.OS == "" {
-					ruleRep.When.OS = ov.GOOS
-				}
-				if ruleRep.When.Arch == "" {
-					ruleRep.When.Arch = ov.GOArch
+				if ruleRep.When != nil {
+					if spec.StringValue(ruleRep.When.OS) == "" {
+						ruleRep.When.OS = spec.StringPtr(ov.GOOS)
+					}
+					if spec.StringValue(ruleRep.When.Arch) == "" {
+						ruleRep.When.Arch = spec.StringPtr(ov.GOArch)
+					}
 				}
 				installSpec.Asset.Rules = append(installSpec.Asset.Rules, ruleRep)
 			}
 		}
 
-		rule.Ext = formatToExtension(ov.Format)
+		ext := formatToExtension(ov.Format)
+		if ext != "" {
+			rule.EXT = spec.StringPtr(ext)
+		}
 		if ov.Asset != "" {
 			assetTmpl, err := convertAssetTemplate(ov.Asset)
 			if err != nil {
 				return nil, err
 			}
-			rule.Template = assetTmpl
+			rule.Template = spec.StringPtr(assetTmpl)
 			tmplVarsOv["AssetWithoutExt"] = assetWithoutExtension(assetTmpl)
 		}
 
@@ -153,7 +171,7 @@ func mapToInstallSpec(p registry.PackageInfo) (*spec.InstallSpec, error) {
 			rule.Binaries = binaries
 		}
 
-		if rule.Arch != "" || len(rule.Binaries) > 0 || rule.Ext != "" || rule.OS != "" || rule.Template != "" {
+		if rule.Arch != nil || len(rule.Binaries) > 0 || rule.EXT != nil || rule.OS != nil || rule.Template != nil {
 			installSpec.Asset.Rules = append(installSpec.Asset.Rules, rule)
 		}
 
@@ -173,20 +191,22 @@ func mapToInstallSpec(p registry.PackageInfo) (*spec.InstallSpec, error) {
 func convertReplacementsToRules(r registry.Replacements) []spec.AssetRule {
 	rules := make([]spec.AssetRule, 0)
 	for k, v := range r {
-		rule := spec.AssetRule{}
+		rule := spec.AssetRule{
+			When: &spec.PlatformCondition{},
+		}
 		if isOS(k) {
-			rule.When.OS = k
-			rule.OS = v
+			rule.When.OS = spec.StringPtr(k)
+			rule.OS = spec.StringPtr(v)
 		} else {
-			rule.When.Arch = k
-			rule.Arch = v
+			rule.When.Arch = spec.StringPtr(k)
+			rule.Arch = spec.StringPtr(v)
 		}
 		rules = append(rules, rule)
 	}
 	slices.SortStableFunc(rules, func(a, b spec.AssetRule) int {
 		return cmp.Or(
-			cmp.Compare(a.When.OS, b.When.OS),
-			cmp.Compare(a.When.Arch, b.When.Arch),
+			cmp.Compare(spec.StringValue(a.When.OS), spec.StringValue(b.When.OS)),
+			cmp.Compare(spec.StringValue(a.When.Arch), spec.StringValue(b.When.Arch)),
 		)
 	})
 	return rules
@@ -206,7 +226,7 @@ func convertFilesToBinaries(files []*registry.File, tmplVars map[string]string) 
 				}
 				path = evaluated
 			}
-			binaries = append(binaries, spec.Binary{Name: f.Name, Path: path})
+			binaries = append(binaries, spec.Binary{Name: spec.StringPtr(f.Name), Path: spec.StringPtr(path)})
 		}
 	}
 	return binaries, nil
@@ -300,7 +320,88 @@ func convertSupportedEnvs(envs registry.SupportedEnvs) []spec.Platform {
 	for _, env := range envs {
 		parts := strings.SplitN(env, "/", 2)
 		if len(parts) == 2 {
-			platforms = append(platforms, spec.Platform{OS: parts[0], Arch: parts[1]})
+			// Convert string to appropriate enum values
+			var os *spec.SupportedPlatformOS
+			var arch *spec.SupportedPlatformArch
+
+			// Map OS string to enum
+			switch parts[0] {
+			case "linux":
+				osVal := spec.Linux
+				os = &osVal
+			case "darwin":
+				osVal := spec.Darwin
+				os = &osVal
+			case "windows":
+				osVal := spec.Windows
+				os = &osVal
+			case "freebsd":
+				osVal := spec.Freebsd
+				os = &osVal
+			case "netbsd":
+				osVal := spec.Netbsd
+				os = &osVal
+			case "openbsd":
+				osVal := spec.Openbsd
+				os = &osVal
+			case "android":
+				osVal := spec.Android
+				os = &osVal
+			case "dragonfly":
+				osVal := spec.Dragonfly
+				os = &osVal
+			case "solaris":
+				osVal := spec.Solaris
+				os = &osVal
+			default:
+				// Skip unsupported OS
+				continue
+			}
+
+			// Map Arch string to enum
+			switch parts[1] {
+			case "amd64":
+				archVal := spec.Amd64
+				arch = &archVal
+			case "arm64":
+				archVal := spec.Arm64
+				arch = &archVal
+			case "386":
+				archVal := spec.The386
+				arch = &archVal
+			case "arm":
+				archVal := spec.Arm
+				arch = &archVal
+			case "ppc64":
+				archVal := spec.Ppc64
+				arch = &archVal
+			case "ppc64le":
+				archVal := spec.Ppc64LE
+				arch = &archVal
+			case "mips":
+				archVal := spec.MIPS
+				arch = &archVal
+			case "mipsle":
+				archVal := spec.Mipsle
+				arch = &archVal
+			case "mips64":
+				archVal := spec.Mips64
+				arch = &archVal
+			case "mips64le":
+				archVal := spec.Mips64LE
+				arch = &archVal
+			case "s390x":
+				archVal := spec.S390X
+				arch = &archVal
+			case "riscv64":
+				archVal := spec.Riscv64
+				arch = &archVal
+			default:
+				// Skip unsupported architecture
+				continue
+			}
+
+			platforms = append(platforms, spec.Platform{OS: os, Arch: arch})
 		}
 	}
 	return platforms

@@ -394,7 +394,7 @@ resolve_asset_filename() {
 }
 
 execute() {
-  STRIP_COMPONENTS=1
+  STRIP_COMPONENTS=0
   CHECKSUM_FILENAME="${ASSET_FILENAME}.sha256"
 
   # --- Construct URLs ---
@@ -447,7 +447,7 @@ execute() {
   if [ -z "${EXT}" ] || [ "${EXT}" = ".exe" ]; then
     BINARY_PATH="${TMPDIR}/${ASSET_FILENAME}"
   else
-    BINARY_PATH="${TMPDIR}/rg"
+    BINARY_PATH="${TMPDIR}/${ASSET_FILENAME}"
   fi
 
   if [ "${UNAME_OS}" = "windows" ]; then
@@ -477,7 +477,7 @@ execute() {
 # --- Configuration  ---
 NAME='rg'
 REPO='BurntSushi/ripgrep'
-EXT='.tar.gz'
+EXT=''
 
 # use in logging routines
 log_prefix() {

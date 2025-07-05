@@ -423,7 +423,7 @@ execute() {
   if [ -z "${EXT}" ] || [ "${EXT}" = ".exe" ]; then
     BINARY_PATH="${TMPDIR}/${ASSET_FILENAME}"
   else
-    BINARY_PATH="${TMPDIR}/hugo"
+    BINARY_PATH="${TMPDIR}/${ASSET_FILENAME}"
   fi
 
   if [ "${UNAME_OS}" = "windows" ]; then
@@ -453,7 +453,7 @@ execute() {
 # --- Configuration  ---
 NAME='hugo'
 REPO='gohugoio/hugo'
-EXT='.tar.gz'
+EXT=''
 
 # use in logging routines
 log_prefix() {

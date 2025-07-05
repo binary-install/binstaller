@@ -86,34 +86,36 @@ func mapToGoInstallerSpec(project *config.Project, nameOverride, repoOverride st
 
 	// Determine Name: Override > project.ProjectName
 	if nameOverride != "" {
-		s.Name = nameOverride
-		log.Debugf("Using name override: %s", s.Name)
+		s.Name = spec.StringPtr(nameOverride)
+		log.Debugf("Using name override: %s", nameOverride)
 	} else if project.ProjectName != "" {
-		s.Name = project.ProjectName
+		s.Name = spec.StringPtr(project.ProjectName)
 		log.Debugf("Using goreleaser project_name as name: %s", project.ProjectName)
 	}
 	// Name inference from Repo will happen after Repo is determined
 
 	// Determine Repo: Override > release.github
 	if repoOverride != "" {
-		s.Repo = normalizeRepo(repoOverride) // Normalize the override
-		log.Debugf("Using repo override: %s", s.Repo)
+		normalizedRepo := normalizeRepo(repoOverride) // Normalize the override
+		s.Repo = spec.StringPtr(normalizedRepo)
+		log.Debugf("Using repo override: %s", normalizedRepo)
 	} else if project.Release.GitHub.Owner != "" && project.Release.GitHub.Name != "" {
-		s.Repo = fmt.Sprintf("%s/%s", project.Release.GitHub.Owner, project.Release.GitHub.Name)
+		repo := fmt.Sprintf("%s/%s", project.Release.GitHub.Owner, project.Release.GitHub.Name)
+		s.Repo = spec.StringPtr(repo)
 	} else {
 		log.Warnf("could not determine repository owner/name from goreleaser config or override. Use --repo flag.")
 	}
 
 	// If name was not determined yet, try to infer from the repository name
-	if s.Name == "" && s.Repo != "" {
-		parts := strings.Split(s.Repo, "/")
+	if spec.StringValue(s.Name) == "" && spec.StringValue(s.Repo) != "" {
+		parts := strings.Split(spec.StringValue(s.Repo), "/")
 		if len(parts) == 2 && parts[1] != "" {
-			s.Name = parts[1]
-			log.Infof("goreleaser project_name missing, inferred name from repository: %s", s.Name)
+			s.Name = spec.StringPtr(parts[1])
+			log.Infof("goreleaser project_name missing, inferred name from repository: %s", parts[1])
 		} else {
-			log.Warnf("goreleaser project_name missing and could not infer name from repository '%s'. Use --name flag.", s.Repo)
+			log.Warnf("goreleaser project_name missing and could not infer name from repository '%s'. Use --name flag.", spec.StringValue(s.Repo))
 		}
-	} else if s.Name == "" {
+	} else if spec.StringValue(s.Name) == "" {
 		// If name is still empty and repo is also empty
 		log.Warnf("goreleaser project_name missing and could not infer name from repository. Use --name flag.")
 	}
@@ -126,13 +128,18 @@ func mapToGoInstallerSpec(project *config.Project, nameOverride, repoOverride st
 			checksumTemplate = project.Checksum.NameTemplate // Fallback to raw
 		}
 		s.Checksums = &spec.ChecksumConfig{
-			Template:  checksumTemplate,
-			Algorithm: project.Checksum.Algorithm,
+			Template:  spec.StringPtr(checksumTemplate),
+			Algorithm: spec.AlgorithmPtr(project.Checksum.Algorithm),
 		}
 	}
 
 	// --- Archives / Assets / Unpack ---
 	if len(project.Archives) > 0 {
+		// Initialize Asset if it doesn't exist
+		if s.Asset == nil {
+			s.Asset = &spec.Asset{}
+		}
+
 		archive := project.Archives[0] // Focus on the first archive
 
 		// Map default archive format to DefaultExtension
@@ -140,8 +147,11 @@ func mapToGoInstallerSpec(project *config.Project, nameOverride, repoOverride st
 		if len(archive.Formats) > 0 {
 			format = archive.Formats[0]
 		}
-		s.Asset.DefaultExtension = formatToExtension(format)
-		log.Debugf("Mapped default archive format '%s' to DefaultExtension '%s'", format, s.Asset.DefaultExtension)
+		ext := formatToExtension(format)
+		if ext != "" {
+			s.Asset.DefaultExtension = spec.StringPtr(ext)
+		}
+		log.Debugf("Mapped default archive format '%s' to DefaultExtension '%s'", format, ext)
 
 		// Asset Template
 		assetTemplate, err := translateTemplate(archive.NameTemplate)
@@ -149,28 +159,33 @@ func mapToGoInstallerSpec(project *config.Project, nameOverride, repoOverride st
 			log.WithError(err).Warnf("Failed to translate asset template, using raw: %s", archive.NameTemplate)
 			assetTemplate = archive.NameTemplate // Fallback to raw
 		}
-		s.Asset.Template = assetTemplate
+		s.Asset.Template = spec.StringPtr(assetTemplate)
 
 		// Ensure the asset template includes the ${EXT} placeholder as per InstallSpec v1
-		if !strings.HasSuffix(s.Asset.Template, "${EXT}") {
-			s.Asset.Template += "${EXT}"
-			log.Debugf("Appended ${EXT} to asset template: %s", s.Asset.Template)
+		if !strings.HasSuffix(assetTemplate, "${EXT}") {
+			assetTemplate += "${EXT}"
+			s.Asset.Template = spec.StringPtr(assetTemplate)
+			log.Debugf("Appended ${EXT} to asset template: %s", assetTemplate)
 		}
 
 		// Infer NamingConvention from the asset template
 		if strings.Contains(archive.NameTemplate, "title .Os") {
+			titlecase := spec.Titlecase
+			lowercase := spec.ArchLowercase
 			s.Asset.NamingConvention = &spec.NamingConvention{
-				OS: "titlecase",
+				OS: &titlecase,
 				// Arch is assumed lowercase unless a complex template suggests otherwise,
 				// which is too complex to infer reliably here.
-				Arch: "lowercase", // Default, explicitly set for clarity
+				Arch: &lowercase, // Default, explicitly set for clarity
 			}
 			log.Debugf("Inferred OS naming convention as 'titlecase' from template: %s", archive.NameTemplate)
 		} else {
 			// If no explicit title casing for OS, rely on spec.SetDefaults for lowercase
+			osLowercase := spec.OSLowercase
+			archLowercase := spec.ArchLowercase
 			s.Asset.NamingConvention = &spec.NamingConvention{
-				OS:   "lowercase", // Default, explicitly set for clarity
-				Arch: "lowercase", // Default, explicitly set for clarity
+				OS:   &osLowercase,   // Default, explicitly set for clarity
+				Arch: &archLowercase, // Default, explicitly set for clarity
 			}
 		}
 
@@ -181,8 +196,8 @@ func mapToGoInstallerSpec(project *config.Project, nameOverride, repoOverride st
 			if len(m) == 3 && m[1] != "" && m[2] != "" {
 				log.Debugf("Inferred Arch name alias (%s -> %s) from template: %s", m[1], m[2], m[0])
 				s.Asset.Rules = append(s.Asset.Rules, spec.AssetRule{
-					When: spec.PlatformCondition{Arch: m[1]},
-					Arch: m[2],
+					When: &spec.PlatformCondition{Arch: spec.StringPtr(m[1])},
+					Arch: spec.StringPtr(m[2]),
 				})
 			}
 		}
@@ -192,8 +207,8 @@ func mapToGoInstallerSpec(project *config.Project, nameOverride, repoOverride st
 			if len(m) == 3 && m[1] != "" && m[2] != "" {
 				log.Debugf("Inferred OS name alias (%s -> %s) from template: %s", m[1], m[2], m[0])
 				s.Asset.Rules = append(s.Asset.Rules, spec.AssetRule{
-					When: spec.PlatformCondition{OS: m[1]},
-					OS:   m[2],
+					When: &spec.PlatformCondition{OS: spec.StringPtr(m[1])},
+					OS:   spec.StringPtr(m[2]),
 				})
 			}
 		}
@@ -210,8 +225,8 @@ func mapToGoInstallerSpec(project *config.Project, nameOverride, repoOverride st
 				// or explicitly sets format to binary (empty ext)
 				if ext != "" || format == "binary" {
 					rule := spec.AssetRule{
-						When: spec.PlatformCondition{OS: override.Goos},
-						Ext:  ext,
+						When: &spec.PlatformCondition{OS: spec.StringPtr(override.Goos)},
+						EXT:  spec.StringPtr(ext),
 					}
 					s.Asset.Rules = append(s.Asset.Rules, rule)
 				} else {
@@ -222,12 +237,16 @@ func mapToGoInstallerSpec(project *config.Project, nameOverride, repoOverride st
 
 		// Unpack Config
 		if archive.WrapInDirectory == "true" {
-			strip := 1
+			strip := int64(1)
 			s.Unpack = &spec.UnpackConfig{StripComponents: &strip}
 		}
 	} else {
 		log.Warnf("no archives found in goreleaser config, asset information may be incomplete")
-		s.Asset.Template = "${NAME}_${VERSION}_${OS}_${ARCH}${EXT}" // A basic default
+		// Initialize Asset if it doesn't exist
+		if s.Asset == nil {
+			s.Asset = &spec.Asset{}
+		}
+		s.Asset.Template = spec.StringPtr("${NAME}_${VERSION}_${OS}_${ARCH}${EXT}") // A basic default
 	}
 
 	// --- Supported Platforms (from Builds) ---
@@ -261,13 +280,13 @@ func deriveSupportedPlatforms(builds []config.Build) []spec.Platform {
 						if !ignore[platformKey] && !ignore[platformKeyWithoutArm] && isValidTarget(goos, goarch) {
 							// Map arm version to Arch field directly for simplicity now
 							// e.g., linux/arm/6 -> {OS: linux, Arch: armv6}
-							platforms[platformKey] = spec.Platform{OS: goos, Arch: goarch + "v" + goarm}
+							platforms[platformKey] = spec.Platform{OS: convertToSupportedOS(goos), Arch: convertToSupportedArch(goarch + "v" + goarm)}
 						}
 					}
 				} else {
 					platformKey := makePlatformKey(goos, goarch, "")
 					if !ignore[platformKey] && isValidTarget(goos, goarch) {
-						platforms[platformKey] = spec.Platform{OS: goos, Arch: goarch}
+						platforms[platformKey] = spec.Platform{OS: convertToSupportedOS(goos), Arch: convertToSupportedArch(goarch)}
 					}
 				}
 			}
@@ -281,8 +300,8 @@ func deriveSupportedPlatforms(builds []config.Build) []spec.Platform {
 	}
 	slices.SortStableFunc(result, func(i, j spec.Platform) int {
 		return cmp.Or(
-			cmp.Compare(i.OS, j.OS),
-			cmp.Compare(i.Arch, j.Arch),
+			cmp.Compare(spec.PlatformOSString(i.OS), spec.PlatformOSString(j.OS)),
+			cmp.Compare(spec.PlatformArchString(i.Arch), spec.PlatformArchString(j.Arch)),
 		)
 	})
 	return result
@@ -444,4 +463,85 @@ func normalizeRepo(repo string) string {
 	repo = strings.TrimPrefix(repo, "github.com/")
 	repo = strings.Trim(repo, "/")
 	return repo
+}
+
+// convertToSupportedOS converts a string OS to the appropriate enum value
+func convertToSupportedOS(os string) *spec.SupportedPlatformOS {
+	switch os {
+	case "linux":
+		val := spec.Linux
+		return &val
+	case "darwin":
+		val := spec.Darwin
+		return &val
+	case "windows":
+		val := spec.Windows
+		return &val
+	case "freebsd":
+		val := spec.Freebsd
+		return &val
+	case "netbsd":
+		val := spec.Netbsd
+		return &val
+	case "openbsd":
+		val := spec.Openbsd
+		return &val
+	case "android":
+		val := spec.Android
+		return &val
+	case "dragonfly":
+		val := spec.Dragonfly
+		return &val
+	case "solaris":
+		val := spec.Solaris
+		return &val
+	default:
+		// Return nil for unsupported OS
+		return nil
+	}
+}
+
+// convertToSupportedArch converts a string arch to the appropriate enum value
+func convertToSupportedArch(arch string) *spec.SupportedPlatformArch {
+	switch arch {
+	case "amd64":
+		val := spec.Amd64
+		return &val
+	case "arm64":
+		val := spec.Arm64
+		return &val
+	case "386":
+		val := spec.The386
+		return &val
+	case "arm", "armv6", "armv7":
+		val := spec.Arm
+		return &val
+	case "ppc64":
+		val := spec.Ppc64
+		return &val
+	case "ppc64le":
+		val := spec.Ppc64LE
+		return &val
+	case "mips":
+		val := spec.MIPS
+		return &val
+	case "mipsle":
+		val := spec.Mipsle
+		return &val
+	case "mips64":
+		val := spec.Mips64
+		return &val
+	case "mips64le":
+		val := spec.Mips64LE
+		return &val
+	case "s390x":
+		val := spec.S390X
+		return &val
+	case "riscv64":
+		val := spec.Riscv64
+		return &val
+	default:
+		// Return nil for unsupported architecture
+		return nil
+	}
 }

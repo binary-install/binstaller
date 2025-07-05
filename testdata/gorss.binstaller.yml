@@ -1,18 +1,29 @@
-schema: v1
-name: gorss
-repo: Lallassu/gorss
 asset:
-    template: gorss_${OS}.tar.gz
-    default_extension: .tar.gz
+    archemulation:
+        rosetta2: true
     binaries:
         - name: gorss
           path: dist/gorss_${OS}
+    defaultextension: .tar.gz
+    namingconvention: null
     rules:
-        - when:
-            os: darwin
+        - arch: null
+          binaries: []
+          ext: null
           os: osx
-    arch_emulation:
-        rosetta2: true
-supported_platforms:
-    - os: linux
-      arch: amd64
+          template: null
+          when:
+            arch: null
+            os: darwin
+    template: gorss_${OS}.tar.gz
+attestation: null
+checksums: null
+defaultbindir: null
+defaultversion: null
+name: gorss
+repo: Lallassu/gorss
+schema: v1
+supportedplatforms:
+    - arch: amd64
+      os: linux
+unpack: null

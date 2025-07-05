@@ -350,16 +350,10 @@ tag_to_version() {
   log_info "Resolved version: ${VERSION} (tag: ${TAG})"
 }
 
-capitalize() {
-  input="$1"
-  first_char=$(printf "%s" "$input" | cut -c1)
-  first_upper=$(printf "%s" "$first_char" | tr '[:lower:]' '[:upper:]')
-  printf "%s%s\n" "$first_upper" "$(printf "%s" "$input" | cut -c2-)"
-}
 
 
 resolve_asset_filename() {
-  OS="$(capitalize "${OS}")"
+  
   # --- Apply Rules ---
   ASSET_FILENAME=""
   if [ "${UNAME_ARCH}" = 'amd64' ] && true
@@ -433,7 +427,7 @@ execute() {
   if [ -z "${EXT}" ] || [ "${EXT}" = ".exe" ]; then
     BINARY_PATH="${TMPDIR}/${ASSET_FILENAME}"
   else
-    BINARY_PATH="${TMPDIR}/goreleaser"
+    BINARY_PATH="${TMPDIR}/${ASSET_FILENAME}"
   fi
 
   if [ "${UNAME_OS}" = "windows" ]; then
@@ -463,7 +457,7 @@ execute() {
 # --- Configuration  ---
 NAME='goreleaser'
 REPO='goreleaser/goreleaser'
-EXT='.tar.gz'
+EXT=''
 
 # use in logging routines
 log_prefix() {

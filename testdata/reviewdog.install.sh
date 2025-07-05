@@ -425,35 +425,6 @@ execute() {
     log_info "Extracting ${ASSET_FILENAME}..."
     (cd "${TMPDIR}" && untar "${ASSET_FILENAME}" "${STRIP_COMPONENTS}")
   fi
-  BINARY_NAME='reviewdog'
-  if [ -z "${EXT}" ] || [ "${EXT}" = ".exe" ]; then
-    BINARY_PATH="${TMPDIR}/${ASSET_FILENAME}"
-  else
-    BINARY_PATH="${TMPDIR}/reviewdog"
-  fi
-
-  if [ "${UNAME_OS}" = "windows" ]; then
-    case "${BINARY_NAME}" in *.exe) ;; *) BINARY_NAME="${BINARY_NAME}.exe" ;; esac
-    case "${BINARY_PATH}" in *.exe) ;; *) BINARY_PATH="${BINARY_PATH}.exe" ;; esac
-  fi
-
-  if [ ! -f "${BINARY_PATH}" ]; then
-    log_crit "Binary not found: ${BINARY_PATH}"
-    log_crit "Listing contents of ${TMPDIR} ..."
-    if command -v find >/dev/null 2>&1; then
-      cd "${TMPDIR}" && find .
-    else
-      cd "${TMPDIR}" && ls -R .
-    fi
-    return 1
-  fi
-
-  # Install the binary
-  INSTALL_PATH="${BINDIR}/${BINARY_NAME}"
-  log_info "Installing binary to ${INSTALL_PATH}"
-  test ! -d "${BINDIR}" && install -d "${BINDIR}"
-  install "${BINARY_PATH}" "${INSTALL_PATH}"
-  log_info "${BINARY_NAME} installation complete!"
 }
 
 # --- Configuration  ---

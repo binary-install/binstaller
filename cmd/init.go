@@ -8,19 +8,20 @@ import (
 
 	"github.com/apex/log"
 	"github.com/binary-install/binstaller/pkg/datasource"
+	"github.com/binary-install/binstaller/pkg/spec"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
 )
 
 var (
 	// Flags for init command
-	initSource       string
-	initSourceFile   string
-	initRepo         string // Repo for GitHub source OR explicit override
-	initName         string // Explicit override for binary name
-	initTag          string
-	initCommitSHA    string
-	initOutputFile   string
+	initSource     string
+	initSourceFile string
+	initRepo       string // Repo for GitHub source OR explicit override
+	initName       string // Explicit override for binary name
+	initTag        string
+	initCommitSHA  string
+	initOutputFile string
 )
 
 // InitCommand represents the init command
@@ -80,8 +81,8 @@ settings from a source like a GoReleaser config file or a GitHub repository.`,
 			log.WithError(err).Error("Failed to detect install spec")
 			return fmt.Errorf("failed to detect install spec: %w", err)
 		}
-		if installSpec.Schema == "" {
-			installSpec.Schema = "v1"
+		if spec.StringValue(installSpec.Schema) == "" {
+			installSpec.Schema = spec.StringPtr("v1")
 		}
 		log.Info("Successfully detected InstallSpec")
 
@@ -102,14 +103,14 @@ settings from a source like a GoReleaser config file or a GitHub repository.`,
 		} else {
 			// Write to file
 			log.Infof("Writing InstallSpec YAML to file: %s", initOutputFile)
-			
+
 			// Ensure the output directory exists
 			outputDir := filepath.Dir(initOutputFile)
 			if err := os.MkdirAll(outputDir, 0755); err != nil {
 				log.WithError(err).Errorf("Failed to create output directory: %s", outputDir)
 				return fmt.Errorf("failed to create output directory %s: %w", outputDir, err)
 			}
-			
+
 			err = os.WriteFile(initOutputFile, yamlData, 0644) // Use standard file permissions
 			if err != nil {
 				log.WithError(err).Errorf("Failed to write InstallSpec to file: %s", initOutputFile)
