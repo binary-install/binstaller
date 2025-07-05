@@ -53,23 +53,12 @@ func (s *InstallSpec) SetDefaults() {
 			s.Checksums.Algorithm = &algo
 		}
 	}
-	if s.Attestation != nil {
-		if s.Attestation.Enabled == nil {
-			enabled := false
-			s.Attestation.Enabled = &enabled
-		}
-		if s.Attestation.Require == nil {
-			require := false
-			s.Attestation.Require = &require
-		}
-	}
 }
 
 // Type aliases for backward compatibility
 type Platform = SupportedPlatformElement
 type AssetConfig = Asset
 type ChecksumConfig = Checksums
-type AttestationConfig = Attestation
 type UnpackConfig = Unpack
 type AssetRule = RuleElement
 type Binary = BinaryElement

@@ -1,115 +1,76 @@
 # Binstaller Configuration Schema
 
-This directory contains the TypeSpec definition and JSON Schema for binstaller configuration files.
-
-## Overview
-
-The binstaller configuration uses a YAML format defined by TypeSpec, which generates a JSON Schema for validation and documentation. This approach ensures:
-
-- Type-safe configuration
-- Excellent IDE support with auto-completion
-- Clear documentation with descriptions for all fields
-- Validation capabilities
-
-## Files
-
-- `main.tsp` - TypeSpec definition of the configuration schema
-- `output/@typespec/json-schema/InstallSpec.json` - Generated JSON Schema with all definitions inline
-- `tspconfig.yaml` - TypeSpec compiler configuration
-- `package.json` - NPM scripts for schema generation
-
-## Usage
-
-### Generate JSON Schema
-
-```bash
-cd schema
-npm install
-npm run gen:schema
-```
-
-This will compile the TypeSpec definition to a complete JSON Schema with all definitions inline at `output/@typespec/json-schema/InstallSpec.json`.
-
-### Validate Configuration Files
-
-You can use the generated JSON Schema to validate configuration files:
-
-```bash
-# Using ajv-cli
-npx ajv validate -s output/@typespec/json-schema/InstallSpec.json -d ../.config/binstaller.yml
-```
-
-### IDE Support
-
-Many IDEs support JSON Schema validation for YAML files. Add this to your `.config/binstaller.yml`:
-
-```yaml
-# yaml-language-server: $schema=../schema/output/@typespec/json-schema/InstallSpec.json
-schema: v1
-repo: owner/repo
-# ... rest of config
-```
+This directory contains the TypeSpec definition for binstaller's configuration format and tools to generate JSON Schema and Go types.
 
 ## Configuration Format
 
-The configuration file (`.config/binstaller.yml`) defines how to download and install binaries from GitHub releases.
+Binstaller uses YAML configuration files (typically `.config/binstaller.yml`) to define how to download, verify, and install binaries from GitHub releases.
 
-### Basic Example
+### Quick Start
+
+Here's a minimal configuration:
 
 ```yaml
 schema: v1
-repo: owner/repo
+repo: owner/project
 asset:
   template: "${NAME}_${VERSION}_${OS}_${ARCH}.tar.gz"
 ```
 
-### Full Example
+### Complete Example
 
 ```yaml
 schema: v1
-name: myapp
-repo: owner/repo
+name: mytool
+repo: myorg/mytool
 default_version: latest
-default_bin_dir: "${HOME}/.local/bin"
+default_bin_dir: ${HOME}/.local/bin
 
+# Define how to construct download URLs
 asset:
   template: "${NAME}_${VERSION}_${OS}_${ARCH}${EXT}"
   default_extension: .tar.gz
+  
+  # Multiple binaries in the archive
   binaries:
-    - name: myapp
-      path: myapp
-  naming_convention:
-    os: lowercase
-    arch: lowercase
-  arch_emulation:
-    rosetta2: true
+    - name: mytool
+      path: mytool
+    - name: mytool-helper
+      path: bin/mytool-helper
+  
+  # Platform-specific rules (applied cumulatively)
   rules:
+    # Windows uses .zip files
     - when:
         os: windows
       ext: .zip
+    
+    # macOS uses different naming
+    - when:
+        os: darwin
+      os: macOS  # Changes ${OS} to "macOS"
+    
+    # macOS also uses .zip
+    - when:
+        os: darwin
+      ext: .zip
+    
+    # M1 Macs need signed binaries
     - when:
         os: darwin
         arch: arm64
       template: "${NAME}_${VERSION}_${OS}_${ARCH}_signed${EXT}"
 
+# Security features
 checksums:
   algorithm: sha256
   template: "${NAME}_${VERSION}_checksums.txt"
-  embedded_checksums:
-    "v1.0.0":
-      - filename: myapp_v1.0.0_linux_amd64.tar.gz
-        hash: abc123...
-      - filename: myapp_v1.0.0_darwin_amd64.tar.gz
-        hash: def456...
 
-attestation:
-  enabled: true
-  require: false
-  verify_flags: "--cert-identity=https://github.com/owner/repo/.github/workflows/release.yml@refs/tags/v1.0.0"
-
+# Archive extraction
 unpack:
   strip_components: 1
 
+# Platform restrictions
 supported_platforms:
   - os: linux
     arch: amd64
@@ -123,27 +84,148 @@ supported_platforms:
     arch: amd64
 ```
 
-## Schema Development
+## Key Concepts
 
-To modify the schema:
+### Template Placeholders
 
-1. Edit `main.tsp`
-2. Run `npm run gen:schema` to regenerate the JSON Schema
-3. Test with sample configuration files
+The asset template uses these placeholders:
 
-The TypeSpec language provides excellent type safety and documentation capabilities. See the [TypeSpec documentation](https://typespec.io/) for more information.
+- `${NAME}` - Binary name (from `name` field or repository name)
+- `${VERSION}` - Version to install (without 'v' prefix)
+- `${OS}` - Operating system (e.g., 'linux', 'darwin', 'windows')
+- `${ARCH}` - Architecture (e.g., 'amd64', 'arm64', '386')
+- `${EXT}` - File extension (from `default_extension` or rules)
 
-## Go Code Generation
+### Rules System
 
-You can generate Go structs from the JSON Schema using a forked version of quicktype that properly handles `unevaluatedProperties`:
+Rules are evaluated **sequentially** and **all matching rules are applied**:
 
-```bash
-npm run gen:go
+1. Each rule's `when` condition is checked
+2. If all conditions match, the rule's overrides are applied
+3. Later rules can override values from earlier rules
+
+Example flow for `darwin/arm64`:
+```yaml
+rules:
+  - when: { os: darwin }
+    os: macOS      # ${OS} becomes "macOS"
+  - when: { os: darwin }
+    ext: .zip      # ${EXT} becomes ".zip"
+  - when: { os: darwin, arch: arm64 }
+    template: "special_${OS}_${ARCH}${EXT}"  # Uses "macOS" and ".zip" from above
 ```
 
-This will:
-1. Clone/update the forked quicktype with `unevaluatedProperties` support
-2. Build quicktype if needed (cached for subsequent runs)
-3. Generate Go structs with proper types (including `map[string][]EmbeddedChecksum` for embedded checksums)
+### Security Features
 
-The generated Go code uses JSON tags, which are compatible with the YAML library used in binstaller (gopkg.in/yaml.v3 supports JSON tags). The generated structs can be used directly in the binstaller codebase.
+#### Checksums
+- Download checksum files from releases
+- Or embed pre-verified checksums using `binst embed-checksums`
+
+## Common Patterns
+
+### Single Binary with Archive Per Platform
+
+```yaml
+asset:
+  template: "${NAME}_${VERSION}_${OS}_${ARCH}.tar.gz"
+  rules:
+    - when: { os: windows }
+      ext: .zip
+```
+
+### Direct Binary Download (No Archive)
+
+```yaml
+asset:
+  template: "${NAME}_${VERSION}_${OS}_${ARCH}${EXT}"
+  default_extension: ""
+  binaries:
+    - name: mytool
+      path: ${ASSET_FILENAME}  # The downloaded file IS the binary
+  rules:
+    - when: { os: windows }
+      ext: .exe
+```
+
+### Multiple Architectures with Emulation
+
+```yaml
+asset:
+  template: "${NAME}_${VERSION}_${OS}_${ARCH}.tar.gz"
+  arch_emulation:
+    rosetta2: true  # Use x86_64 on Apple Silicon when available
+```
+
+### Custom OS/Arch Names
+
+Some projects use non-standard naming:
+
+```yaml
+asset:
+  template: "${NAME}-${OS}-${ARCH}"
+  rules:
+    - when: { os: darwin }
+      os: macos
+    - when: { arch: amd64 }
+      arch: x64
+    - when: { arch: 386 }
+      arch: x86
+```
+
+## Schema Development
+
+The schema is defined using [TypeSpec](https://typespec.io/):
+
+```bash
+# Install dependencies
+cd schema
+npm install
+
+# Generate JSON Schema and Go types
+make gen
+
+# Or individually:
+make gen-schema  # Generate JSON Schema
+make gen-go      # Generate Go types
+```
+
+The generation pipeline:
+1. TypeSpec → JSON Schema (via TypeSpec compiler)
+2. JSON Schema → Go structs (via customized quicktype)
+
+## Files
+
+- `main.tsp` - TypeSpec definition of the configuration schema
+- `output/@typespec/json-schema/InstallSpec.json` - Generated JSON Schema with all definitions inline
+- `../pkg/spec/generated.go` - Generated Go structs
+- `tspconfig.yaml` - TypeSpec compiler configuration
+- `package.json` - NPM scripts for schema generation
+- `gen-go-with-fork.sh` - Script to use forked quicktype with unevaluatedProperties support
+
+## Validation
+
+You can validate your configuration against the schema:
+
+```bash
+# Using any JSON Schema validator
+npx ajv validate -s schema/output/@typespec/json-schema/InstallSpec.json -d .config/binstaller.yml
+```
+
+### IDE Support
+
+Many IDEs support JSON Schema validation for YAML files. Add this to your `.config/binstaller.yml`:
+
+```yaml
+# yaml-language-server: $schema=../schema/output/@typespec/json-schema/InstallSpec.json
+schema: v1
+repo: owner/repo
+# ... rest of config
+```
+
+## Tips
+
+1. **Start simple**: Begin with just `repo` and `asset.template`
+2. **Test incrementally**: Use `binst gen` to test your configuration
+3. **Use rules sparingly**: Only add rules for actual platform differences
+4. **Embed checksums**: Use `binst embed-checksums` for better security
+5. **Document your choices**: Add comments explaining non-obvious configurations
