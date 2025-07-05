@@ -58,6 +58,10 @@ node "$QUICKTYPE_DIR/dist/index.js" \
 echo "✅ Go structs generated successfully!"
 echo "📄 Output: $SCRIPT_DIR/../pkg/spec/generated.go"
 
+# Format the generated Go code
+echo "🎨 Formatting generated Go code..."
+gofmt -w ../pkg/spec/generated.go
+
 # Show the EmbeddedChecksums type to verify it's correct
 echo ""
 echo "🔍 Checking EmbeddedChecksums type:"

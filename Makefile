@@ -129,8 +129,6 @@ $(JSON_SCHEMA): $(TYPESPEC_SOURCES)
 $(GENERATED_GO): $(JSON_SCHEMA)
 	@echo "Generating Go structs from JSON Schema..."
 	@cd $(SCHEMA_DIR) && npm run gen:go
-	@echo "Formatting generated Go code..."
-	@gofmt -w $(GENERATED_GO)
 
 gen-schema: $(JSON_SCHEMA) ## Generate JSON Schema from TypeSpec definitions
 
