@@ -227,6 +227,7 @@ binst gen -o install.sh
 The `.config/binstaller.yml` configuration file uses a simple, declarative format:
 
 ```yaml
+# yaml-language-server: $schema=https://raw.githubusercontent.com/binary-install/binstaller/main/schema/output/@typespec/json-schema/InstallSpec.json
 schema: v1
 name: fzf
 repo: junegunn/fzf
@@ -249,6 +250,21 @@ supported_platforms:
   - os: windows
     arch: amd64
 ```
+
+### 📚 Schema Documentation
+
+- **[TypeSpec Definition](schema/main.tsp)** - Human-readable schema definition with comprehensive documentation for all configuration options
+- **[JSON Schema](schema/output/@typespec/json-schema/InstallSpec.json)** - Full JSON Schema definition for validation and IDE support
+- **[Go Structs](pkg/spec/generated.go)** - Generated Go structs used by the implementation
+- **[Schema Browser](https://json-schema.app/view/%23?url=https%3A%2F%2Fraw.githubusercontent.com%2Fbinary-install%2Fbinstaller%2Fmain%2Fschema%2Foutput%2F%40typespec%2Fjson-schema%2FInstallSpec.json)** - Interactive schema explorer (external tool)
+
+The configuration schema is defined using [TypeSpec](https://typespec.io/), which generates both the JSON Schema for validation and Go structs for the implementation. This ensures type safety and consistency across the entire toolchain.
+
+**For detailed configuration options and their meanings, refer to the [TypeSpec definition](schema/main.tsp)**, which includes:
+- Comprehensive documentation for each field
+- Examples of common usage patterns
+- Explanations of advanced features like platform-specific rules, architecture emulation, and embedded checksums
+- Complete type information and constraints
 
 ## 📄 License
 
