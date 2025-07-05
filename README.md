@@ -11,7 +11,7 @@
 
 ---
 
-**binstaller** (binst) is a modern binary installer generator that creates secure, reproducible installation scripts for static binaries distributed via GitHub releases. Works with Go binaries, Rust binaries, and any other static binaries - as long as they're released on GitHub, binstaller can generate installation scripts for them.
+**binstaller** (binst) is a config-based installer shell script generator that creates secure, reproducible installation scripts for static binaries distributed via GitHub releases. Works with Go binaries, Rust binaries, and any other static binaries - as long as they're released on GitHub, binstaller can generate installation scripts for them.
 
 ## 🔄 How it Works
 
