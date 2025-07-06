@@ -136,12 +136,17 @@ model Platform {
   @doc("""
     Operating system identifier.
     
+    Values are based on Go's GOOS (runtime.GOOS) and compatible with
+    shlib's uname_os.sh: https://github.com/client9/shlib/blob/master/uname_os.sh
+    
     Common values:
     - "linux" - Linux distributions
     - "darwin" - macOS
     - "windows" - Windows
     - "freebsd", "openbsd", "netbsd" - BSD variants
     - "android" - Android
+    
+    Full list from go tool dist list:
     """)
   os:
     | "linux"
@@ -152,28 +157,48 @@ model Platform {
     | "netbsd"
     | "dragonfly"
     | "solaris"
-    | "android";
+    | "android"
+    | "aix"
+    | "illumos"
+    | "ios"
+    | "js"
+    | "plan9"
+    | "wasip1";
 
   @doc("""
     CPU architecture identifier.
     
+    Values are based on Go's GOARCH (runtime.GOARCH) and compatible with
+    shlib's uname_arch.sh: https://github.com/client9/shlib/blob/master/uname_arch_check.sh
+    
     Common values:
-    - "amd64 (x86_64)" - 64-bit x86
-    - "arm64 (aarch64)" - 64-bit ARM
-    - "386" - 32-bit x86
-    - "arm" - 32-bit ARM
+    - "amd64" (x86_64) - 64-bit x86
+    - "arm64" (aarch64) - 64-bit ARM
+    - "386" (i386) - 32-bit x86
+    - "arm" - 32-bit ARM (base)
+    
+    ARM variants with version:
+    - "armv5" - ARM v5
+    - "armv6" - ARM v6 (e.g., Raspberry Pi 1)
+    - "armv7" - ARM v7 (e.g., Raspberry Pi 2)
     
     Less common:
     - "ppc64", "ppc64le" - PowerPC 64-bit
     - "mips", "mipsle", "mips64", "mips64le" - MIPS architectures
     - "s390x" - IBM Z architecture
     - "riscv64" - RISC-V 64-bit
+    - "loong64" - LoongArch 64-bit
+    - "wasm" - WebAssembly
+    - "amd64p32" - AMD64 with 32-bit pointers
     """)
   arch:
     | "amd64"
     | "arm64"
     | "386"
     | "arm"
+    | "armv5"
+    | "armv6"
+    | "armv7"
     | "ppc64"
     | "ppc64le"
     | "mips"
@@ -181,7 +206,10 @@ model Platform {
     | "mips64"
     | "mips64le"
     | "s390x"
-    | "riscv64";
+    | "riscv64"
+    | "loong64"
+    | "wasm"
+    | "amd64p32";
 }
 
 @doc("""
@@ -379,6 +407,7 @@ model PlatformCondition {
     If omitted, the rule matches any OS.
     
     Can be any string value to support custom OS identifiers.
+    See Platform.os for common values.
     """)
   os?: string;
 
@@ -389,6 +418,7 @@ model PlatformCondition {
     If omitted, the rule matches any architecture.
     
     Can be any string value to support custom architecture identifiers.
+    See Platform.arch for common values.
     """)
   arch?: string;
 }

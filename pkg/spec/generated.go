@@ -324,6 +324,7 @@ type When struct {
 	// If omitted, the rule matches any OS.
 	//
 	// Can be any string value to support custom OS identifiers.
+	// See Platform.os for common values.
 	OS *string `json:"os,omitempty"`
 	// Match specific architecture.
 	//
@@ -331,6 +332,7 @@ type When struct {
 	// If omitted, the rule matches any architecture.
 	//
 	// Can be any string value to support custom architecture identifiers.
+	// See Platform.arch for common values.
 	Arch *string `json:"arch,omitempty"`
 }
 
@@ -424,26 +426,42 @@ type EmbeddedChecksumElement struct {
 type SupportedPlatformElement struct {
 	// Operating system identifier.
 	//
+	// Values are based on Go's GOOS (runtime.GOOS) and compatible with
+	// shlib's uname_os.sh: https://github.com/client9/shlib/blob/master/uname_os.sh
+	//
 	// Common values:
 	// - "linux" - Linux distributions
 	// - "darwin" - macOS
 	// - "windows" - Windows
 	// - "freebsd", "openbsd", "netbsd" - BSD variants
 	// - "android" - Android
+	//
+	// Full list from go tool dist list:
 	OS *SupportedPlatformOS `json:"os,omitempty"`
 	// CPU architecture identifier.
 	//
+	// Values are based on Go's GOARCH (runtime.GOARCH) and compatible with
+	// shlib's uname_arch.sh: https://github.com/client9/shlib/blob/master/uname_arch_check.sh
+	//
 	// Common values:
-	// - "amd64 (x86_64)" - 64-bit x86
-	// - "arm64 (aarch64)" - 64-bit ARM
-	// - "386" - 32-bit x86
-	// - "arm" - 32-bit ARM
+	// - "amd64" (x86_64) - 64-bit x86
+	// - "arm64" (aarch64) - 64-bit ARM
+	// - "386" (i386) - 32-bit x86
+	// - "arm" - 32-bit ARM (base)
+	//
+	// ARM variants with version:
+	// - "armv5" - ARM v5
+	// - "armv6" - ARM v6 (e.g., Raspberry Pi 1)
+	// - "armv7" - ARM v7 (e.g., Raspberry Pi 2)
 	//
 	// Less common:
 	// - "ppc64", "ppc64le" - PowerPC 64-bit
 	// - "mips", "mipsle", "mips64", "mips64le" - MIPS architectures
 	// - "s390x" - IBM Z architecture
 	// - "riscv64" - RISC-V 64-bit
+	// - "loong64" - LoongArch 64-bit
+	// - "wasm" - WebAssembly
+	// - "amd64p32" - AMD64 with 32-bit pointers
 	Arch *SupportedPlatformArch `json:"arch,omitempty"`
 }
 
@@ -505,23 +523,39 @@ const (
 
 // CPU architecture identifier.
 //
+// Values are based on Go's GOARCH (runtime.GOARCH) and compatible with
+// shlib's uname_arch.sh: https://github.com/client9/shlib/blob/master/uname_arch_check.sh
+//
 // Common values:
-// - "amd64 (x86_64)" - 64-bit x86
-// - "arm64 (aarch64)" - 64-bit ARM
-// - "386" - 32-bit x86
-// - "arm" - 32-bit ARM
+// - "amd64" (x86_64) - 64-bit x86
+// - "arm64" (aarch64) - 64-bit ARM
+// - "386" (i386) - 32-bit x86
+// - "arm" - 32-bit ARM (base)
+//
+// ARM variants with version:
+// - "armv5" - ARM v5
+// - "armv6" - ARM v6 (e.g., Raspberry Pi 1)
+// - "armv7" - ARM v7 (e.g., Raspberry Pi 2)
 //
 // Less common:
 // - "ppc64", "ppc64le" - PowerPC 64-bit
 // - "mips", "mipsle", "mips64", "mips64le" - MIPS architectures
 // - "s390x" - IBM Z architecture
 // - "riscv64" - RISC-V 64-bit
+// - "loong64" - LoongArch 64-bit
+// - "wasm" - WebAssembly
+// - "amd64p32" - AMD64 with 32-bit pointers
 type SupportedPlatformArch string
 
 const (
 	Amd64    SupportedPlatformArch = "amd64"
+	Amd64P32 SupportedPlatformArch = "amd64p32"
 	Arm      SupportedPlatformArch = "arm"
 	Arm64    SupportedPlatformArch = "arm64"
+	Armv5    SupportedPlatformArch = "armv5"
+	Armv6    SupportedPlatformArch = "armv6"
+	Armv7    SupportedPlatformArch = "armv7"
+	Loong64  SupportedPlatformArch = "loong64"
 	MIPS     SupportedPlatformArch = "mips"
 	Mips64   SupportedPlatformArch = "mips64"
 	Mips64LE SupportedPlatformArch = "mips64le"
@@ -531,9 +565,13 @@ const (
 	Riscv64  SupportedPlatformArch = "riscv64"
 	S390X    SupportedPlatformArch = "s390x"
 	The386   SupportedPlatformArch = "386"
+	WASM     SupportedPlatformArch = "wasm"
 )
 
 // Operating system identifier.
+//
+// Values are based on Go's GOOS (runtime.GOOS) and compatible with
+// shlib's uname_os.sh: https://github.com/client9/shlib/blob/master/uname_os.sh
 //
 // Common values:
 // - "linux" - Linux distributions
@@ -541,16 +579,24 @@ const (
 // - "windows" - Windows
 // - "freebsd", "openbsd", "netbsd" - BSD variants
 // - "android" - Android
+//
+// Full list from go tool dist list:
 type SupportedPlatformOS string
 
 const (
+	AIX       SupportedPlatformOS = "aix"
 	Android   SupportedPlatformOS = "android"
 	Darwin    SupportedPlatformOS = "darwin"
 	Dragonfly SupportedPlatformOS = "dragonfly"
 	Freebsd   SupportedPlatformOS = "freebsd"
+	Illumos   SupportedPlatformOS = "illumos"
+	Ios       SupportedPlatformOS = "ios"
+	JS        SupportedPlatformOS = "js"
 	Linux     SupportedPlatformOS = "linux"
 	Netbsd    SupportedPlatformOS = "netbsd"
 	Openbsd   SupportedPlatformOS = "openbsd"
+	Plan9     SupportedPlatformOS = "plan9"
 	Solaris   SupportedPlatformOS = "solaris"
+	Wasip1    SupportedPlatformOS = "wasip1"
 	Windows   SupportedPlatformOS = "windows"
 )
