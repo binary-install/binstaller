@@ -28,14 +28,14 @@ supported_platforms:
 - os: linux
   arch: amd64
 - os: linux
-  arch: arm
-- os: linux
   arch: arm64
+- os: linux
+  arch: armv6
 - os: windows
   arch: "386"
 - os: windows
   arch: amd64
 - os: windows
-  arch: arm
-- os: windows
   arch: arm64
+- os: windows
+  arch: armv6

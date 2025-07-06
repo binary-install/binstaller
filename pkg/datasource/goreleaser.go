@@ -495,6 +495,24 @@ func convertToSupportedOS(os string) *spec.SupportedPlatformOS {
 	case "solaris":
 		val := spec.Solaris
 		return &val
+	case "aix":
+		val := spec.AIX
+		return &val
+	case "illumos":
+		val := spec.Illumos
+		return &val
+	case "ios":
+		val := spec.Ios
+		return &val
+	case "js":
+		val := spec.JS
+		return &val
+	case "plan9":
+		val := spec.Plan9
+		return &val
+	case "wasip1":
+		val := spec.Wasip1
+		return &val
 	default:
 		// Return nil for unsupported OS
 		return nil
@@ -507,14 +525,26 @@ func convertToSupportedArch(arch string) *spec.SupportedPlatformArch {
 	case "amd64":
 		val := spec.Amd64
 		return &val
+	case "amd64p32":
+		val := spec.Amd64P32
+		return &val
 	case "arm64":
 		val := spec.Arm64
 		return &val
 	case "386":
 		val := spec.The386
 		return &val
-	case "arm", "armv6", "armv7":
+	case "arm":
 		val := spec.Arm
+		return &val
+	case "armv5":
+		val := spec.Armv5
+		return &val
+	case "armv6":
+		val := spec.Armv6
+		return &val
+	case "armv7":
+		val := spec.Armv7
 		return &val
 	case "ppc64":
 		val := spec.Ppc64
@@ -539,6 +569,12 @@ func convertToSupportedArch(arch string) *spec.SupportedPlatformArch {
 		return &val
 	case "riscv64":
 		val := spec.Riscv64
+		return &val
+	case "loong64":
+		val := spec.Loong64
+		return &val
+	case "wasm":
+		val := spec.WASM
 		return &val
 	default:
 		// Return nil for unsupported architecture

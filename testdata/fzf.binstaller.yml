@@ -25,13 +25,15 @@ supported_platforms:
 - os: freebsd
   arch: amd64
 - os: linux
-- os: linux
-- os: linux
   arch: amd64
 - os: linux
-  arch: arm
-- os: linux
   arch: arm64
+- os: linux
+  arch: armv5
+- os: linux
+  arch: armv6
+- os: linux
+  arch: loong64
 - os: linux
   arch: ppc64le
 - os: linux
@@ -39,11 +41,12 @@ supported_platforms:
 - os: openbsd
   arch: amd64
 - os: windows
-- os: windows
   arch: amd64
 - os: windows
-  arch: arm
-- os: windows
-  arch: arm
-- os: windows
   arch: arm64
+- os: windows
+  arch: armv5
+- os: windows
+  arch: armv6
+- os: windows
+  arch: armv7
