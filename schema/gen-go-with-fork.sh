@@ -42,7 +42,7 @@ if ! command -v deno &> /dev/null; then
     exit 1
 fi
 
-deno run --allow-read --allow-write add-quicktype-property-order.ts
+deno run --allow-read --allow-write --allow-env add-quicktype-property-order.ts
 
 # Generate Go structs
 echo "🚀 Generating Go structs..."
