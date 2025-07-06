@@ -1,0 +1,106 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "Platform.json",
+    "type": "object",
+    "properties": {
+        "os": {
+            "anyOf": [
+                {
+                    "type": "string",
+                    "const": "linux"
+                },
+                {
+                    "type": "string",
+                    "const": "darwin"
+                },
+                {
+                    "type": "string",
+                    "const": "windows"
+                },
+                {
+                    "type": "string",
+                    "const": "freebsd"
+                },
+                {
+                    "type": "string",
+                    "const": "openbsd"
+                },
+                {
+                    "type": "string",
+                    "const": "netbsd"
+                },
+                {
+                    "type": "string",
+                    "const": "dragonfly"
+                },
+                {
+                    "type": "string",
+                    "const": "solaris"
+                },
+                {
+                    "type": "string",
+                    "const": "android"
+                }
+            ],
+            "description": "Operating system (e.g., linux, darwin, windows)"
+        },
+        "arch": {
+            "anyOf": [
+                {
+                    "type": "string",
+                    "const": "amd64"
+                },
+                {
+                    "type": "string",
+                    "const": "arm64"
+                },
+                {
+                    "type": "string",
+                    "const": "386"
+                },
+                {
+                    "type": "string",
+                    "const": "arm"
+                },
+                {
+                    "type": "string",
+                    "const": "ppc64"
+                },
+                {
+                    "type": "string",
+                    "const": "ppc64le"
+                },
+                {
+                    "type": "string",
+                    "const": "mips"
+                },
+                {
+                    "type": "string",
+                    "const": "mipsle"
+                },
+                {
+                    "type": "string",
+                    "const": "mips64"
+                },
+                {
+                    "type": "string",
+                    "const": "mips64le"
+                },
+                {
+                    "type": "string",
+                    "const": "s390x"
+                },
+                {
+                    "type": "string",
+                    "const": "riscv64"
+                }
+            ],
+            "description": "Architecture (e.g., amd64, arm64, 386)"
+        }
+    },
+    "required": [
+        "os",
+        "arch"
+    ],
+    "description": "Supported OS and architecture combination"
+}

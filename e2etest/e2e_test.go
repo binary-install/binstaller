@@ -88,6 +88,7 @@ func testInstallScript(t *testing.T, repo, binaryName, versionFlag, sha string) 
 		t.Fatalf("Failed to run installation script: %v\nStdout: %s\nStderr: %s", err, installStdout.String(), stderr.String())
 	}
 
+
 	// Check that the binary was installed
 	binName := binaryName
 	if runtime.GOOS == "windows" {
@@ -184,7 +185,6 @@ supported_platforms:
 		if err != nil {
 			t.Fatalf("Failed to read generated script: %v", err)
 		}
-
 
 		// Verify target version is embedded
 		if !bytes.Contains(scriptContent, []byte(`TAG="v1.2.3"`)) {

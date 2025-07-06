@@ -1,40 +1,41 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/binary-install/binstaller/main/schema/output/@typespec/json-schema/InstallSpec.json
 schema: v1
 name: reviewdog
 repo: reviewdog/reviewdog
 asset:
-    template: ${NAME}_${VERSION}_${OS}_${ARCH}${EXT}
-    default_extension: .tar.gz
-    rules:
-        - when:
-            arch: amd64
-          arch: x86_64
-        - when:
-            arch: "386"
-          arch: i386
-    naming_convention:
-        os: titlecase
-        arch: lowercase
+  template: ${NAME}_${VERSION}_${OS}_${ARCH}${EXT}
+  default_extension: .tar.gz
+  rules:
+  - when:
+      arch: amd64
+    arch: x86_64
+  - when:
+      arch: "386"
+    arch: i386
+  naming_convention:
+    os: titlecase
+    arch: lowercase
 checksums:
-    algorithm: sha256
-    template: checksums.txt
+  algorithm: sha256
+  template: checksums.txt
 supported_platforms:
-    - os: darwin
-      arch: amd64
-    - os: darwin
-      arch: arm64
-    - os: linux
-      arch: "386"
-    - os: linux
-      arch: amd64
-    - os: linux
-      arch: arm64
-    - os: linux
-      arch: armv6
-    - os: windows
-      arch: "386"
-    - os: windows
-      arch: amd64
-    - os: windows
-      arch: arm64
-    - os: windows
-      arch: armv6
+- os: darwin
+  arch: amd64
+- os: darwin
+  arch: arm64
+- os: linux
+  arch: "386"
+- os: linux
+  arch: amd64
+- os: linux
+  arch: arm64
+- os: linux
+  arch: armv6
+- os: windows
+  arch: "386"
+- os: windows
+  arch: amd64
+- os: windows
+  arch: arm64
+- os: windows
+  arch: armv6

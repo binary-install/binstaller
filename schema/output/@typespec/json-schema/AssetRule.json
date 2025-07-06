@@ -1,0 +1,38 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "AssetRule.json",
+    "type": "object",
+    "properties": {
+        "when": {
+            "$ref": "PlatformCondition.json",
+            "description": "Condition for applying this rule"
+        },
+        "template": {
+            "type": "string",
+            "description": "Override template for matching platforms"
+        },
+        "os": {
+            "type": "string",
+            "description": "Override OS value for matching platforms"
+        },
+        "arch": {
+            "type": "string",
+            "description": "Override architecture value for matching platforms"
+        },
+        "ext": {
+            "type": "string",
+            "description": "Override extension for matching platforms"
+        },
+        "binaries": {
+            "type": "array",
+            "items": {
+                "$ref": "Binary.json"
+            },
+            "description": "Override binary configuration for matching platforms"
+        }
+    },
+    "required": [
+        "when"
+    ],
+    "description": "Platform-specific asset configuration override"
+}

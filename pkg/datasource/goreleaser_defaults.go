@@ -45,8 +45,8 @@ func applyBuildDefaults(ctx *gorelcontext.Context) error {
 		project.Builds = []config.Build{{
 			ID:     "default",
 			Goos:   []string{"darwin", "linux", "windows"}, // Official GoReleaser defaults
-			Goarch: []string{"386", "amd64", "arm64"},       // Official GoReleaser defaults
-			Goarm:  []string{"6"},                           // Official GoReleaser default (only v6)
+			Goarch: []string{"386", "amd64", "arm64"},      // Official GoReleaser defaults
+			Goarm:  []string{"6"},                          // Official GoReleaser default (only v6)
 			Binary: "{{ .ProjectName }}",
 			// Official GoReleaser default ignore rules
 			Ignore: []config.IgnoredBuild{
@@ -94,7 +94,7 @@ func applyBuildDefaults(ctx *gorelcontext.Context) error {
 			{Gomips: "hardfloat"},
 			{Goamd64: "v4"},
 		}
-		
+
 		for _, defaultIgnore := range defaultIgnores {
 			exists := false
 			for _, existing := range build.Ignore {

@@ -51,8 +51,9 @@ func (e *Embedder) Embed() error {
 
 	// If Checksums section doesn't exist, create it with defaults
 	if e.Spec.Checksums == nil {
+		sha256 := spec.Sha256
 		e.Spec.Checksums = &spec.ChecksumConfig{
-			Algorithm: "sha256", // Default algorithm
+			Algorithm: &sha256, // Default algorithm
 		}
 	}
 
@@ -94,15 +95,15 @@ func (e *Embedder) Embed() error {
 	embeddedChecksums := make([]spec.EmbeddedChecksum, 0, len(checksums))
 	for filename, hash := range checksums {
 		ec := spec.EmbeddedChecksum{
-			Filename: filename,
-			Hash:     hash,
+			Filename: spec.StringPtr(filename),
+			Hash:     spec.StringPtr(hash),
 		}
 		embeddedChecksums = append(embeddedChecksums, ec)
 	}
 
 	// Sort embedded checksums by filename for consistent output
 	slices.SortStableFunc(embeddedChecksums, func(a, b spec.EmbeddedChecksum) int {
-		return strings.Compare(a.Filename, b.Filename)
+		return strings.Compare(spec.StringValue(a.Filename), spec.StringValue(b.Filename))
 	})
 
 	// Update the spec with the new checksums
@@ -136,12 +137,12 @@ func (e *Embedder) resolveVersion(version string) (string, error) {
 		return version, nil
 	}
 
-	if e.Spec == nil || e.Spec.Repo == "" {
+	if e.Spec == nil || spec.StringValue(e.Spec.Repo) == "" {
 		return "", fmt.Errorf("repository not specified in spec")
 	}
 
 	// Use GitHub API to get the latest release
-	url := fmt.Sprintf("https://api.github.com/repos/%s/releases/latest", e.Spec.Repo)
+	url := fmt.Sprintf("https://api.github.com/repos/%s/releases/latest", spec.StringValue(e.Spec.Repo))
 
 	// Set up the request with Accept header for JSON response
 	req, err := http.NewRequest("GET", url, nil)
@@ -187,7 +188,7 @@ func (e *Embedder) downloadAndParseChecksumFile() (map[string]string, error) {
 	}
 
 	checksumURL := fmt.Sprintf("https://github.com/%s/releases/download/%s/%s",
-		e.Spec.Repo, e.Version, checksumFilename)
+		spec.StringValue(e.Spec.Repo), e.Version, checksumFilename)
 
 	log.Infof("Downloading checksums from %s", checksumURL)
 
@@ -285,19 +286,19 @@ func parseChecksumFileInternal(checksumFile string) (map[string]string, error) {
 
 // createChecksumFilename creates the checksum filename using the template from the spec
 func (e *Embedder) createChecksumFilename() string {
-	if e.Spec.Checksums == nil || e.Spec.Checksums.Template == "" {
+	if e.Spec.Checksums == nil || spec.StringValue(e.Spec.Checksums.Template) == "" {
 		return ""
 	}
 
 	// Perform variable substitution in the template
-	filename := e.Spec.Checksums.Template
-	filename = strings.ReplaceAll(filename, "${NAME}", e.Spec.Name)
+	filename := spec.StringValue(e.Spec.Checksums.Template)
+	filename = strings.ReplaceAll(filename, "${NAME}", spec.StringValue(e.Spec.Name))
 	filename = strings.ReplaceAll(filename, "${VERSION}", e.Version)
-	filename = strings.ReplaceAll(filename, "${REPO}", e.Spec.Repo)
+	filename = strings.ReplaceAll(filename, "${REPO}", spec.StringValue(e.Spec.Repo))
 
 	// For consistency with the shell script, also handle repo owner/name expansion
 	if strings.Contains(filename, "${REPO_OWNER}") || strings.Contains(filename, "${REPO_NAME}") {
-		parts := strings.SplitN(e.Spec.Repo, "/", 2)
+		parts := strings.SplitN(spec.StringValue(e.Spec.Repo), "/", 2)
 		if len(parts) == 2 {
 			filename = strings.ReplaceAll(filename, "${REPO_OWNER}", parts[0])
 			filename = strings.ReplaceAll(filename, "${REPO_NAME}", parts[1])

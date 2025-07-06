@@ -1,14 +1,15 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/binary-install/binstaller/main/schema/output/@typespec/json-schema/InstallSpec.json
 schema: v1
 name: kauthproxy
 repo: int128/kauthproxy
 asset:
-    template: kauthproxy_${OS}_${ARCH}${EXT}
-    default_extension: .zip
-    binaries:
-        - name: kauthproxy
-          path: kauthproxy
-        - name: kubectl-auth_proxy
-          path: kauthproxy
+  template: kauthproxy_${OS}_${ARCH}${EXT}
+  default_extension: .zip
+  binaries:
+  - name: kauthproxy
+    path: kauthproxy
+  - name: kubectl-auth_proxy
+    path: kauthproxy
 checksums:
-    algorithm: sha256
-    template: ${ASSET_FILENAME}.sha256
+  algorithm: sha256
+  template: ${ASSET_FILENAME}.sha256

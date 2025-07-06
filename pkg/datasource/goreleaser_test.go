@@ -53,8 +53,8 @@ checksum:
 	if err != nil {
 		t.Fatalf("setupGoReleaserTest failed: %v", err)
 	}
-	if installSpec.Asset.DefaultExtension != ".tar.gz" {
-		t.Errorf("DefaultExtension: want .tar.gz, got %q", installSpec.Asset.DefaultExtension)
+	if spec.StringValue(installSpec.Asset.DefaultExtension) != ".tar.gz" {
+		t.Errorf("DefaultExtension: want .tar.gz, got %q", spec.StringValue(installSpec.Asset.DefaultExtension))
 	}
 }
 
@@ -80,8 +80,8 @@ checksum:
 	}
 	want := []spec.AssetRule{
 		{
-			When: spec.PlatformCondition{OS: "windows"},
-			Ext:  ".zip",
+			When: &spec.PlatformCondition{OS: spec.StringPtr("windows")},
+			EXT:  spec.StringPtr(".zip"),
 		},
 	}
 	if diff := cmp.Diff(want, installSpec.Asset.Rules); diff != "" {
@@ -110,8 +110,8 @@ checksum:
 		t.Fatalf("setupGoReleaserTest failed: %v", err)
 	}
 	want := "checksums.txt"
-	if installSpec.Checksums == nil || installSpec.Checksums.Template != want {
-		t.Errorf("Checksums.Template: want %q, got %v", want, installSpec.Checksums)
+	if installSpec.Checksums == nil || spec.StringValue(installSpec.Checksums.Template) != want {
+		t.Errorf("Checksums.Template: want %q, got %v", want, spec.StringValue(installSpec.Checksums.Template))
 	}
 }
 
@@ -135,11 +135,11 @@ checksum:
 	if err != nil {
 		t.Fatalf("setupGoReleaserTest failed: %v", err)
 	}
-	if installSpec.Name != "mycli" {
-		t.Errorf("Name: want mycli, got %q", installSpec.Name)
+	if spec.StringValue(installSpec.Name) != "mycli" {
+		t.Errorf("Name: want mycli, got %q", spec.StringValue(installSpec.Name))
 	}
-	if installSpec.Repo != "myowner/myrepo" {
-		t.Errorf("Repo: want myowner/myrepo, got %q", installSpec.Repo)
+	if spec.StringValue(installSpec.Repo) != "myowner/myrepo" {
+		t.Errorf("Repo: want myowner/myrepo, got %q", spec.StringValue(installSpec.Repo))
 	}
 }
 
@@ -163,8 +163,8 @@ checksum:
 		t.Fatalf("setupGoReleaserTest failed: %v", err)
 	}
 
-	if installSpec.Asset.DefaultExtension != "" {
-		t.Errorf("DefaultExtension for binary format should be empty, got: %q", installSpec.Asset.DefaultExtension)
+	if spec.StringValue(installSpec.Asset.DefaultExtension) != "" {
+		t.Errorf("DefaultExtension for binary format should be empty, got: %q", spec.StringValue(installSpec.Asset.DefaultExtension))
 	}
 }
 
@@ -187,8 +187,8 @@ checksum:
 		t.Fatalf("setupGoReleaserTest failed: %v", err)
 	}
 
-	if installSpec.Asset.DefaultExtension != ".zip" {
-		t.Errorf("DefaultExtension for binary format should be .zip, got: %q", installSpec.Asset.DefaultExtension)
+	if spec.StringValue(installSpec.Asset.DefaultExtension) != ".zip" {
+		t.Errorf("DefaultExtension for binary format should be .zip, got: %q", spec.StringValue(installSpec.Asset.DefaultExtension))
 	}
 }
 
@@ -213,8 +213,8 @@ checksum:
 	}
 
 	expectedName := "myrepo"
-	if installSpec.Name != expectedName {
-		t.Errorf("expected Name to be %q, got %q", expectedName, installSpec.Name)
+	if spec.StringValue(installSpec.Name) != expectedName {
+		t.Errorf("expected Name to be %q, got %q", expectedName, spec.StringValue(installSpec.Name))
 	}
 }
 
@@ -238,8 +238,8 @@ checksum:
 	if installSpec.Asset.NamingConvention == nil {
 		t.Fatalf("NamingConvention is nil")
 	}
-	if installSpec.Asset.NamingConvention.OS != "titlecase" {
-		t.Errorf("NamingConvention.OS: want titlecase, got %q", installSpec.Asset.NamingConvention.OS)
+	if spec.NamingConventionOSString(installSpec.Asset.NamingConvention.OS) != "titlecase" {
+		t.Errorf("NamingConvention.OS: want titlecase, got %q", spec.NamingConventionOSString(installSpec.Asset.NamingConvention.OS))
 	}
 }
 
@@ -301,12 +301,18 @@ checksum:
 		t.Fatalf("setupGoReleaserTest failed: %v", err)
 	}
 
+	linuxOS := spec.Linux
+	darwinOS := spec.Darwin
+	windowsOS := spec.Windows
+	amd64Arch := spec.Amd64
+	arm64Arch := spec.Arm64
+
 	expectedPlatforms := []spec.Platform{
-		{OS: "linux", Arch: "amd64"},
-		{OS: "linux", Arch: "arm64"},
-		{OS: "darwin", Arch: "amd64"},
-		{OS: "darwin", Arch: "arm64"},
-		{OS: "windows", Arch: "arm64"},
+		{OS: &linuxOS, Arch: &amd64Arch},
+		{OS: &linuxOS, Arch: &arm64Arch},
+		{OS: &darwinOS, Arch: &amd64Arch},
+		{OS: &darwinOS, Arch: &arm64Arch},
+		{OS: &windowsOS, Arch: &arm64Arch},
 		// windows/amd64 is ignored in the goreleaser config
 	}
 
@@ -393,8 +399,8 @@ checksum:
 	//   - if "${ARM}" is true (non-empty string)
 	//   - v{{ .Arm }} is executed -> v${ARM}
 	expectedTemplate := "${NAME}_${OS}_${ARCH}${EXT}"
-	if installSpec.Asset.Template != expectedTemplate {
-		t.Errorf("Asset.Template: want %q, got %q", expectedTemplate, installSpec.Asset.Template)
+	if spec.StringValue(installSpec.Asset.Template) != expectedTemplate {
+		t.Errorf("Asset.Template: want %q, got %q", expectedTemplate, spec.StringValue(installSpec.Asset.Template))
 	}
 }
 
@@ -423,7 +429,11 @@ func sortPlatforms(platforms []spec.Platform) {
 	// Simple sort by OS then Arch
 	for i := 0; i < len(platforms); i++ {
 		for j := i + 1; j < len(platforms); j++ {
-			if platforms[i].OS > platforms[j].OS || (platforms[i].OS == platforms[j].OS && platforms[i].Arch > platforms[j].Arch) {
+			osI := spec.PlatformOSString(platforms[i].OS)
+			osJ := spec.PlatformOSString(platforms[j].OS)
+			archI := spec.PlatformArchString(platforms[i].Arch)
+			archJ := spec.PlatformArchString(platforms[j].Arch)
+			if osI > osJ || (osI == osJ && archI > archJ) {
 				platforms[i], platforms[j] = platforms[j], platforms[i]
 			}
 		}

@@ -1,18 +1,19 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/binary-install/binstaller/main/schema/output/@typespec/json-schema/InstallSpec.json
 schema: v1
 name: gorss
 repo: Lallassu/gorss
 asset:
-    template: gorss_${OS}.tar.gz
-    default_extension: .tar.gz
-    binaries:
-        - name: gorss
-          path: dist/gorss_${OS}
-    rules:
-        - when:
-            os: darwin
-          os: osx
-    arch_emulation:
-        rosetta2: true
+  template: gorss_${OS}.tar.gz
+  default_extension: .tar.gz
+  binaries:
+  - name: gorss
+    path: dist/gorss_${OS}
+  rules:
+  - when:
+      os: darwin
+    os: osx
+  arch_emulation:
+    rosetta2: true
 supported_platforms:
-    - os: linux
-      arch: amd64
+- os: linux
+  arch: amd64

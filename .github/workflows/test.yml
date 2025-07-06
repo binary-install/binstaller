@@ -17,6 +17,14 @@ jobs:
         go-version-file: 'go.mod'
       id: go
 
+    - uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+
+    - uses: denoland/setup-deno@v2
+      with:
+        deno-version: vx.x.x
+
     - run: make setup
 
     - uses: aquaproj/aqua-installer@5e54e5cee8a95ee2ce7c04cb993da6dfad13e59c # v3.1.2

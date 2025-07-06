@@ -45,22 +45,22 @@ func (e *Embedder) calculateChecksums() (map[string]string, error) {
 		go func(p spec.Platform) {
 			defer wg.Done()
 
-			filename, err := e.generateAssetFilename(p.OS, p.Arch)
+			filename, err := e.generateAssetFilename(spec.PlatformOSString(p.OS), spec.PlatformArchString(p.Arch))
 			if err != nil {
-				errorCh <- fmt.Errorf("failed to generate asset filename for %s/%s: %w", p.OS, p.Arch, err)
+				errorCh <- fmt.Errorf("failed to generate asset filename for %s/%s: %w", spec.PlatformOSString(p.OS), spec.PlatformArchString(p.Arch), err)
 				return
 			}
 
 			// Skip empty filenames
 			if filename == "" {
-				log.Warnf("Skipping empty filename for %s/%s", p.OS, p.Arch)
+				log.Warnf("Skipping empty filename for %s/%s", spec.PlatformOSString(p.OS), spec.PlatformArchString(p.Arch))
 				return
 			}
 
 			// Download the asset
 			assetPath := filepath.Join(tempDir, filename)
 			assetURL := fmt.Sprintf("https://github.com/%s/releases/download/%s/%s",
-				e.Spec.Repo, e.Version, filename)
+				spec.StringValue(e.Spec.Repo), e.Version, filename)
 
 			log.Infof("Downloading %s", assetURL)
 			if err := downloadFile(assetURL, assetPath); err != nil {
@@ -70,7 +70,7 @@ func (e *Embedder) calculateChecksums() (map[string]string, error) {
 			}
 
 			// Calculate the checksum
-			hash, err := ComputeHash(assetPath, e.Spec.Checksums.Algorithm)
+			hash, err := ComputeHash(assetPath, spec.AlgorithmString(e.Spec.Checksums.Algorithm))
 			if err != nil {
 				errorCh <- fmt.Errorf("failed to compute hash for %s: %w", filename, err)
 				return
@@ -114,7 +114,7 @@ type checksumResult struct {
 
 // generateAssetFilename creates an asset filename for a specific OS and Arch
 func (e *Embedder) generateAssetFilename(osInput, archInput string) (string, error) {
-	if e.Spec == nil || e.Spec.Asset.Template == "" {
+	if e.Spec == nil || e.Spec.Asset == nil || spec.StringValue(e.Spec.Asset.Template) == "" {
 		return "", fmt.Errorf("asset template not defined in spec")
 	}
 
@@ -128,37 +128,38 @@ func (e *Embedder) generateAssetFilename(osInput, archInput string) (string, err
 
 	// Apply OS/Arch naming conventions for template values
 	if e.Spec.Asset.NamingConvention != nil {
-		if e.Spec.Asset.NamingConvention.OS == "titlecase" {
+		if spec.NamingConventionOSString(e.Spec.Asset.NamingConvention.OS) == "titlecase" {
 			osValue = titleCase(osValue)
 		}
 	}
 
 	// Apply rules to get the right extension and override OS/Arch if needed
-	ext := e.Spec.Asset.DefaultExtension
-	template := e.Spec.Asset.Template
+	ext := spec.StringValue(e.Spec.Asset.DefaultExtension)
+	template := spec.StringValue(e.Spec.Asset.Template)
 
 	// Check if any rule applies - use osMatch/archMatch for condition checking
 	for _, rule := range e.Spec.Asset.Rules {
-		if (rule.When.OS == "" || rule.When.OS == osMatch) &&
-			(rule.When.Arch == "" || rule.When.Arch == archMatch) {
-			if rule.OS != "" {
-				osValue = rule.OS
+		if rule.When != nil &&
+			(spec.StringValue(rule.When.OS) == "" || spec.StringValue(rule.When.OS) == osMatch) &&
+			(spec.StringValue(rule.When.Arch) == "" || spec.StringValue(rule.When.Arch) == archMatch) {
+			if spec.StringValue(rule.OS) != "" {
+				osValue = spec.StringValue(rule.OS)
 			}
-			if rule.Arch != "" {
-				archValue = rule.Arch
+			if spec.StringValue(rule.Arch) != "" {
+				archValue = spec.StringValue(rule.Arch)
 			}
-			if rule.Ext != "" {
-				ext = rule.Ext
+			if spec.StringValue(rule.EXT) != "" {
+				ext = spec.StringValue(rule.EXT)
 			}
-			if rule.Template != "" {
-				template = rule.Template
+			if spec.StringValue(rule.Template) != "" {
+				template = spec.StringValue(rule.Template)
 			}
 		}
 	}
 
 	// Perform variable substitution in the template
 	filename := template
-	filename = strings.ReplaceAll(filename, "${NAME}", e.Spec.Name)
+	filename = strings.ReplaceAll(filename, "${NAME}", spec.StringValue(e.Spec.Name))
 	filename = strings.ReplaceAll(filename, "${VERSION}", e.Version)
 	filename = strings.ReplaceAll(filename, "${OS}", osValue)
 	filename = strings.ReplaceAll(filename, "${ARCH}", archValue)
@@ -166,7 +167,7 @@ func (e *Embedder) generateAssetFilename(osInput, archInput string) (string, err
 
 	// For consistency with the shell script, also handle repo owner/name expansion
 	if strings.Contains(filename, "${REPO_OWNER}") || strings.Contains(filename, "${REPO_NAME}") {
-		parts := strings.SplitN(e.Spec.Repo, "/", 2)
+		parts := strings.SplitN(spec.StringValue(e.Spec.Repo), "/", 2)
 		if len(parts) == 2 {
 			filename = strings.ReplaceAll(filename, "${REPO_OWNER}", parts[0])
 			filename = strings.ReplaceAll(filename, "${REPO_NAME}", parts[1])
@@ -215,12 +216,19 @@ func downloadFile(url, filepath string) error {
 
 // getCommonPlatforms returns a list of common platforms
 func getCommonPlatforms() []spec.Platform {
+	linuxOS := spec.Linux
+	darwinOS := spec.Darwin
+	windowsOS := spec.Windows
+	amd64Arch := spec.Amd64
+	arm64Arch := spec.Arm64
+	x86Arch := spec.The386
+
 	return []spec.Platform{
-		{OS: "linux", Arch: "amd64"},
-		{OS: "linux", Arch: "arm64"},
-		{OS: "darwin", Arch: "amd64"},
-		{OS: "darwin", Arch: "arm64"},
-		{OS: "windows", Arch: "amd64"},
-		{OS: "windows", Arch: "386"},
+		{OS: &linuxOS, Arch: &amd64Arch},
+		{OS: &linuxOS, Arch: &arm64Arch},
+		{OS: &darwinOS, Arch: &amd64Arch},
+		{OS: &darwinOS, Arch: &arm64Arch},
+		{OS: &windowsOS, Arch: &amd64Arch},
+		{OS: &windowsOS, Arch: &x86Arch},
 	}
 }

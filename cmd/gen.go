@@ -10,12 +10,12 @@ import (
 	"github.com/binary-install/binstaller/internal/shell" // Placeholder for script generator
 	"github.com/binary-install/binstaller/pkg/spec"
 	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v3"
+	"github.com/goccy/go-yaml"
 )
 
 var (
 	// Flags for gen command
-	genOutputFile   string
+	genOutputFile    string
 	genTargetVersion string
 	// Input config file is handled by the global --config flag
 )

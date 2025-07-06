@@ -1,27 +1,28 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/binary-install/binstaller/main/schema/output/@typespec/json-schema/InstallSpec.json
 schema: v1
 name: gh-setup
 repo: k1LoW/gh-setup
 asset:
-    template: ${NAME}_v${VERSION}_${OS}_${ARCH}${EXT}
-    default_extension: .tar.gz
-    rules:
-        - when:
-            os: darwin
-          ext: .zip
-    naming_convention:
-        os: lowercase
-        arch: lowercase
+  template: ${NAME}_v${VERSION}_${OS}_${ARCH}${EXT}
+  default_extension: .tar.gz
+  rules:
+  - when:
+      os: darwin
+    ext: .zip
+  naming_convention:
+    os: lowercase
+    arch: lowercase
 checksums:
-    algorithm: sha256
-    template: checksums.txt
+  algorithm: sha256
+  template: checksums.txt
 supported_platforms:
-    - os: darwin
-      arch: amd64
-    - os: darwin
-      arch: arm64
-    - os: linux
-      arch: amd64
-    - os: linux
-      arch: arm64
-    - os: windows
-      arch: amd64
+- os: darwin
+  arch: amd64
+- os: darwin
+  arch: arm64
+- os: linux
+  arch: amd64
+- os: linux
+  arch: arm64
+- os: windows
+  arch: amd64

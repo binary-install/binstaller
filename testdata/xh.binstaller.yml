@@ -1,30 +1,31 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/binary-install/binstaller/main/schema/output/@typespec/json-schema/InstallSpec.json
 schema: v1
 name: xh
 repo: ducaale/xh
 asset:
-    template: xh-${TAG}-${ARCH}-${OS}${EXT}
-    default_extension: .tar.gz
-    binaries:
-        - name: xh
-          path: xh-${TAG}-${ARCH}-${OS}/xh
-    rules:
-        - when:
-            arch: amd64
-          arch: x86_64
-        - when:
-            arch: arm64
-          arch: aarch64
-        - when:
-            os: darwin
-          os: apple-darwin
-        - when:
-            os: linux
-          os: unknown-linux-musl
-        - when:
-            os: windows
-          os: pc-windows-msvc
-        - when:
-            os: windows
-          ext: .zip
-    arch_emulation:
-        rosetta2: true
+  template: xh-${TAG}-${ARCH}-${OS}${EXT}
+  default_extension: .tar.gz
+  binaries:
+  - name: xh
+    path: xh-${TAG}-${ARCH}-${OS}/xh
+  rules:
+  - when:
+      arch: amd64
+    arch: x86_64
+  - when:
+      arch: arm64
+    arch: aarch64
+  - when:
+      os: darwin
+    os: apple-darwin
+  - when:
+      os: linux
+    os: unknown-linux-musl
+  - when:
+      os: windows
+    os: pc-windows-msvc
+  - when:
+      os: windows
+    ext: .zip
+  arch_emulation:
+    rosetta2: true

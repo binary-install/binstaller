@@ -1,17 +1,18 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/binary-install/binstaller/main/schema/output/@typespec/json-schema/InstallSpec.json
 schema: v1
 repo: babarot/git-bump
 asset:
-    template: git-bump_${OS}_${ARCH}${EXT}
-    default_extension: .tar.gz
-    rules:
-        - when:
-            arch: amd64
-          arch: x86_64
-    arch_emulation:
-        rosetta2: true
-checksums:
-    algorithm: sha256
-    template: git-bump_${VERSION}_checksums.txt
-supported_platforms:
-    - os: linux
+  template: git-bump_${OS}_${ARCH}${EXT}
+  default_extension: .tar.gz
+  rules:
+  - when:
       arch: amd64
+    arch: x86_64
+  arch_emulation:
+    rosetta2: true
+checksums:
+  algorithm: sha256
+  template: git-bump_${VERSION}_checksums.txt
+supported_platforms:
+- os: linux
+  arch: amd64

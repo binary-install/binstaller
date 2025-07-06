@@ -1,0 +1,434 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "binstaller.json",
+    "$defs": {
+        "InstallSpec": {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "$id": "InstallSpec.json",
+            "type": "object",
+            "properties": {
+                "schema": {
+                    "type": "string",
+                    "default": "v1",
+                    "description": "Schema version"
+                },
+                "name": {
+                    "type": "string",
+                    "description": "Binary name (defaults to repository name if not specified)"
+                },
+                "repo": {
+                    "type": "string",
+                    "pattern": "^[^/]+/[^/]+$",
+                    "description": "GitHub repository in format 'owner/repo'"
+                },
+                "default_version": {
+                    "type": "string",
+                    "default": "latest",
+                    "description": "Default version to install"
+                },
+                "default_bin_dir": {
+                    "type": "string",
+                    "default": "${BINSTALLER_BIN:-${HOME}/.local/bin}",
+                    "description": "Default binary installation directory"
+                },
+                "asset": {
+                    "$ref": "AssetConfig.json",
+                    "description": "Asset download configuration"
+                },
+                "checksums": {
+                    "$ref": "ChecksumConfig.json",
+                    "description": "Checksum verification configuration"
+                },
+                "attestation": {
+                    "$ref": "AttestationConfig.json",
+                    "description": "Attestation verification configuration"
+                },
+                "unpack": {
+                    "$ref": "UnpackConfig.json",
+                    "description": "Archive extraction configuration"
+                },
+                "supported_platforms": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "Platform.json"
+                    },
+                    "description": "List of supported OS/architecture combinations"
+                }
+            },
+            "required": [
+                "repo",
+                "asset"
+            ],
+            "description": "Configuration specification for binstaller binary installation"
+        },
+        "AssetConfig": {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "$id": "AssetConfig.json",
+            "type": "object",
+            "properties": {
+                "template": {
+                    "type": "string",
+                    "description": "Filename template with placeholders: ${NAME}, ${VERSION}, ${OS}, ${ARCH}, ${EXT}"
+                },
+                "default_extension": {
+                    "type": "string",
+                    "description": "Default file extension when not specified in template"
+                },
+                "binaries": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "Binary.json"
+                    },
+                    "description": "Binary names and their paths within the asset"
+                },
+                "rules": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "AssetRule.json"
+                    },
+                    "description": "Platform-specific overrides"
+                },
+                "naming_convention": {
+                    "$ref": "NamingConvention.json",
+                    "description": "Controls the casing of placeholder values"
+                },
+                "arch_emulation": {
+                    "$ref": "ArchEmulation.json",
+                    "description": "Architecture emulation configuration"
+                }
+            },
+            "required": [
+                "template"
+            ],
+            "description": "Configuration for constructing download URLs and asset names"
+        },
+        "Binary": {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "$id": "Binary.json",
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "description": "Name of the binary to install"
+                },
+                "path": {
+                    "type": "string",
+                    "description": "Path to the binary within the extracted archive (use ${ASSET_FILENAME} for non-archive assets)"
+                }
+            },
+            "required": [
+                "name",
+                "path"
+            ],
+            "description": "Binary name and path configuration"
+        },
+        "AssetRule": {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "$id": "AssetRule.json",
+            "type": "object",
+            "properties": {
+                "when": {
+                    "$ref": "PlatformCondition.json",
+                    "description": "Condition for applying this rule"
+                },
+                "template": {
+                    "type": "string",
+                    "description": "Override template for matching platforms"
+                },
+                "os": {
+                    "type": "string",
+                    "description": "Override OS value for matching platforms"
+                },
+                "arch": {
+                    "type": "string",
+                    "description": "Override architecture value for matching platforms"
+                },
+                "ext": {
+                    "type": "string",
+                    "description": "Override extension for matching platforms"
+                },
+                "binaries": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "Binary.json"
+                    },
+                    "description": "Override binary configuration for matching platforms"
+                }
+            },
+            "required": [
+                "when"
+            ],
+            "description": "Platform-specific asset configuration override"
+        },
+        "PlatformCondition": {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "$id": "PlatformCondition.json",
+            "type": "object",
+            "properties": {
+                "os": {
+                    "type": "string",
+                    "description": "Match specific operating system"
+                },
+                "arch": {
+                    "type": "string",
+                    "description": "Match specific architecture"
+                }
+            },
+            "description": "Condition for matching specific platforms"
+        },
+        "NamingConvention": {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "$id": "NamingConvention.json",
+            "type": "object",
+            "properties": {
+                "os": {
+                    "anyOf": [
+                        {
+                            "type": "string",
+                            "const": "lowercase"
+                        },
+                        {
+                            "type": "string",
+                            "const": "titlecase"
+                        }
+                    ],
+                    "default": "lowercase",
+                    "description": "Casing for ${OS} placeholder"
+                },
+                "arch": {
+                    "type": "string",
+                    "const": "lowercase",
+                    "default": "lowercase",
+                    "description": "Casing for ${ARCH} placeholder"
+                }
+            },
+            "description": "Controls the casing of template placeholders"
+        },
+        "ArchEmulation": {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "$id": "ArchEmulation.json",
+            "type": "object",
+            "properties": {
+                "rosetta2": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Use amd64 instead of arm64 when Rosetta 2 is available on macOS"
+                }
+            },
+            "description": "Architecture emulation configuration"
+        },
+        "ChecksumConfig": {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "$id": "ChecksumConfig.json",
+            "type": "object",
+            "properties": {
+                "algorithm": {
+                    "anyOf": [
+                        {
+                            "type": "string",
+                            "const": "sha256"
+                        },
+                        {
+                            "type": "string",
+                            "const": "sha512"
+                        },
+                        {
+                            "type": "string",
+                            "const": "sha1"
+                        },
+                        {
+                            "type": "string",
+                            "const": "md5"
+                        }
+                    ],
+                    "default": "sha256",
+                    "description": "Hash algorithm"
+                },
+                "template": {
+                    "type": "string",
+                    "description": "Checksum filename template"
+                },
+                "embedded_checksums": {
+                    "$ref": "#/$defs/RecordArrayEmbeddedChecksum",
+                    "description": "Pre-verified checksums keyed by version"
+                }
+            },
+            "description": "Checksum verification configuration",
+            "$defs": {
+                "RecordArrayEmbeddedChecksum": {
+                    "type": "object",
+                    "properties": {},
+                    "unevaluatedProperties": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "EmbeddedChecksum.json"
+                        }
+                    }
+                }
+            }
+        },
+        "EmbeddedChecksum": {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "$id": "EmbeddedChecksum.json",
+            "type": "object",
+            "properties": {
+                "filename": {
+                    "type": "string",
+                    "description": "Asset filename"
+                },
+                "hash": {
+                    "type": "string",
+                    "description": "Checksum hash value"
+                }
+            },
+            "required": [
+                "filename",
+                "hash"
+            ],
+            "description": "Pre-verified checksum for a specific asset"
+        },
+        "AttestationConfig": {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "$id": "AttestationConfig.json",
+            "type": "object",
+            "properties": {
+                "enabled": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Enable attestation verification"
+                },
+                "require": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Require attestation to pass"
+                },
+                "verify_flags": {
+                    "type": "string",
+                    "description": "Additional flags for 'gh attestation verify' command"
+                }
+            },
+            "description": "Attestation verification using GitHub's attestation feature"
+        },
+        "UnpackConfig": {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "$id": "UnpackConfig.json",
+            "type": "object",
+            "properties": {
+                "strip_components": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 2147483647,
+                    "default": 0,
+                    "description": "Number of leading path components to strip when extracting"
+                }
+            },
+            "description": "Archive extraction configuration"
+        },
+        "Platform": {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "$id": "Platform.json",
+            "type": "object",
+            "properties": {
+                "os": {
+                    "anyOf": [
+                        {
+                            "type": "string",
+                            "const": "linux"
+                        },
+                        {
+                            "type": "string",
+                            "const": "darwin"
+                        },
+                        {
+                            "type": "string",
+                            "const": "windows"
+                        },
+                        {
+                            "type": "string",
+                            "const": "freebsd"
+                        },
+                        {
+                            "type": "string",
+                            "const": "openbsd"
+                        },
+                        {
+                            "type": "string",
+                            "const": "netbsd"
+                        },
+                        {
+                            "type": "string",
+                            "const": "dragonfly"
+                        },
+                        {
+                            "type": "string",
+                            "const": "solaris"
+                        },
+                        {
+                            "type": "string",
+                            "const": "android"
+                        }
+                    ],
+                    "description": "Operating system (e.g., linux, darwin, windows)"
+                },
+                "arch": {
+                    "anyOf": [
+                        {
+                            "type": "string",
+                            "const": "amd64"
+                        },
+                        {
+                            "type": "string",
+                            "const": "arm64"
+                        },
+                        {
+                            "type": "string",
+                            "const": "386"
+                        },
+                        {
+                            "type": "string",
+                            "const": "arm"
+                        },
+                        {
+                            "type": "string",
+                            "const": "ppc64"
+                        },
+                        {
+                            "type": "string",
+                            "const": "ppc64le"
+                        },
+                        {
+                            "type": "string",
+                            "const": "mips"
+                        },
+                        {
+                            "type": "string",
+                            "const": "mipsle"
+                        },
+                        {
+                            "type": "string",
+                            "const": "mips64"
+                        },
+                        {
+                            "type": "string",
+                            "const": "mips64le"
+                        },
+                        {
+                            "type": "string",
+                            "const": "s390x"
+                        },
+                        {
+                            "type": "string",
+                            "const": "riscv64"
+                        }
+                    ],
+                    "description": "Architecture (e.g., amd64, arm64, 386)"
+                }
+            },
+            "required": [
+                "os",
+                "arch"
+            ],
+            "description": "Supported OS and architecture combination"
+        }
+    }
+}

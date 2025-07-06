@@ -1,0 +1,488 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "InstallSpec.json",
+    "type": "object",
+    "properties": {
+        "schema": {
+            "type": "string",
+            "default": "v1",
+            "description": "Schema version"
+        },
+        "name": {
+            "type": "string",
+            "description": "Binary name (defaults to repository name if not specified)"
+        },
+        "repo": {
+            "type": "string",
+            "pattern": "^[^/]+/[^/]+$",
+            "description": "GitHub repository in format 'owner/repo'"
+        },
+        "default_version": {
+            "type": "string",
+            "default": "latest",
+            "description": "Default version to install"
+        },
+        "default_bin_dir": {
+            "type": "string",
+            "default": "${BINSTALLER_BIN:-${HOME}/.local/bin}",
+            "description": "Default binary installation directory"
+        },
+        "asset": {
+            "$ref": "#/$defs/AssetConfig",
+            "description": "Asset download configuration"
+        },
+        "checksums": {
+            "$ref": "#/$defs/ChecksumConfig",
+            "description": "Checksum verification configuration"
+        },
+        "unpack": {
+            "$ref": "#/$defs/UnpackConfig",
+            "description": "Archive extraction configuration"
+        },
+        "supported_platforms": {
+            "type": "array",
+            "items": {
+                "$ref": "#/$defs/Platform"
+            },
+            "description": "List of supported OS/architecture combinations"
+        }
+    },
+    "required": [
+        "repo",
+        "asset"
+    ],
+    "description": "Configuration specification for binstaller binary installation.\n\nThis is the root configuration that defines how to download, verify,\nand install binaries from GitHub releases.\n\nMinimal example:\n```yaml\nschema: v1\nrepo: owner/project\nasset:\n  template: \"${NAME}_${VERSION}_${OS}_${ARCH}.tar.gz\"\n```\n\nComplete example with all features:\n```yaml\nschema: v1\nname: mytool\nrepo: myorg/mytool\ndefault_version: latest\ndefault_bin_dir: ${HOME}/.local/bin\n\n# Asset configuration with platform-specific rules\nasset:\n  template: \"${NAME}_${VERSION}_${OS}_${ARCH}${EXT}\"\n  default_extension: .tar.gz\n  binaries:\n    - name: mytool\n      path: mytool\n    - name: mytool-helper\n      path: bin/mytool-helper\n  rules:\n    # Windows gets .zip extension\n    - when:\n        os: windows\n      ext: .zip\n    # macOS uses different naming\n    - when:\n        os: darwin\n      os: macOS\n      ext: .zip\n    # Special handling for M1 Macs\n    - when:\n        os: darwin\n        arch: arm64\n      template: \"${NAME}_${VERSION}_${OS}_${ARCH}_signed${EXT}\"\n  naming_convention:\n    os: lowercase\n  arch_emulation:\n    rosetta2: true\n\n# Security features\nchecksums:\n  algorithm: sha256\n  template: \"${NAME}_${VERSION}_checksums.txt\"\n  embedded_checksums:\n    \"1.0.0\":\n      - filename: \"mytool_1.0.0_linux_amd64.tar.gz\"\n        hash: \"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\"\n\n# Archive handling\nunpack:\n  strip_components: 1\n\n# Platform restrictions\nsupported_platforms:\n  - os: linux\n    arch: amd64\n  - os: linux\n    arch: arm64\n  - os: darwin\n    arch: amd64\n  - os: darwin\n    arch: arm64\n  - os: windows\n    arch: amd64\n```",
+    "$defs": {
+        "AssetConfig": {
+            "type": "object",
+            "properties": {
+                "template": {
+                    "type": "string",
+                    "description": "Filename template with placeholders.\n\nAvailable placeholders:\n- ${NAME}: Binary name (from 'name' field or repository name)\n- ${VERSION}: Version to install (includes 'v' prefix if present in tag)\n- ${OS}: Operating system (e.g., 'linux', 'darwin', 'windows')\n- ${ARCH}: Architecture (e.g., 'amd64', 'arm64', '386')\n- ${EXT}: File extension (from 'default_extension' or rules)\n\nExamples:\n- \"${NAME}_${VERSION}_${OS}_${ARCH}.tar.gz\"\n- \"${NAME}-${VERSION}-${OS}-${ARCH}${EXT}\"\n- \"v${VERSION}/${NAME}_${OS}_${ARCH}.zip\""
+                },
+                "default_extension": {
+                    "type": "string",
+                    "description": "Default file extension when not specified in template.\nThis is used when the template contains ${EXT} placeholder.\nCommon values: '.tar.gz', '.zip', '.exe'\nIf not set and template uses ${EXT}, it defaults to empty string."
+                },
+                "binaries": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/Binary"
+                    },
+                    "description": "Binary names and their paths within the asset.\n\nFor archives: Specify the path within the extracted directory.\n\nIf not specified, defaults to a single binary with:\n- name: The repository name\n- path: The repository name"
+                },
+                "rules": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/AssetRule"
+                    },
+                    "description": "Platform-specific overrides.\nRules are evaluated in order, and ALL matching rules are applied cumulatively.\nLater rules can override values set by earlier rules.\nUse this to handle special cases for specific OS/arch combinations."
+                },
+                "naming_convention": {
+                    "$ref": "#/$defs/NamingConvention",
+                    "description": "Controls the casing of placeholder values"
+                },
+                "arch_emulation": {
+                    "$ref": "#/$defs/ArchEmulation",
+                    "description": "Architecture emulation configuration"
+                }
+            },
+            "quicktypePropertyOrder": [
+                "template",
+                "default_extension",
+                "binaries",
+                "rules",
+                "naming_convention",
+                "arch_emulation"
+            ],
+            "required": [
+                "template"
+            ],
+            "description": "Configuration for constructing download URLs and asset names.\n\nThe asset configuration determines how to build the download URL for each platform.\nIt uses a template system with placeholders that are replaced with actual values."
+        },
+        "ChecksumConfig": {
+            "type": "object",
+            "properties": {
+                "algorithm": {
+                    "anyOf": [
+                        {
+                            "type": "string",
+                            "const": "sha256"
+                        },
+                        {
+                            "type": "string",
+                            "const": "sha512"
+                        },
+                        {
+                            "type": "string",
+                            "const": "sha1"
+                        },
+                        {
+                            "type": "string",
+                            "const": "md5"
+                        }
+                    ],
+                    "default": "sha256",
+                    "description": "Hash algorithm used for checksums.\nMust match the algorithm used by the project's checksum files.\nMost projects use sha256."
+                },
+                "template": {
+                    "type": "string",
+                    "description": "Template for checksum filename.\n\nIf specified, binstaller will download this file to verify checksums.\nUses the same placeholders as asset templates.\n\nCommon patterns:\n- \"${NAME}_${VERSION}_checksums.txt\"\n- \"checksums.txt\"\n- \"${NAME}-${VERSION}-SHA256SUMS\"\n\nLeave empty to rely only on embedded checksums."
+                },
+                "embedded_checksums": {
+                    "$ref": "#/$defs/RecordArrayEmbeddedChecksum",
+                    "description": "Pre-verified checksums organized by version.\n\nUse 'binst embed-checksums' command to automatically populate this.\nThe key is the version string (includes 'v' prefix if present in tag).\nThe value is an array of filename/hash pairs.\n\nThis allows offline installation and protects against\ncompromised checksum files."
+                }
+            },
+            "quicktypePropertyOrder": [
+                "algorithm",
+                "template",
+                "embedded_checksums"
+            ],
+            "description": "Checksum verification configuration.\n\nBinstaller verifies downloaded files using checksums to ensure integrity.\nIt can either download checksum files from the release or use pre-verified\nchecksums embedded in the configuration.\n\nExample:\n```yaml\nchecksums:\n  algorithm: sha256\n  template: \"${NAME}_${VERSION}_checksums.txt\"\n  embedded_checksums:\n    \"1.0.0\":\n      - filename: \"mytool_1.0.0_linux_amd64.tar.gz\"\n        hash: \"abc123...\"\n      - filename: \"mytool_1.0.0_darwin_amd64.tar.gz\"\n        hash: \"def456...\"\n```"
+        },
+        "UnpackConfig": {
+            "type": "object",
+            "properties": {
+                "strip_components": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 2147483647,
+                    "default": 0,
+                    "description": "Number of leading path components to strip when extracting.\n\nSimilar to tar's --strip-components option.\nUseful when archives have an extra top-level directory.\n\nExamples:\n- 0 (default): Extract as-is\n- 1: Remove first directory level (e.g., \"mytool-v1.0.0/bin/mytool\" → \"bin/mytool\")\n- 2: Remove first two directory levels"
+                }
+            },
+            "quicktypePropertyOrder": [
+                "strip_components"
+            ],
+            "description": "Archive extraction configuration.\n\nControls how archives are extracted during installation.\nPrimarily used to handle archives with unnecessary directory nesting.\n\nExample:\n```yaml\n# Archive structure: mytool-v1.0.0/bin/mytool\n# We want just: bin/mytool\nunpack:\n  strip_components: 1\n```"
+        },
+        "Platform": {
+            "type": "object",
+            "properties": {
+                "os": {
+                    "anyOf": [
+                        {
+                            "type": "string",
+                            "const": "linux"
+                        },
+                        {
+                            "type": "string",
+                            "const": "darwin"
+                        },
+                        {
+                            "type": "string",
+                            "const": "windows"
+                        },
+                        {
+                            "type": "string",
+                            "const": "freebsd"
+                        },
+                        {
+                            "type": "string",
+                            "const": "openbsd"
+                        },
+                        {
+                            "type": "string",
+                            "const": "netbsd"
+                        },
+                        {
+                            "type": "string",
+                            "const": "dragonfly"
+                        },
+                        {
+                            "type": "string",
+                            "const": "solaris"
+                        },
+                        {
+                            "type": "string",
+                            "const": "android"
+                        },
+                        {
+                            "type": "string",
+                            "const": "aix"
+                        },
+                        {
+                            "type": "string",
+                            "const": "illumos"
+                        },
+                        {
+                            "type": "string",
+                            "const": "ios"
+                        },
+                        {
+                            "type": "string",
+                            "const": "js"
+                        },
+                        {
+                            "type": "string",
+                            "const": "plan9"
+                        },
+                        {
+                            "type": "string",
+                            "const": "wasip1"
+                        }
+                    ],
+                    "description": "Operating system identifier.\n\nValues are based on Go's GOOS (runtime.GOOS) and compatible with\nshlib's uname_os.sh: https://github.com/client9/shlib/blob/master/uname_os.sh\n\nCommon values:\n- \"linux\" - Linux distributions\n- \"darwin\" - macOS\n- \"windows\" - Windows\n- \"freebsd\", \"openbsd\", \"netbsd\" - BSD variants\n- \"android\" - Android\n\nFull list from go tool dist list:"
+                },
+                "arch": {
+                    "anyOf": [
+                        {
+                            "type": "string",
+                            "const": "amd64"
+                        },
+                        {
+                            "type": "string",
+                            "const": "arm64"
+                        },
+                        {
+                            "type": "string",
+                            "const": "386"
+                        },
+                        {
+                            "type": "string",
+                            "const": "arm"
+                        },
+                        {
+                            "type": "string",
+                            "const": "armv5"
+                        },
+                        {
+                            "type": "string",
+                            "const": "armv6"
+                        },
+                        {
+                            "type": "string",
+                            "const": "armv7"
+                        },
+                        {
+                            "type": "string",
+                            "const": "ppc64"
+                        },
+                        {
+                            "type": "string",
+                            "const": "ppc64le"
+                        },
+                        {
+                            "type": "string",
+                            "const": "mips"
+                        },
+                        {
+                            "type": "string",
+                            "const": "mipsle"
+                        },
+                        {
+                            "type": "string",
+                            "const": "mips64"
+                        },
+                        {
+                            "type": "string",
+                            "const": "mips64le"
+                        },
+                        {
+                            "type": "string",
+                            "const": "s390x"
+                        },
+                        {
+                            "type": "string",
+                            "const": "riscv64"
+                        },
+                        {
+                            "type": "string",
+                            "const": "loong64"
+                        },
+                        {
+                            "type": "string",
+                            "const": "wasm"
+                        },
+                        {
+                            "type": "string",
+                            "const": "amd64p32"
+                        }
+                    ],
+                    "description": "CPU architecture identifier.\n\nValues are based on Go's GOARCH (runtime.GOARCH) and compatible with\nshlib's uname_arch.sh: https://github.com/client9/shlib/blob/master/uname_arch_check.sh\n\nCommon values:\n- \"amd64\" (x86_64) - 64-bit x86\n- \"arm64\" (aarch64) - 64-bit ARM\n- \"386\" (i386) - 32-bit x86\n- \"arm\" - 32-bit ARM (base)\n\nARM variants with version:\n- \"armv5\" - ARM v5\n- \"armv6\" - ARM v6 (e.g., Raspberry Pi 1)\n- \"armv7\" - ARM v7 (e.g., Raspberry Pi 2)\n\nLess common:\n- \"ppc64\", \"ppc64le\" - PowerPC 64-bit\n- \"mips\", \"mipsle\", \"mips64\", \"mips64le\" - MIPS architectures\n- \"s390x\" - IBM Z architecture\n- \"riscv64\" - RISC-V 64-bit\n- \"loong64\" - LoongArch 64-bit\n- \"wasm\" - WebAssembly\n- \"amd64p32\" - AMD64 with 32-bit pointers"
+                }
+            },
+            "quicktypePropertyOrder": [
+                "os",
+                "arch"
+            ],
+            "required": [
+                "os",
+                "arch"
+            ],
+            "description": "Supported OS and architecture combination.\n\nDefines a specific platform that the binary supports.\nUsed to restrict installation to known-working platforms.\n\nExample:\n```yaml\nsupported_platforms:\n  - os: linux\n    arch: amd64\n  - os: linux\n    arch: arm64\n  - os: darwin\n    arch: amd64\n  - os: darwin\n    arch: arm64\n  - os: windows\n    arch: amd64\n```"
+        },
+        "Binary": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "description": "Name of the binary to install.\nThis will be the filename created in the installation directory."
+                },
+                "path": {
+                    "type": "string",
+                    "description": "Path to the binary within the extracted archive.\n\nThe path relative to the archive root.\n\nExamples:\n- \"mytool\" - Binary at archive root\n- \"bin/mytool\" - Binary in bin subdirectory"
+                }
+            },
+            "quicktypePropertyOrder": [
+                "name",
+                "path"
+            ],
+            "required": [
+                "name",
+                "path"
+            ],
+            "description": "Binary name and path configuration.\n\nDefines which binary files to install from the downloaded asset.\nFor single binary releases, this is straightforward.\nFor releases with multiple binaries, you can specify which ones to install.\n\nExamples:\n- Single binary in archive: {name: \"mytool\", path: \"mytool\"}\n- Binary in subdirectory: {name: \"mytool\", path: \"bin/mytool\"}\n- Multiple binaries: [{name: \"tool1\", path: \"tool1\"}, {name: \"tool2\", path: \"tool2\"}]"
+        },
+        "AssetRule": {
+            "type": "object",
+            "properties": {
+                "when": {
+                    "$ref": "#/$defs/PlatformCondition",
+                    "description": "Condition for applying this rule.\nAll specified fields must match for the rule to apply.\nIf a field is not specified, it matches any value."
+                },
+                "template": {
+                    "type": "string",
+                    "description": "Override template for matching platforms.\nThis completely replaces the default template when the rule matches."
+                },
+                "os": {
+                    "type": "string",
+                    "description": "Override OS value for matching platforms.\nThis changes the ${OS} placeholder value in the template.\nUseful when the release uses different OS naming (e.g., 'mac' instead of 'darwin')."
+                },
+                "arch": {
+                    "type": "string",
+                    "description": "Override architecture value for matching platforms.\nThis changes the ${ARCH} placeholder value in the template.\nUseful when the release uses different arch naming (e.g., 'x64' instead of 'amd64')."
+                },
+                "ext": {
+                    "type": "string",
+                    "description": "Override extension for matching platforms.\nThis changes the ${EXT} placeholder value in the template.\nCommon values: '.tar.gz', '.zip', '.exe'"
+                },
+                "binaries": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/Binary"
+                    },
+                    "description": "Override binary configuration for matching platforms.\nThis replaces the default binary configuration when the rule matches.\nUseful when different platforms have different binary names or paths."
+                }
+            },
+            "quicktypePropertyOrder": [
+                "when",
+                "template",
+                "os",
+                "arch",
+                "ext",
+                "binaries"
+            ],
+            "required": [
+                "when"
+            ],
+            "description": "Platform-specific asset configuration override.\n\nRules are evaluated in order, and ALL matching rules are applied sequentially.\nEach matching rule's overrides are applied cumulatively, with later rules\noverriding values set by earlier rules.\n\nA rule matches when all specified conditions in 'when' are met.\n\nExample:\n```yaml\nrules:\n  # Rule 1: Windows gets .zip extension\n  - when:\n      os: windows\n    ext: .zip\n  \n  # Rule 2: Darwin is renamed to macOS\n  - when:\n      os: darwin\n    os: macOS\n  \n  # Rule 3: Darwin also gets .zip (cumulative with rule 2)\n  - when:\n      os: darwin\n    ext: .zip\n  \n  # Rule 4: Darwin arm64 gets special template (cumulative with rules 2 & 3)\n  - when:\n      os: darwin\n      arch: arm64\n    template: \"${NAME}_${VERSION}_${OS}_${ARCH}_signed${EXT}\"\n```\n\nIn this example, for darwin/arm64:\n- Rule 2 changes OS to \"macOS\"\n- Rule 3 changes extension to \".zip\"\n- Rule 4 changes the entire template\n- Final result uses all these changes"
+        },
+        "NamingConvention": {
+            "type": "object",
+            "properties": {
+                "os": {
+                    "anyOf": [
+                        {
+                            "type": "string",
+                            "const": "lowercase"
+                        },
+                        {
+                            "type": "string",
+                            "const": "titlecase"
+                        }
+                    ],
+                    "default": "lowercase",
+                    "description": "Casing for ${OS} placeholder.\n\n- lowercase (default): \"linux\", \"darwin\", \"windows\"\n- titlecase: \"Linux\", \"Darwin\", \"Windows\""
+                },
+                "arch": {
+                    "type": "string",
+                    "const": "lowercase",
+                    "default": "lowercase",
+                    "description": "Casing for ${ARCH} placeholder.\n\nCurrently only supports lowercase.\nValues like \"amd64\", \"arm64\", \"386\"."
+                }
+            },
+            "quicktypePropertyOrder": [
+                "os",
+                "arch"
+            ],
+            "description": "Controls the casing of template placeholders.\n\nSome projects use different casing conventions in their release filenames.\nThis provides a simpler alternative to using rules for common cases like\ntitlecase OS names.\n\nExample:\n```yaml\nnaming_convention:\n  os: titlecase  # \"Darwin\" instead of \"darwin\"\n  arch: lowercase  # \"amd64\" (default)\n```"
+        },
+        "ArchEmulation": {
+            "type": "object",
+            "properties": {
+                "rosetta2": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Use amd64 binaries instead of arm64 when Rosetta 2 is available on macOS.\n\nUseful when:\n- arm64 binaries are not available\n- x86_64 binaries are more stable or feature-complete\n- You need compatibility with x86_64-only dependencies\n\nThe installer will detect Rosetta 2 and download amd64 binaries\non Apple Silicon Macs when this is enabled."
+                }
+            },
+            "quicktypePropertyOrder": [
+                "rosetta2"
+            ],
+            "description": "Architecture emulation configuration.\n\nHandles cases where binaries can run on different architectures\nthrough emulation layers.\n\nExample:\n```yaml\narch_emulation:\n  rosetta2: true  # Use x86_64 binaries on Apple Silicon Macs\n```"
+        },
+        "RecordArrayEmbeddedChecksum": {
+            "type": "object",
+            "properties": {},
+            "unevaluatedProperties": {
+                "type": "array",
+                "items": {
+                    "$ref": "#/$defs/EmbeddedChecksum"
+                }
+            }
+        },
+        "PlatformCondition": {
+            "type": "object",
+            "properties": {
+                "os": {
+                    "type": "string",
+                    "description": "Match specific operating system.\n\nIf specified, the rule only applies when the runtime OS matches.\nIf omitted, the rule matches any OS.\n\nCan be any string value to support custom OS identifiers.\nSee Platform.os for common values."
+                },
+                "arch": {
+                    "type": "string",
+                    "description": "Match specific architecture.\n\nIf specified, the rule only applies when the runtime architecture matches.\nIf omitted, the rule matches any architecture.\n\nCan be any string value to support custom architecture identifiers.\nSee Platform.arch for common values."
+                }
+            },
+            "quicktypePropertyOrder": [
+                "os",
+                "arch"
+            ],
+            "description": "Condition for matching specific platforms in rules.\n\nUsed in the 'when' clause of asset rules to specify which\nplatforms the rule should apply to. Note that matching uses\nthe original OS and architecture values, not any overridden\nvalues from previous rules.\n\nExample:\n```yaml\nwhen:\n  os: darwin\n  arch: arm64\n```"
+        },
+        "EmbeddedChecksum": {
+            "type": "object",
+            "properties": {
+                "filename": {
+                    "type": "string",
+                    "description": "Asset filename exactly as it appears in the release.\nThis must match the filename generated by the asset template."
+                },
+                "hash": {
+                    "type": "string",
+                    "description": "Checksum hash value in hexadecimal format.\nThe format depends on the algorithm specified in ChecksumConfig.\nFor sha256: 64 hex characters, for sha512: 128 hex characters, etc."
+                }
+            },
+            "quicktypePropertyOrder": [
+                "filename",
+                "hash"
+            ],
+            "required": [
+                "filename",
+                "hash"
+            ],
+            "description": "Pre-verified checksum for a specific asset.\n\nStores the checksum hash for a specific file.\nThese are typically populated using 'binst embed-checksums' command.\n\nExample:\n```yaml\nfilename: \"mytool_1.0.0_linux_amd64.tar.gz\"\nhash: \"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\"\n```"
+        }
+    },
+    "quicktypePropertyOrder": [
+        "schema",
+        "name",
+        "repo",
+        "default_version",
+        "default_bin_dir",
+        "asset",
+        "checksums",
+        "unpack",
+        "supported_platforms"
+    ]
+}

@@ -1,23 +1,24 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/binary-install/binstaller/main/schema/output/@typespec/json-schema/InstallSpec.json
 schema: v1
 repo: haya14busa/bump
 asset:
-    template: bump_${VERSION}_${OS}_${ARCH}${EXT}
-    default_extension: .tar.gz
-    rules:
-        - when:
-            arch: amd64
-          arch: x86_64
-        - when:
-            os: darwin
-          os: Darwin
-        - when:
-            os: linux
-          os: Linux
-    arch_emulation:
-        rosetta2: true
-checksums:
-    algorithm: sha256
-    template: checksums.txt
-supported_platforms:
-    - os: linux
+  template: bump_${VERSION}_${OS}_${ARCH}${EXT}
+  default_extension: .tar.gz
+  rules:
+  - when:
       arch: amd64
+    arch: x86_64
+  - when:
+      os: darwin
+    os: Darwin
+  - when:
+      os: linux
+    os: Linux
+  arch_emulation:
+    rosetta2: true
+checksums:
+  algorithm: sha256
+  template: checksums.txt
+supported_platforms:
+- os: linux
+  arch: amd64

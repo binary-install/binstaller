@@ -1,0 +1,8 @@
+emit:
+  - "@typespec/json-schema"
+
+output-dir: "{project-root}/output"
+
+options:
+  "@typespec/json-schema":
+    file-type: json

@@ -1,9 +1,10 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/binary-install/binstaller/main/schema/output/@typespec/json-schema/InstallSpec.json
 schema: v1
 repo: xo/xo
 asset:
-    template: xo-${VERSION}-${OS}-${ARCH}${EXT}
-    default_extension: .tar.bz2
-    rules:
-        - when:
-            os: windows
-          ext: .zip
+  template: xo-${VERSION}-${OS}-${ARCH}${EXT}
+  default_extension: .tar.bz2
+  rules:
+  - when:
+      os: windows
+    ext: .zip

@@ -18,11 +18,11 @@ func TestGenerateWithVersion(t *testing.T) {
 		{
 			name: "normal generation without target version",
 			installSpec: &spec.InstallSpec{
-				Name: "test-tool",
-				Repo: "owner/test-tool",
-				Asset: spec.AssetConfig{
-					Template:         "${NAME}-${VERSION}-${OS}_${ARCH}${EXT}",
-					DefaultExtension: ".tar.gz",
+				Name: spec.StringPtr("test-tool"),
+				Repo: spec.StringPtr("owner/test-tool"),
+				Asset: &spec.AssetConfig{
+					Template:         spec.StringPtr("${NAME}-${VERSION}-${OS}_${ARCH}${EXT}"),
+					DefaultExtension: spec.StringPtr(".tar.gz"),
 				},
 			},
 			targetVersion: "",
@@ -39,11 +39,11 @@ func TestGenerateWithVersion(t *testing.T) {
 		{
 			name: "target version generation",
 			installSpec: &spec.InstallSpec{
-				Name: "test-tool",
-				Repo: "owner/test-tool",
-				Asset: spec.AssetConfig{
-					Template:         "${NAME}-${VERSION}-${OS}_${ARCH}${EXT}",
-					DefaultExtension: ".tar.gz",
+				Name: spec.StringPtr("test-tool"),
+				Repo: spec.StringPtr("owner/test-tool"),
+				Asset: &spec.AssetConfig{
+					Template:         spec.StringPtr("${NAME}-${VERSION}-${OS}_${ARCH}${EXT}"),
+					DefaultExtension: spec.StringPtr(".tar.gz"),
 				},
 			},
 			targetVersion: "v1.2.3",
@@ -63,22 +63,22 @@ func TestGenerateWithVersion(t *testing.T) {
 		{
 			name: "target version with embedded checksums filtering",
 			installSpec: &spec.InstallSpec{
-				Name: "test-tool",
-				Repo: "owner/test-tool",
-				Asset: spec.AssetConfig{
-					Template:         "${NAME}-${VERSION}-${OS}_${ARCH}${EXT}",
-					DefaultExtension: ".tar.gz",
+				Name: spec.StringPtr("test-tool"),
+				Repo: spec.StringPtr("owner/test-tool"),
+				Asset: &spec.AssetConfig{
+					Template:         spec.StringPtr("${NAME}-${VERSION}-${OS}_${ARCH}${EXT}"),
+					DefaultExtension: spec.StringPtr(".tar.gz"),
 				},
 				Checksums: &spec.ChecksumConfig{
-					Algorithm: "sha256",
-					Template:  "${NAME}_${VERSION}_checksums.txt",
+					Algorithm: spec.AlgorithmPtr("sha256"),
+					Template:  spec.StringPtr("${NAME}_${VERSION}_checksums.txt"),
 					EmbeddedChecksums: map[string][]spec.EmbeddedChecksum{
 						"v1.2.3": {
-							{Filename: "test-tool-1.2.3-linux_amd64.tar.gz", Hash: "abc123"},
-							{Filename: "test-tool-1.2.3-darwin_amd64.tar.gz", Hash: "def456"},
+							{Filename: spec.StringPtr("test-tool-1.2.3-linux_amd64.tar.gz"), Hash: spec.StringPtr("abc123")},
+							{Filename: spec.StringPtr("test-tool-1.2.3-darwin_amd64.tar.gz"), Hash: spec.StringPtr("def456")},
 						},
 						"v1.2.4": {
-							{Filename: "test-tool-1.2.4-linux_amd64.tar.gz", Hash: "ghi789"},
+							{Filename: spec.StringPtr("test-tool-1.2.4-linux_amd64.tar.gz"), Hash: spec.StringPtr("ghi789")},
 						},
 					},
 				},
@@ -95,21 +95,21 @@ func TestGenerateWithVersion(t *testing.T) {
 		{
 			name: "normal generation includes all embedded checksums",
 			installSpec: &spec.InstallSpec{
-				Name: "test-tool",
-				Repo: "owner/test-tool",
-				Asset: spec.AssetConfig{
-					Template:         "${NAME}-${VERSION}-${OS}_${ARCH}${EXT}",
-					DefaultExtension: ".tar.gz",
+				Name: spec.StringPtr("test-tool"),
+				Repo: spec.StringPtr("owner/test-tool"),
+				Asset: &spec.AssetConfig{
+					Template:         spec.StringPtr("${NAME}-${VERSION}-${OS}_${ARCH}${EXT}"),
+					DefaultExtension: spec.StringPtr(".tar.gz"),
 				},
 				Checksums: &spec.ChecksumConfig{
-					Algorithm: "sha256",
-					Template:  "${NAME}_${VERSION}_checksums.txt",
+					Algorithm: spec.AlgorithmPtr("sha256"),
+					Template:  spec.StringPtr("${NAME}_${VERSION}_checksums.txt"),
 					EmbeddedChecksums: map[string][]spec.EmbeddedChecksum{
 						"v1.2.3": {
-							{Filename: "test-tool-1.2.3-linux_amd64.tar.gz", Hash: "abc123"},
+							{Filename: spec.StringPtr("test-tool-1.2.3-linux_amd64.tar.gz"), Hash: spec.StringPtr("abc123")},
 						},
 						"v1.2.4": {
-							{Filename: "test-tool-1.2.4-linux_amd64.tar.gz", Hash: "ghi789"},
+							{Filename: spec.StringPtr("test-tool-1.2.4-linux_amd64.tar.gz"), Hash: spec.StringPtr("ghi789")},
 						},
 					},
 				},
@@ -162,13 +162,13 @@ func TestFilterChecksumsForVersion(t *testing.T) {
 				Checksums: &spec.ChecksumConfig{
 					EmbeddedChecksums: map[string][]spec.EmbeddedChecksum{
 						"v1.2.3": {
-							{Filename: "file1.tar.gz", Hash: "abc123"},
+							{Filename: spec.StringPtr("file1.tar.gz"), Hash: spec.StringPtr("abc123")},
 						},
 						"v1.2.4": {
-							{Filename: "file2.tar.gz", Hash: "def456"},
+							{Filename: spec.StringPtr("file2.tar.gz"), Hash: spec.StringPtr("def456")},
 						},
 						"v1.2.5": {
-							{Filename: "file3.tar.gz", Hash: "ghi789"},
+							{Filename: spec.StringPtr("file3.tar.gz"), Hash: spec.StringPtr("ghi789")},
 						},
 					},
 				},
@@ -203,7 +203,7 @@ func TestFilterChecksumsForVersion(t *testing.T) {
 				Checksums: &spec.ChecksumConfig{
 					EmbeddedChecksums: map[string][]spec.EmbeddedChecksum{
 						"v1.2.3": {
-							{Filename: "file1.tar.gz", Hash: "abc123"},
+							{Filename: spec.StringPtr("file1.tar.gz"), Hash: spec.StringPtr("abc123")},
 						},
 					},
 				},
@@ -246,11 +246,11 @@ func TestFilterChecksumsForVersion(t *testing.T) {
 func TestGenerate(t *testing.T) {
 	// Test that Generate() calls GenerateWithVersion() with empty target version
 	installSpec := &spec.InstallSpec{
-		Name: "test-tool",
-		Repo: "owner/test-tool",
-		Asset: spec.AssetConfig{
-			Template:         "${NAME}-${VERSION}-${OS}_${ARCH}${EXT}",
-			DefaultExtension: ".tar.gz",
+		Name: spec.StringPtr("test-tool"),
+		Repo: spec.StringPtr("owner/test-tool"),
+		Asset: &spec.AssetConfig{
+			Template:         spec.StringPtr("${NAME}-${VERSION}-${OS}_${ARCH}${EXT}"),
+			DefaultExtension: spec.StringPtr(".tar.gz"),
 		},
 	}
 

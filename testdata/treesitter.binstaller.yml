@@ -1,16 +1,17 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/binary-install/binstaller/main/schema/output/@typespec/json-schema/InstallSpec.json
 schema: v1
 name: tree-sitter
 repo: tree-sitter/tree-sitter
 asset:
-    template: tree-sitter-${OS}-${ARCH}${EXT}
-    default_extension: .gz
-    binaries:
-        - name: tree-sitter
-          path: tree-sitter-${OS}-${ARCH}
-    rules:
-        - when:
-            arch: amd64
-          arch: x64
-        - when:
-            os: darwin
-          os: macos
+  template: tree-sitter-${OS}-${ARCH}${EXT}
+  default_extension: .gz
+  binaries:
+  - name: tree-sitter
+    path: tree-sitter-${OS}-${ARCH}
+  rules:
+  - when:
+      arch: amd64
+    arch: x64
+  - when:
+      os: darwin
+    os: macos
