@@ -129,7 +129,7 @@ func mapToInstallSpec(p registry.PackageInfo) (*spec.InstallSpec, error) {
 			continue
 		}
 		rule := spec.AssetRule{
-			When: &spec.PlatformCondition{OS: spec.StringPtr(ov.GOOS), Arch: spec.StringPtr(ov.GOArch)},
+			When: &spec.PlatformCondition{OS: spec.StringPtrOrNil(ov.GOOS), Arch: spec.StringPtrOrNil(ov.GOArch)},
 		}
 
 		// copy tmplVar for overrides
@@ -140,10 +140,10 @@ func mapToInstallSpec(p registry.PackageInfo) (*spec.InstallSpec, error) {
 			for _, ruleRep := range rules {
 				if ruleRep.When != nil {
 					if spec.StringValue(ruleRep.When.OS) == "" {
-						ruleRep.When.OS = spec.StringPtr(ov.GOOS)
+						ruleRep.When.OS = spec.StringPtrOrNil(ov.GOOS)
 					}
 					if spec.StringValue(ruleRep.When.Arch) == "" {
-						ruleRep.When.Arch = spec.StringPtr(ov.GOArch)
+						ruleRep.When.Arch = spec.StringPtrOrNil(ov.GOArch)
 					}
 				}
 				installSpec.Asset.Rules = append(installSpec.Asset.Rules, ruleRep)

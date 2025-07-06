@@ -82,6 +82,14 @@ func StringPtr(s string) *string {
 	return &s
 }
 
+// StringPtrOrNil returns a pointer to the string, or nil if the string is empty
+func StringPtrOrNil(s string) *string {
+	if s == "" {
+		return nil
+	}
+	return &s
+}
+
 // StringValue safely dereferences a string pointer
 func StringValue(s *string) string {
 	if s == nil {
