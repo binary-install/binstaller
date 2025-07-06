@@ -34,5 +34,4 @@ asset:
     template: micro-${VERSION}-${OS}-${ARCH}${EXT}
   - when:
       os: windows
-      arch: ""
     ext: .zip

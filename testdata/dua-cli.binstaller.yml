@@ -27,7 +27,6 @@ asset:
     arch: aarch64
   - when:
       os: windows
-      arch: ""
     ext: .zip
   arch_emulation:
     rosetta2: true

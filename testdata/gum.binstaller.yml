@@ -19,7 +19,6 @@ asset:
       os: Windows
     - when:
         os: windows
-        arch: ""
       ext: .zip
 checksums:
   algorithm: sha256

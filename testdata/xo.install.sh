@@ -356,7 +356,7 @@ resolve_asset_filename() {
   
   # --- Apply Rules ---
   ASSET_FILENAME=""
-  if [ "${UNAME_OS}" = 'windows' ] && [ "${UNAME_ARCH}" = '' ] && true
+  if [ "${UNAME_OS}" = 'windows' ] && true
   then
     EXT='.zip'
   fi
@@ -463,7 +463,7 @@ OS="${BINSTALLER_OS:-$(uname_os)}"
 UNAME_OS="${OS}"
 
 ARCH="${BINSTALLER_ARCH:-$(uname_arch)}"
-UNAME_ARCH="${ARCH}"
+
 log_info "Detected Platform: ${OS}/${ARCH}"
 
 # --- Validate platform ---

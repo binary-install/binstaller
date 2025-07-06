@@ -26,7 +26,6 @@ asset:
     os: pc-windows-msvc
   - when:
       os: windows
-      arch: ""
     ext: .zip
   arch_emulation:
     rosetta2: true

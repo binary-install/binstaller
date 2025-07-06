@@ -19,11 +19,9 @@ asset:
     os: Windows
   - when:
       os: darwin
-      arch: ""
     template: ubi-${OS}-${ARCH}${EXT}
   - when:
       os: windows
-      arch: ""
     template: ubi-${OS}-msvc-${ARCH}${EXT}
     ext: .zip
 checksums:

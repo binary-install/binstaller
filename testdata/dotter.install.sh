@@ -368,11 +368,11 @@ resolve_asset_filename() {
   then
     ARCH='amd64'
   fi
-  if [ "${UNAME_OS}" = 'darwin' ] && [ "${UNAME_ARCH}" = '' ] && true
+  if [ "${UNAME_OS}" = 'darwin' ] && true
   then
     ASSET_FILENAME="dotter-${OS}-${ARCH}.arm${EXT}"
   fi
-  if [ "${UNAME_OS}" = 'windows' ] && [ "${UNAME_ARCH}" = '' ] && true
+  if [ "${UNAME_OS}" = 'windows' ] && true
   then
     ASSET_FILENAME="dotter-${OS}-${ARCH}-msvc${EXT}"
   fi

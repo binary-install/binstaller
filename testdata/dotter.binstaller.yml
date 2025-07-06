@@ -16,11 +16,9 @@ asset:
     arch: amd64
   - when:
       os: darwin
-      arch: ""
     template: dotter-${OS}-${ARCH}.arm${EXT}
   - when:
       os: windows
-      arch: ""
     template: dotter-${OS}-${ARCH}-msvc${EXT}
 supported_platforms:
 - os: darwin

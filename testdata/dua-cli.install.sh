@@ -381,7 +381,7 @@ resolve_asset_filename() {
   then
     ARCH='aarch64'
   fi
-  if [ "${UNAME_OS}" = 'windows' ] && [ "${UNAME_ARCH}" = '' ] && true
+  if [ "${UNAME_OS}" = 'windows' ] && true
   then
     EXT='.zip'
   fi

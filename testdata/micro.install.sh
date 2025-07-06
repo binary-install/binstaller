@@ -380,7 +380,7 @@ resolve_asset_filename() {
   then
     ASSET_FILENAME="micro-${VERSION}-${OS}-${ARCH}${EXT}"
   fi
-  if [ "${UNAME_OS}" = 'windows' ] && [ "${UNAME_ARCH}" = '' ] && true
+  if [ "${UNAME_OS}" = 'windows' ] && true
   then
     EXT='.zip'
   fi

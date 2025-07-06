@@ -502,7 +502,7 @@ resolve_asset_filename() {
   then
     OS='Windows'
   fi
-  if [ "${UNAME_OS}" = 'windows' ] && [ "${UNAME_ARCH}" = '' ] && true
+  if [ "${UNAME_OS}" = 'windows' ] && true
   then
     EXT='.zip'
   fi

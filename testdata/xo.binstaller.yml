@@ -7,5 +7,4 @@ asset:
   rules:
   - when:
       os: windows
-      arch: ""
     ext: .zip
