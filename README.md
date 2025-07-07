@@ -154,11 +154,10 @@ go install github.com/binary-install/binstaller/cmd/binst@v0.1.0
 
 ## 🚀 Quick Start
 
-### Basic Usage
-
-The workflow in action:
-
 ```bash
+# Set GITHUB_TOKEN to avoid rate limits (optional but recommended)
+export GITHUB_TOKEN="$(gh auth token)"  # or use a fine-grained token with no permissions
+
 # Step 1: Initialize configuration from a source
 binst init --source=github --repo=owner/repo -o .config/binstaller.yml
 
@@ -268,6 +267,49 @@ The configuration schema is defined using [TypeSpec](https://typespec.io/), whic
 - Examples of common usage patterns
 - Explanations of advanced features like platform-specific rules, architecture emulation, and embedded checksums
 - Complete type information and constraints
+
+## 🤖 CI/CD Usage
+
+### GitHub Actions (Recommended Setup)
+
+When using binstaller in GitHub Actions, always set the `GITHUB_TOKEN` to avoid rate limits:
+
+```yaml
+- name: Initialize binstaller config
+  env:
+    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Automatically available in GitHub Actions
+  run: |
+    binst init --source=github --repo=owner/repo
+
+- name: Embed checksums
+  env:
+    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  run: |
+    binst embed-checksums --version latest --mode calculate
+```
+
+**Note:** The `GITHUB_TOKEN` is automatically provided by GitHub Actions with appropriate permissions for the current repository.
+
+### Other CI Systems
+
+For other CI systems, create a fine-grained personal access token with no permissions:
+
+```bash
+# GitLab CI (.gitlab-ci.yml)
+variables:
+  GITHUB_TOKEN: $GITHUB_PAT  # Set in GitLab CI/CD settings
+
+# CircleCI (.circleci/config.yml)
+environment:
+  GITHUB_TOKEN: $GITHUB_TOKEN  # Set in CircleCI project settings
+
+# Jenkins (Jenkinsfile)
+environment {
+  GITHUB_TOKEN = credentials('github-token')  # Set in Jenkins credentials
+}
+```
+
+**Creating a token:** Go to GitHub Settings → Developer settings → Personal access tokens → Fine-grained tokens → Generate new token. No repository permissions are needed.
 
 ## 📄 License
 

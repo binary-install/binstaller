@@ -17,6 +17,7 @@ import (
 	"strings"
 
 	"github.com/apex/log"
+	"github.com/binary-install/binstaller/pkg/httpclient"
 	"github.com/binary-install/binstaller/pkg/spec"
 	"github.com/goccy/go-yaml"
 	"github.com/goccy/go-yaml/ast"
@@ -145,14 +146,14 @@ func (e *Embedder) resolveVersion(version string) (string, error) {
 	url := fmt.Sprintf("https://api.github.com/repos/%s/releases/latest", spec.StringValue(e.Spec.Repo))
 
 	// Set up the request with Accept header for JSON response
-	req, err := http.NewRequest("GET", url, nil)
+	req, err := httpclient.NewRequestWithGitHubAuth("GET", url)
 	if err != nil {
 		return "", fmt.Errorf("failed to create request: %w", err)
 	}
 	req.Header.Set("Accept", "application/vnd.github.v3+json")
 
 	// Send the request
-	client := &http.Client{}
+	client := httpclient.NewGitHubClient()
 	resp, err := client.Do(req)
 	if err != nil {
 		return "", fmt.Errorf("failed to get latest release: %w", err)
@@ -202,7 +203,12 @@ func (e *Embedder) downloadAndParseChecksumFile() (map[string]string, error) {
 	tempFilePath := filepath.Join(tempDir, "checksums.txt")
 
 	// Download the checksum file
-	resp, err := http.Get(checksumURL)
+	req, err := httpclient.NewRequestWithGitHubAuth("GET", checksumURL)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+	client := httpclient.NewGitHubClient()
+	resp, err := client.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to download checksum file: %w", err)
 	}

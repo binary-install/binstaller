@@ -3,10 +3,10 @@ package datasource
 import (
 	"bytes"
 	"context"
-	"net/http"
 
 	"github.com/aquaproj/aqua/v2/pkg/config"
 	"github.com/aquaproj/aqua/v2/pkg/controller"
+	"github.com/binary-install/binstaller/pkg/httpclient"
 	"github.com/binary-install/binstaller/pkg/spec"
 	log "github.com/sirupsen/logrus"
 )
@@ -27,7 +27,7 @@ func (g *GitHubAdapter) GenerateInstallSpec(ctx context.Context) (*spec.InstallS
 	param := &config.Param{Limit: 1}
 	logE := log.NewEntry(log.New())
 	var registry bytes.Buffer
-	ctrl := controller.InitializeGenerateRegistryCommandController(ctx, logE, param, http.DefaultClient, &registry)
+	ctrl := controller.InitializeGenerateRegistryCommandController(ctx, logE, param, httpclient.NewGitHubClient(), &registry)
 	if err := ctrl.GenerateRegistry(ctx, param, logE, g.repo); err != nil {
 		return nil, err
 	}
