@@ -177,7 +177,7 @@ func TestIsGitHubURL(t *testing.T) {
 func TestNewGitHubClient(t *testing.T) {
 	client := NewGitHubClient()
 	if client == nil {
-		t.Error("NewGitHubClient() returned nil")
+		t.Fatal("NewGitHubClient() returned nil")
 	}
 
 	// Check that the transport is set correctly
