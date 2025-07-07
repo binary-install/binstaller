@@ -126,7 +126,8 @@ type Asset struct {
 	//
 	// Available placeholders:
 	// - ${NAME}: Binary name (from 'name' field or repository name)
-	// - ${VERSION}: Version to install (includes 'v' prefix if present in tag)
+	// - ${VERSION}: Version to install (without 'v' prefix, e.g., '1.0.0')
+	// - ${TAG}: Original tag with 'v' prefix if present (e.g., 'v1.0.0')
 	// - ${OS}: Operating system (e.g., 'linux', 'darwin', 'windows')
 	// - ${ARCH}: Architecture (e.g., 'amd64', 'arm64', '386')
 	// - ${EXT}: File extension (from 'default_extension' or rules)
@@ -376,7 +377,7 @@ type Checksums struct {
 	// Pre-verified checksums organized by version.
 	//
 	// Use 'binst embed-checksums' command to automatically populate this.
-	// The key is the version string (includes 'v' prefix if present in tag).
+	// The key is the version string (includes 'v' prefix if present in tag, e.g., 'v1.0.0').
 	// The value is an array of filename/hash pairs.
 	//
 	// This allows offline installation and protects against
