@@ -281,6 +281,9 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🐦️ Author
 
-| | |
-|---|---|
-| <img src="https://github.com/haya14busa.png" width="60" height="60" alt="haya14busa" /> | **haya14busa**<br/>[![GitHub followers](https://img.shields.io/github/followers/haya14busa.svg?style=flat&label=Follow&logo=github)](https://github.com/haya14busa) [![GitHub Sponsors](https://img.shields.io/badge/Sponsor-EA4AAA?style=flat&logo=github-sponsors&logoColor=white)](https://github.com/sponsors/haya14busa) |
+<table>
+  <tr>
+    <td><img src="https://github.com/haya14busa.png" width="60" height="60" alt="haya14busa" /></td>
+    <td><b>haya14busa</b><br/><a href="https://github.com/haya14busa"><img src="https://img.shields.io/github/followers/haya14busa.svg?style=flat&label=Follow&logo=github" alt="GitHub followers" /></a> <a href="https://github.com/sponsors/haya14busa"><img src="https://img.shields.io/badge/Sponsor-EA4AAA?style=flat&logo=github-sponsors&logoColor=white" alt="GitHub Sponsors" /></a></td>
+  </tr>
+</table>
