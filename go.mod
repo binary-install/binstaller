@@ -3,15 +3,16 @@ module github.com/binary-install/binstaller
 go 1.24.4
 
 require (
-	github.com/apex/log v1.1.4
+	github.com/apex/log v1.9.0
 	github.com/aquaproj/aqua/v2 v2.53.3
+	github.com/buildkite/interpolate v0.1.5
+	github.com/charmbracelet/fang v0.3.0
 	github.com/goccy/go-yaml v1.18.0
 	github.com/google/go-cmp v0.7.0
 	github.com/goreleaser/goreleaser/v2 v2.8.2
 	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/cobra v1.9.1
-	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (
@@ -32,10 +33,8 @@ require (
 	github.com/bodgit/sevenzip v1.6.0 // indirect
 	github.com/bodgit/windows v1.0.1 // indirect
 	github.com/buger/jsonparser v1.1.1 // indirect
-	github.com/buildkite/interpolate v0.1.5 // indirect
 	github.com/caarlos0/log v0.4.8 // indirect
 	github.com/charmbracelet/colorprofile v0.3.1 // indirect
-	github.com/charmbracelet/fang v0.3.0 // indirect
 	github.com/charmbracelet/lipgloss v1.1.0 // indirect
 	github.com/charmbracelet/lipgloss/v2 v2.0.0-beta.2 // indirect
 	github.com/charmbracelet/x/ansi v0.8.0 // indirect
@@ -136,4 +135,5 @@ require (
 	golang.org/x/text v0.24.0 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
