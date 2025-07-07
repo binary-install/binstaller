@@ -8,12 +8,20 @@ on:
     types:
       - labeled  # Run when PRs are labeled
 
+permissions:
+  contents: read
+
 jobs:
   verify-releaser:
     runs-on: ubuntu-latest
     permissions:
       contents: read
     steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@6c439dc8bdf85cadbbce9ed30d1c7b959517bc49 # v2.12.2
+        with:
+          egress-policy: audit
+
       - name: Verify Trusted Tag Releaser
         uses: actionutils/trusted-tag-verifier@v0
         with:
@@ -49,6 +57,11 @@ jobs:
       group: "release-approval"
       cancel-in-progress: true
     steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@6c439dc8bdf85cadbbce9ed30d1c7b959517bc49 # v2.12.2
+        with:
+          egress-policy: audit
+
       - name: Approve release
         run: echo "Release approved in the release environment"
 
