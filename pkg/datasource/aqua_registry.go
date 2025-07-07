@@ -12,8 +12,8 @@ import (
 	aquaexpr "github.com/aquaproj/aqua/v2/pkg/expr"
 	"github.com/binary-install/binstaller/pkg/httpclient"
 	"github.com/binary-install/binstaller/pkg/spec"
-	"github.com/pkg/errors"
 	"github.com/goccy/go-yaml"
+	"github.com/pkg/errors"
 )
 
 // AquaRegistryAdapter implements SourceAdapter for Aqua registry YAML files.

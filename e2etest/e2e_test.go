@@ -88,7 +88,6 @@ func testInstallScript(t *testing.T, repo, binaryName, versionFlag, sha string) 
 		t.Fatalf("Failed to run installation script: %v\nStdout: %s\nStderr: %s", err, installStdout.String(), stderr.String())
 	}
 
-
 	// Check that the binary was installed
 	binName := binaryName
 	if runtime.GOOS == "windows" {

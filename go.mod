@@ -32,6 +32,7 @@ require (
 	github.com/bodgit/sevenzip v1.6.0 // indirect
 	github.com/bodgit/windows v1.0.1 // indirect
 	github.com/buger/jsonparser v1.1.1 // indirect
+	github.com/buildkite/interpolate v0.1.5 // indirect
 	github.com/caarlos0/log v0.4.8 // indirect
 	github.com/charmbracelet/colorprofile v0.3.1 // indirect
 	github.com/charmbracelet/fang v0.3.0 // indirect
