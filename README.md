@@ -9,6 +9,7 @@
   <p align="center">
     <a href="/LICENSE.md"><img alt="Software License" src="https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat-square"></a>
     <a href="https://github.com/binary-install/binstaller/releases"><img alt="Release" src="https://img.shields.io/github/release/binary-install/binstaller.svg?style=flat-square"></a>
+    <a href="https://scorecard.dev/viewer/?uri=github.com/binary-install/binstaller"><img alt="OpenSSF Scorecard" src="https://api.scorecard.dev/projects/github.com/binary-install/binstaller/badge"></a>
   </p>
 </p>
 
