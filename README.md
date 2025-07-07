@@ -226,7 +226,7 @@ binst gen -o install.sh
 
 ### GitHub Actions Usage
 
-When using binstaller in GitHub Actions, set `GITHUB_TOKEN` for commands that access GitHub:
+While binstaller works without authentication, we recommend setting `GITHUB_TOKEN` in GitHub Actions to avoid rate limits:
 
 ```yaml
 - name: Initialize from GitHub  # Requires token for all sources
