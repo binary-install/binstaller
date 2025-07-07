@@ -19,6 +19,7 @@ import (
 	"github.com/apex/log"
 	"github.com/binary-install/binstaller/pkg/httpclient"
 	"github.com/binary-install/binstaller/pkg/spec"
+	"github.com/buildkite/interpolate"
 	"github.com/goccy/go-yaml"
 	"github.com/goccy/go-yaml/ast"
 )
@@ -56,6 +57,14 @@ func (e *Embedder) Embed() error {
 		e.Spec.Checksums = &spec.ChecksumConfig{
 			Algorithm: &sha256, // Default algorithm
 		}
+	}
+
+	// Validate checksum template
+	// Note: ${ASSET_FILENAME} could technically be supported by looping through all supported OS/arch combinations,
+	// but this would be equivalent to using 'calculate' mode. Since there are no plans to implement this,
+	// we explicitly reject it to guide users to the appropriate solution.
+	if e.Spec.Checksums.Template != nil && strings.Contains(spec.StringValue(e.Spec.Checksums.Template), "${ASSET_FILENAME}") {
+		return fmt.Errorf("${ASSET_FILENAME} is not supported in checksum templates. Use 'binst embed-checksums --mode calculate' instead to generate checksums for all platforms")
 	}
 
 	// Resolve version if it's "latest"
@@ -290,27 +299,44 @@ func parseChecksumFileInternal(checksumFile string) (map[string]string, error) {
 	return checksums, nil
 }
 
+// interpolateTemplate performs variable substitution in a template string
+func (e *Embedder) interpolateTemplate(template string, additionalVars map[string]string) (string, error) {
+	// Create base environment map with variables supported by all templates
+	envMap := map[string]string{
+		"NAME":    spec.StringValue(e.Spec.Name),
+		"VERSION": e.Version,
+	}
+
+	// Merge additional variables (OS, ARCH, EXT for asset templates)
+	for k, v := range additionalVars {
+		envMap[k] = v
+	}
+
+	// Perform variable substitution
+	env := interpolate.NewMapEnv(envMap)
+	return interpolate.Interpolate(env, template)
+}
+
 // createChecksumFilename creates the checksum filename using the template from the spec
 func (e *Embedder) createChecksumFilename() string {
 	if e.Spec.Checksums == nil || spec.StringValue(e.Spec.Checksums.Template) == "" {
 		return ""
 	}
 
-	// Perform variable substitution in the template
-	filename := spec.StringValue(e.Spec.Checksums.Template)
-	filename = strings.ReplaceAll(filename, "${NAME}", spec.StringValue(e.Spec.Name))
-	filename = strings.ReplaceAll(filename, "${VERSION}", e.Version)
-	filename = strings.ReplaceAll(filename, "${REPO}", spec.StringValue(e.Spec.Repo))
+	template := spec.StringValue(e.Spec.Checksums.Template)
 
-	// For consistency with the shell script, also handle repo owner/name expansion
-	if strings.Contains(filename, "${REPO_OWNER}") || strings.Contains(filename, "${REPO_NAME}") {
-		parts := strings.SplitN(spec.StringValue(e.Spec.Repo), "/", 2)
-		if len(parts) == 2 {
-			filename = strings.ReplaceAll(filename, "${REPO_OWNER}", parts[0])
-			filename = strings.ReplaceAll(filename, "${REPO_NAME}", parts[1])
-		}
+	// Check for unsupported ASSET_FILENAME variable
+	if strings.Contains(template, "${ASSET_FILENAME}") {
+		log.Errorf("${ASSET_FILENAME} is not supported in checksum templates. Use 'binst embed-checksums --mode calculate' instead.")
+		return ""
 	}
 
+	// Note: Checksum templates only support NAME and VERSION according to schema
+	filename, err := e.interpolateTemplate(template, nil)
+	if err != nil {
+		log.Errorf("Failed to interpolate checksum template: %v", err)
+		return ""
+	}
 	return filename
 }
 

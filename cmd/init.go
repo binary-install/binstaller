@@ -9,8 +9,8 @@ import (
 	"github.com/apex/log"
 	"github.com/binary-install/binstaller/pkg/datasource"
 	"github.com/binary-install/binstaller/pkg/spec"
-	"github.com/spf13/cobra"
 	"github.com/goccy/go-yaml"
+	"github.com/spf13/cobra"
 )
 
 var (

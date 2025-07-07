@@ -42,10 +42,10 @@ func TestNewRequestWithGitHubAuth(t *testing.T) {
 			wantAuth: false,
 		},
 		{
-			name:     "Raw GitHub URL with token",
-			url:      "https://raw.githubusercontent.com/owner/repo/main/file.txt",
-			token:    "ghp_testtoken999",
-			wantAuth: true,
+			name:      "Raw GitHub URL with token",
+			url:       "https://raw.githubusercontent.com/owner/repo/main/file.txt",
+			token:     "ghp_testtoken999",
+			wantAuth:  true,
 			wantToken: "Bearer ghp_testtoken999",
 		},
 	}

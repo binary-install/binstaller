@@ -158,21 +158,17 @@ func (e *Embedder) generateAssetFilename(osInput, archInput string) (string, err
 		}
 	}
 
-	// Perform variable substitution in the template
-	filename := template
-	filename = strings.ReplaceAll(filename, "${NAME}", spec.StringValue(e.Spec.Name))
-	filename = strings.ReplaceAll(filename, "${VERSION}", e.Version)
-	filename = strings.ReplaceAll(filename, "${OS}", osValue)
-	filename = strings.ReplaceAll(filename, "${ARCH}", archValue)
-	filename = strings.ReplaceAll(filename, "${EXT}", ext)
+	// Asset templates support OS, ARCH, and EXT in addition to NAME and VERSION
+	additionalVars := map[string]string{
+		"OS":   osValue,
+		"ARCH": archValue,
+		"EXT":  ext,
+	}
 
-	// For consistency with the shell script, also handle repo owner/name expansion
-	if strings.Contains(filename, "${REPO_OWNER}") || strings.Contains(filename, "${REPO_NAME}") {
-		parts := strings.SplitN(spec.StringValue(e.Spec.Repo), "/", 2)
-		if len(parts) == 2 {
-			filename = strings.ReplaceAll(filename, "${REPO_OWNER}", parts[0])
-			filename = strings.ReplaceAll(filename, "${REPO_NAME}", parts[1])
-		}
+	// Perform variable substitution in the template
+	filename, err := e.interpolateTemplate(template, additionalVars)
+	if err != nil {
+		return "", fmt.Errorf("failed to interpolate asset template: %w", err)
 	}
 
 	return filename, nil
