@@ -224,6 +224,33 @@ binst embed-checksums --config .config/binstaller.yml --version v1.0.0 --mode do
 binst gen -o install.sh
 ```
 
+### GitHub Actions Usage
+
+When using binstaller in GitHub Actions, set `GITHUB_TOKEN` for commands that access GitHub:
+
+```yaml
+- name: Initialize from GitHub  # Requires token for all sources
+  env:
+    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  run: |
+    binst init --source=github --repo=owner/repo
+
+- name: Embed checksums (calculate mode)  # Requires token - downloads multiple assets
+  env:
+    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  run: |
+    binst embed-checksums --version latest --mode calculate
+
+- name: Embed checksums (checksum-file mode)  # No token needed - only reads local file
+  run: |
+    binst embed-checksums --version latest --mode checksum-file --checksum-file checksums.txt
+```
+
+**When GITHUB_TOKEN is needed:**
+- `binst init` with any source (github, goreleaser, aqua)
+- `binst embed-checksums` with `--mode download` or `--mode calculate`
+- Especially important for `--mode calculate` which downloads multiple release assets
+
 ## ⚙️ Configuration Format
 
 The `.config/binstaller.yml` configuration file uses a simple, declarative format:
@@ -267,49 +294,6 @@ The configuration schema is defined using [TypeSpec](https://typespec.io/), whic
 - Examples of common usage patterns
 - Explanations of advanced features like platform-specific rules, architecture emulation, and embedded checksums
 - Complete type information and constraints
-
-## 🤖 CI/CD Usage
-
-### GitHub Actions (Recommended Setup)
-
-When using binstaller in GitHub Actions, always set the `GITHUB_TOKEN` to avoid rate limits:
-
-```yaml
-- name: Initialize binstaller config
-  env:
-    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Automatically available in GitHub Actions
-  run: |
-    binst init --source=github --repo=owner/repo
-
-- name: Embed checksums
-  env:
-    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  run: |
-    binst embed-checksums --version latest --mode calculate
-```
-
-**Note:** The `GITHUB_TOKEN` is automatically provided by GitHub Actions with appropriate permissions for the current repository.
-
-### Other CI Systems
-
-For other CI systems, create a fine-grained personal access token with no permissions:
-
-```bash
-# GitLab CI (.gitlab-ci.yml)
-variables:
-  GITHUB_TOKEN: $GITHUB_PAT  # Set in GitLab CI/CD settings
-
-# CircleCI (.circleci/config.yml)
-environment:
-  GITHUB_TOKEN: $GITHUB_TOKEN  # Set in CircleCI project settings
-
-# Jenkins (Jenkinsfile)
-environment {
-  GITHUB_TOKEN = credentials('github-token')  # Set in Jenkins credentials
-}
-```
-
-**Creating a token:** Go to GitHub Settings → Developer settings → Personal access tokens → Fine-grained tokens → Generate new token. No repository permissions are needed.
 
 ## 📄 License
 
