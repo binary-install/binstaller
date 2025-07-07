@@ -154,11 +154,10 @@ go install github.com/binary-install/binstaller/cmd/binst@v0.1.0
 
 ## 🚀 Quick Start
 
-### Basic Usage
-
-The workflow in action:
-
 ```bash
+# Set GITHUB_TOKEN to avoid rate limits (optional but recommended)
+export GITHUB_TOKEN="$(gh auth token)"  # or use a fine-grained token with no permissions
+
 # Step 1: Initialize configuration from a source
 binst init --source=github --repo=owner/repo -o .config/binstaller.yml
 
@@ -224,6 +223,33 @@ binst embed-checksums --config .config/binstaller.yml --version v1.0.0 --mode do
 # Step 3: Generate installer script
 binst gen -o install.sh
 ```
+
+### GitHub Actions Usage
+
+While binstaller works without authentication, we recommend setting `GITHUB_TOKEN` in GitHub Actions to avoid rate limits:
+
+```yaml
+- name: Initialize from GitHub  # Requires token for all sources
+  env:
+    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  run: |
+    binst init --source=github --repo=owner/repo
+
+- name: Embed checksums (calculate mode)  # Requires token - downloads multiple assets
+  env:
+    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  run: |
+    binst embed-checksums --version latest --mode calculate
+
+- name: Embed checksums (checksum-file mode)  # No token needed - only reads local file
+  run: |
+    binst embed-checksums --version latest --mode checksum-file --file checksums.txt
+```
+
+**When GITHUB_TOKEN is needed:**
+- `binst init` with any source (github, goreleaser, aqua)
+- `binst embed-checksums` with `--mode download` or `--mode calculate`
+- Especially important for `--mode calculate` which downloads multiple release assets
 
 ## ⚙️ Configuration Format
 

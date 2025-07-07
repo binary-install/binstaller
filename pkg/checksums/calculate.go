@@ -10,6 +10,7 @@ import (
 	"sync"
 
 	"github.com/apex/log"
+	"github.com/binary-install/binstaller/pkg/httpclient"
 	"github.com/binary-install/binstaller/pkg/spec"
 )
 
@@ -194,8 +195,15 @@ func downloadFile(url, filepath string) error {
 	}
 	defer out.Close()
 
+	// Create request with GitHub auth if needed
+	req, err := httpclient.NewRequestWithGitHubAuth("GET", url)
+	if err != nil {
+		return fmt.Errorf("failed to create request: %w", err)
+	}
+
 	// Get the data
-	resp, err := http.Get(url)
+	client := httpclient.NewGitHubClient()
+	resp, err := client.Do(req)
 	if err != nil {
 		return fmt.Errorf("failed to download file: %w", err)
 	}

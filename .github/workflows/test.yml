@@ -34,6 +34,8 @@ jobs:
     - run: make ci
 
     - name: Generate test configs
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: make test-gen-configs
 
     - name: Generate test installers
@@ -53,4 +55,6 @@ jobs:
       run: make test-run-installers
 
     - name: Test aqua source
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: make test-aqua-source

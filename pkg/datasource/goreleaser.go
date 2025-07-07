@@ -13,6 +13,7 @@ import (
 	"text/template"
 
 	"github.com/apex/log"
+	"github.com/binary-install/binstaller/pkg/httpclient"
 	"github.com/binary-install/binstaller/pkg/spec"
 	"github.com/goreleaser/goreleaser/v2/pkg/config"
 	gorelcontext "github.com/goreleaser/goreleaser/v2/pkg/context"
@@ -417,7 +418,12 @@ func loadFromGitHub(repo, configPath, specifiedCommitHash string) (*config.Proje
 	}
 	url := fmt.Sprintf("https://raw.githubusercontent.com/%s/%s/%s", repo, commitHash, configPath)
 	log.Infof("fetching config from URL: %s", url)
-	resp, err := http.Get(url) // Basic GET, no token handling yet
+	req, err := httpclient.NewRequestWithGitHubAuth("GET", url)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to create request for %s", url)
+	}
+	client := httpclient.NewGitHubClient()
+	resp, err := client.Do(req)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to fetch config from %s", url)
 	}

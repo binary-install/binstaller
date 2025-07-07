@@ -10,6 +10,7 @@ import (
 
 	"github.com/aquaproj/aqua/v2/pkg/config/registry"
 	aquaexpr "github.com/aquaproj/aqua/v2/pkg/expr"
+	"github.com/binary-install/binstaller/pkg/httpclient"
 	"github.com/binary-install/binstaller/pkg/spec"
 	"github.com/pkg/errors"
 	"github.com/goccy/go-yaml"
@@ -258,7 +259,12 @@ func (a *AquaRegistryAdapter) GenerateInstallSpec(ctx context.Context) (*spec.In
 			ref = "HEAD"
 		}
 		url := "https://raw.githubusercontent.com/aquaproj/aqua-registry/" + ref + "/pkgs/" + a.repo + "/registry.yaml"
-		resp, err := http.Get(url)
+		req, err := httpclient.NewRequestWithGitHubAuth("GET", url)
+		if err != nil {
+			return nil, err
+		}
+		client := httpclient.NewGitHubClient()
+		resp, err := client.Do(req)
 		if err != nil {
 			return nil, err
 		}
