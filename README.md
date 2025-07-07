@@ -243,7 +243,7 @@ When using binstaller in GitHub Actions, set `GITHUB_TOKEN` for commands that ac
 
 - name: Embed checksums (checksum-file mode)  # No token needed - only reads local file
   run: |
-    binst embed-checksums --version latest --mode checksum-file --checksum-file checksums.txt
+    binst embed-checksums --version latest --mode checksum-file --file checksums.txt
 ```
 
 **When GITHUB_TOKEN is needed:**
