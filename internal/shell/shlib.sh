@@ -124,56 +124,6 @@ uname_arch_check() {
   log_crit "uname_arch_check '$(uname -m)' got converted to '$arch' which is not a GOARCH value.  Please file bug report at https://github.com/client9/shlib"
   return 1
 }
-http_download_curl() {
-  local_file=$1
-  source_url=$2
-  header=$3
-  if [ -z "$header" ]; then
-    curl -fsSL -o "$local_file" "$source_url"
-  else
-    curl -fsSL -H "$header" -o "$local_file" "$source_url"
-  fi
-}
-http_download_wget() {
-  local_file=$1
-  source_url=$2
-  header=$3
-  if [ -z "$header" ]; then
-    wget -q -O "$local_file" "$source_url"
-  else
-    wget -q --header "$header" -O "$local_file" "$source_url"
-  fi
-}
-http_download() {
-  log_debug "http_download $2"
-  if is_command curl; then
-    http_download_curl "$@"
-    return
-  elif is_command wget; then
-    http_download_wget "$@"
-    return
-  fi
-  log_crit "http_download unable to find wget or curl"
-  return 1
-}
-http_copy() {
-  tmp=$(mktemp)
-  http_download "${tmp}" "$1" "$2" || return 1
-  body=$(cat "$tmp")
-  rm -f "${tmp}"
-  echo "$body"
-}
-github_release() {
-  owner_repo=$1
-  version=$2
-  test -z "$version" && version="latest"
-  giturl="https://github.com/${owner_repo}/releases/${version}"
-  json=$(http_copy "$giturl" "Accept:application/json")
-  test -z "$json" && return 1
-  version=$(echo "$json" | tr -s '\n' ' ' | sed 's/.*"tag_name":"//' | sed 's/".*//')
-  test -z "$version" && return 1
-  echo "$version"
-}
 cat /dev/null <<EOF
 ------------------------------------------------------------------------
 End of functions from https://github.com/client9/shlib

@@ -146,56 +146,6 @@ uname_arch_check() {
   log_crit "uname_arch_check '$(uname -m)' got converted to '$arch' which is not a GOARCH value.  Please file bug report at https://github.com/client9/shlib"
   return 1
 }
-http_download_curl() {
-  local_file=$1
-  source_url=$2
-  header=$3
-  if [ -z "$header" ]; then
-    curl -fsSL -o "$local_file" "$source_url"
-  else
-    curl -fsSL -H "$header" -o "$local_file" "$source_url"
-  fi
-}
-http_download_wget() {
-  local_file=$1
-  source_url=$2
-  header=$3
-  if [ -z "$header" ]; then
-    wget -q -O "$local_file" "$source_url"
-  else
-    wget -q --header "$header" -O "$local_file" "$source_url"
-  fi
-}
-http_download() {
-  log_debug "http_download $2"
-  if is_command curl; then
-    http_download_curl "$@"
-    return
-  elif is_command wget; then
-    http_download_wget "$@"
-    return
-  fi
-  log_crit "http_download unable to find wget or curl"
-  return 1
-}
-http_copy() {
-  tmp=$(mktemp)
-  http_download "${tmp}" "$1" "$2" || return 1
-  body=$(cat "$tmp")
-  rm -f "${tmp}"
-  echo "$body"
-}
-github_release() {
-  owner_repo=$1
-  version=$2
-  test -z "$version" && version="latest"
-  giturl="https://github.com/${owner_repo}/releases/${version}"
-  json=$(http_copy "$giturl" "Accept:application/json")
-  test -z "$json" && return 1
-  version=$(echo "$json" | tr -s '\n' ' ' | sed 's/.*"tag_name":"//' | sed 's/".*//')
-  test -z "$version" && return 1
-  echo "$version"
-}
 cat /dev/null <<EOF
 ------------------------------------------------------------------------
 End of functions from https://github.com/client9/shlib
@@ -303,6 +253,76 @@ hash_verify() {
   fi
 }
 
+# GitHub HTTP download functions with GITHUB_TOKEN support
+github_http_download_curl() {
+  local_file=$1
+  source_url=$2
+  header=$3
+  if [ -n "$GITHUB_TOKEN" ]; then
+    log_debug "Using GITHUB_TOKEN for authentication"
+    if [ -z "$header" ]; then
+      curl -fsSL -H "Authorization: Bearer $GITHUB_TOKEN" -o "$local_file" "$source_url"
+    else
+      curl -fsSL -H "Authorization: Bearer $GITHUB_TOKEN" -H "$header" -o "$local_file" "$source_url"
+    fi
+  else
+    if [ -z "$header" ]; then
+      curl -fsSL -o "$local_file" "$source_url"
+    else
+      curl -fsSL -H "$header" -o "$local_file" "$source_url"
+    fi
+  fi
+}
+github_http_download_wget() {
+  local_file=$1
+  source_url=$2
+  header=$3
+  if [ -n "$GITHUB_TOKEN" ]; then
+    log_debug "Using GITHUB_TOKEN for authentication"
+    if [ -z "$header" ]; then
+      wget -q --header "Authorization: Bearer $GITHUB_TOKEN" -O "$local_file" "$source_url"
+    else
+      wget -q --header "Authorization: Bearer $GITHUB_TOKEN" --header "$header" -O "$local_file" "$source_url"
+    fi
+  else
+    if [ -z "$header" ]; then
+      wget -q -O "$local_file" "$source_url"
+    else
+      wget -q --header "$header" -O "$local_file" "$source_url"
+    fi
+  fi
+}
+github_http_download() {
+  log_debug "github_http_download $2"
+  if is_command curl; then
+    github_http_download_curl "$@"
+    return
+  elif is_command wget; then
+    github_http_download_wget "$@"
+    return
+  fi
+  log_crit "github_http_download unable to find wget or curl"
+  return 1
+}
+github_http_copy() {
+  tmp=$(mktemp)
+  github_http_download "${tmp}" "$@" || return 1
+  body=$(cat "$tmp")
+  rm -f "${tmp}"
+  echo "$body"
+}
+github_release() {
+  owner_repo=$1
+  version=$2
+  test -z "$version" && version="latest"
+  giturl="https://github.com/${owner_repo}/releases/${version}"
+  json=$(github_http_copy "$giturl" "Accept:application/json")
+  test -z "$json" && return 1
+  version=$(echo "$json" | tr -s '\n' ' ' | sed 's/.*"tag_name":"//' | sed 's/".*//')
+  test -z "$version" && return 1
+  echo "$version"
+}
+
 
 # --- Embedded Checksums (Format: VERSION:FILENAME:HASH) ---
 EMBEDDED_CHECKSUMS=""
@@ -387,7 +407,7 @@ execute() {
   trap 'rm -rf -- "$TMPDIR"' EXIT HUP INT TERM
   log_debug "Downloading files into ${TMPDIR}"
   log_info "Downloading ${ASSET_URL}"
-  http_download "${TMPDIR}/${ASSET_FILENAME}" "${ASSET_URL}"
+  github_http_download "${TMPDIR}/${ASSET_FILENAME}" "${ASSET_URL}"
 
   # Try to find embedded checksum first
   EMBEDDED_HASH=$(find_embedded_checksum "$VERSION" "$ASSET_FILENAME")
@@ -407,7 +427,7 @@ execute() {
   elif [ -n "$CHECKSUM_URL" ]; then
     # Fall back to downloading checksum file
     log_info "Downloading checksums from ${CHECKSUM_URL}"
-    http_download "${TMPDIR}/${CHECKSUM_FILENAME}" "${CHECKSUM_URL}"
+    github_http_download "${TMPDIR}/${CHECKSUM_FILENAME}" "${CHECKSUM_URL}"
     log_info "Verifying checksum ..."
     hash_verify "${TMPDIR}/${ASSET_FILENAME}" "${TMPDIR}/${CHECKSUM_FILENAME}"
   else

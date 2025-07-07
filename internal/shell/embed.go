@@ -25,8 +25,6 @@ cat \
   uname_arch.sh \
   uname_os_check.sh \
   uname_arch_check.sh \
-  http_download.sh \
-  github_release.sh \
   license_end.sh | \
   grep -v '^#' | grep -v ' #' | tr -s '\n'
 */

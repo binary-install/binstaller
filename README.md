@@ -115,6 +115,8 @@ curl -sL https://github.com/binary-install/binstaller/releases/latest/download/i
 - `$BINSTALLER_BIN` if set, otherwise
 - `$HOME/.local/bin` (following XDG Base Directory Specification)
 
+**GitHub Token Support**: Generated install scripts also support `GITHUB_TOKEN` environment variable to avoid rate limits when downloading from GitHub releases.
+
 ### Generic Installer
 
 ```bash

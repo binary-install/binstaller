@@ -157,7 +157,7 @@ execute() {
   trap 'rm -rf -- "$TMPDIR"' EXIT HUP INT TERM
   log_debug "Downloading files into ${TMPDIR}"
   log_info "Downloading ${ASSET_URL}"
-  http_download "${TMPDIR}/${ASSET_FILENAME}" "${ASSET_URL}"
+  github_http_download "${TMPDIR}/${ASSET_FILENAME}" "${ASSET_URL}"
 
   # Try to find embedded checksum first
   EMBEDDED_HASH=$(find_embedded_checksum "$VERSION" "$ASSET_FILENAME")
@@ -177,7 +177,7 @@ execute() {
   elif [ -n "$CHECKSUM_URL" ]; then
     # Fall back to downloading checksum file
     log_info "Downloading checksums from ${CHECKSUM_URL}"
-    http_download "${TMPDIR}/${CHECKSUM_FILENAME}" "${CHECKSUM_URL}"
+    github_http_download "${TMPDIR}/${CHECKSUM_FILENAME}" "${CHECKSUM_URL}"
     log_info "Verifying checksum ..."
     hash_verify "${TMPDIR}/${ASSET_FILENAME}" "${TMPDIR}/${CHECKSUM_FILENAME}"
   else
