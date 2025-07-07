@@ -1,8 +1,11 @@
 # binstaller
 
 <p align="center">
-  <h3 align="center">binstaller</h3>
-  <p align="center">A modern, secure binary installer generator with enhanced security features</p>
+  <img src="https://github.com/user-attachments/assets/9a6c4109-4991-4f44-a186-a4972b2a72ae" alt="binstaller logo" width="300">
+</p>
+
+<p align="center">
+  <p align="center">Config-driven secure shell-script installer generator</p>
   <p align="center">
     <a href="/LICENSE.md"><img alt="Software License" src="https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat-square"></a>
     <a href="https://github.com/binary-install/binstaller/releases"><img alt="Release" src="https://img.shields.io/github/release/binary-install/binstaller.svg?style=flat-square"></a>
@@ -11,7 +14,7 @@
 
 ---
 
-**binstaller** (binst) is a config-based installer shell script generator that creates secure, reproducible installation scripts for static binaries distributed via GitHub releases. Works with Go binaries, Rust binaries, and any other static binaries - as long as they're released on GitHub, binstaller can generate installation scripts for them.
+**binstaller** (binst) is a config-driven secure shell-script installer generator that creates reproducible installation scripts for static binaries distributed via GitHub releases. Works with Go binaries, Rust binaries, and any other static binaries - as long as they're released on GitHub, binstaller can generate installation scripts for them.
 
 ## 🔄 How it Works
 
