@@ -5,10 +5,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"os"
+	"regexp"
 	"sort"
 	"strings"
 	"text/tabwriter"
+	"time"
 
 	"github.com/apex/log"
 	"github.com/binary-install/binstaller/pkg/asset"
@@ -21,7 +24,6 @@ import (
 var (
 	// Flags for test command
 	testVersion     string
-	testVerbose     bool
 	testCheckAssets bool
 )
 
@@ -118,6 +120,12 @@ and running the actual installer script.`,
 func validateSpec(installSpec *spec.InstallSpec) error {
 	if installSpec.Repo == nil || *installSpec.Repo == "" {
 		return fmt.Errorf("repo field is required")
+	}
+
+	// Validate repository format (owner/repo)
+	repoPattern := regexp.MustCompile(`^[a-zA-Z0-9._-]+/[a-zA-Z0-9._-]+$`)
+	if !repoPattern.MatchString(*installSpec.Repo) {
+		return fmt.Errorf("repo must be in format 'owner/repo', got: %s", *installSpec.Repo)
 	}
 
 	if installSpec.Asset == nil {
@@ -227,28 +235,36 @@ func checkAssetsExist(ctx context.Context, installSpec *spec.InstallSpec, versio
 
 	log.Infof("Checking assets for version: %s", actualVersion)
 
-	// Check each asset
-	client := httpclient.NewGitHubClient()
+	// Fetch all release assets once
+	releaseAssets, err := fetchReleaseAssets(ctx, repo, actualVersion)
+	if err != nil {
+		return fmt.Errorf("failed to fetch release assets: %w", err)
+	}
+
+	// Create a map of existing assets for quick lookup
+	existingAssets := make(map[string]bool)
+	for _, asset := range releaseAssets {
+		existingAssets[asset] = true
+	}
+
+	// Check each generated asset
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
 	fmt.Fprintln(w, "PLATFORM\tASSET FILENAME\tSTATUS")
 	fmt.Fprintln(w, "--------\t--------------\t------")
 
 	for platform, filename := range assetFilenames {
-		exists, err := checkAssetExists(ctx, client, repo, actualVersion, filename)
-		if err != nil {
-			log.WithError(err).Warnf("Failed to check asset %s", filename)
-			fmt.Fprintf(w, "%s\t%s\t%s\n", platform, filename, "ERROR")
-			continue
-		}
-
 		status := "✓ EXISTS"
-		if !exists {
+		if !existingAssets[filename] {
 			status = "✗ MISSING"
 		}
 		fmt.Fprintf(w, "%s\t%s\t%s\n", platform, filename, status)
 	}
 
 	w.Flush()
+
+	// Display unmatched assets from the release
+	displayUnmatchedAssets(releaseAssets, assetFilenames)
+
 	return nil
 }
 
@@ -260,9 +276,13 @@ func resolveLatestVersion(ctx context.Context, repo string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("failed to create request: %w", err)
 	}
+	req = req.WithContext(ctx)
 	req.Header.Set("Accept", "application/vnd.github.v3+json")
 
-	client := httpclient.NewGitHubClient()
+	client := &http.Client{
+		Timeout: 30 * time.Second,
+		Transport: httpclient.NewGitHubClient().Transport,
+	}
 	resp, err := client.Do(req)
 	if err != nil {
 		return "", fmt.Errorf("failed to fetch latest release: %w", err)
@@ -284,28 +304,83 @@ func resolveLatestVersion(ctx context.Context, repo string) (string, error) {
 	return release.TagName, nil
 }
 
-// checkAssetExists checks if a specific asset exists in the GitHub release
-func checkAssetExists(ctx context.Context, client *http.Client, repo, version, filename string) (bool, error) {
-	url := fmt.Sprintf("https://github.com/%s/releases/download/%s/%s", repo, version, filename)
+// fetchReleaseAssets fetches all assets from a GitHub release
+func fetchReleaseAssets(ctx context.Context, repo, version string) ([]string, error) {
+	url := fmt.Sprintf("https://api.github.com/repos/%s/releases/tags/%s", repo, url.PathEscape(version))
 	
-	req, err := httpclient.NewRequestWithGitHubAuth("HEAD", url)
+	req, err := httpclient.NewRequestWithGitHubAuth("GET", url)
 	if err != nil {
-		return false, fmt.Errorf("failed to create request: %w", err)
+		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
+	req = req.WithContext(ctx)
+	req.Header.Set("Accept", "application/vnd.github.v3+json")
 
+	client := &http.Client{
+		Timeout: 30 * time.Second,
+		Transport: httpclient.NewGitHubClient().Transport,
+	}
 	resp, err := client.Do(req)
 	if err != nil {
-		return false, fmt.Errorf("failed to check asset: %w", err)
+		return nil, fmt.Errorf("failed to fetch release: %w", err)
 	}
 	defer resp.Body.Close()
 
-	return resp.StatusCode == http.StatusOK, nil
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("GitHub API returned status %d", resp.StatusCode)
+	}
+
+	var release struct {
+		Assets []struct {
+			Name string `json:"name"`
+		} `json:"assets"`
+	}
+	
+	if err := json.NewDecoder(resp.Body).Decode(&release); err != nil {
+		return nil, fmt.Errorf("failed to parse release response: %w", err)
+	}
+
+	assets := make([]string, len(release.Assets))
+	for i, asset := range release.Assets {
+		assets[i] = asset.Name
+	}
+
+	return assets, nil
+}
+
+// displayUnmatchedAssets displays release assets that don't have matching entries
+func displayUnmatchedAssets(releaseAssets []string, assetFilenames map[string]string) {
+	// Create a map of expected filenames for quick lookup
+	expectedAssets := make(map[string]bool)
+	for _, filename := range assetFilenames {
+		expectedAssets[filename] = true
+	}
+
+	// Find unmatched assets
+	unmatchedAssets := make([]string, 0)
+	for _, asset := range releaseAssets {
+		if !expectedAssets[asset] {
+			unmatchedAssets = append(unmatchedAssets, asset)
+		}
+	}
+
+	// Display unmatched assets if any
+	if len(unmatchedAssets) > 0 {
+		fmt.Println("\nUnmatched assets in release (no corresponding platform):")
+		w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
+		fmt.Fprintln(w, "ASSET FILENAME")
+		fmt.Fprintln(w, "--------------")
+		
+		sort.Strings(unmatchedAssets)
+		for _, asset := range unmatchedAssets {
+			fmt.Fprintf(w, "%s\n", asset)
+		}
+		w.Flush()
+	}
 }
 
 
 func init() {
 	// Flags specific to test command
 	TestCommand.Flags().StringVar(&testVersion, "version", "", "Test with specific version (default: uses default_version from spec)")
-	TestCommand.Flags().BoolVar(&testVerbose, "verbose", false, "Enable verbose output")
 	TestCommand.Flags().BoolVar(&testCheckAssets, "check-assets", false, "Check if generated assets exist in GitHub release")
 }
