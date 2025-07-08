@@ -11,7 +11,7 @@
     "deno:check": "npm run deno:fmt && npm run deno:lint",
     "gen:schema": "npm run format && npm run compile",
     "gen:go": "./gen-go-with-fork.sh",
-    "gen:platforms": "deno run --allow-read --allow-write gen-platform-constants.ts && go fmt ../pkg/asset/platforms_generated.go"
+    "gen:platforms": "deno run --allow-read --allow-write --allow-env gen-platform-constants.ts && go fmt ../pkg/asset/platforms_generated.go"
   },
   "devDependencies": {
     "@typespec/compiler": "latest",
