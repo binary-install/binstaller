@@ -138,6 +138,8 @@ gen: gen-schema gen-go gen-platforms ## Generate JSON Schema, Go structs, and pl
 gen-platforms: ## Generate platform constants from TypeSpec
 	@echo "Generating platform constants from TypeSpec..."
 	@cd $(SCHEMA_DIR) && npm run gen:platforms
+	@echo "Formatting generated Go code..."
+	@go fmt pkg/asset/platforms_generated.go
 
 schema-lint: ## Format and lint TypeSpec schema files
 	@echo "Installing schema dependencies..."

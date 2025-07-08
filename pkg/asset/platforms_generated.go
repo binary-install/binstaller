@@ -60,10 +60,10 @@ func GetAllPlatformConstants() ([]string, []string) {
 	for _, os := range GetAllOSValues() {
 		osValues = append(osValues, string(os))
 	}
-	
+
 	for _, arch := range GetAllArchValues() {
 		archValues = append(archValues, string(arch))
 	}
-	
+
 	return osValues, archValues
 }
