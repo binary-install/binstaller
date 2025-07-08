@@ -117,7 +117,6 @@ type checksumResult struct {
 	Hash     string
 }
 
-
 // downloadFile downloads a file from a URL to a local path
 func downloadFile(url, filepath string) error {
 	// Create the file
@@ -153,4 +152,3 @@ func downloadFile(url, filepath string) error {
 
 	return nil
 }
-

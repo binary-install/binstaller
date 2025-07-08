@@ -316,9 +316,13 @@ func parseChecksumFileInternal(checksumFile string) (map[string]string, error) {
 func (e *Embedder) interpolateTemplate(template string, additionalVars map[string]string) (string, error) {
 	// Create base environment map with variables supported by all templates
 	envMap := map[string]string{
-		"NAME":    spec.StringValue(e.Spec.Name),
-		"VERSION": e.Version,
+		"NAME": spec.StringValue(e.Spec.Name),
+		"TAG":  e.Version, // Original tag with 'v' prefix if present
 	}
+
+	// VERSION should be without 'v' prefix according to spec documentation
+	version := strings.TrimPrefix(e.Version, "v")
+	envMap["VERSION"] = version
 
 	// Merge additional variables (OS, ARCH, EXT for asset templates)
 	for k, v := range additionalVars {
@@ -376,7 +380,6 @@ func (e *Embedder) filterChecksums(checksums map[string]string) map[string]strin
 	log.Infof("Filtered checksums: %d out of %d entries match asset template", len(filtered), len(checksums))
 	return filtered
 }
-
 
 // ComputeHash computes the hash of a file using the specified algorithm
 func ComputeHash(filepath string, algorithm string) (string, error) {

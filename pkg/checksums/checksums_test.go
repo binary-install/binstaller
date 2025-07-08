@@ -57,8 +57,6 @@ ghi789 *test-1.0.0-windows-amd64.zip
 	}
 }
 
-
-
 func TestComputeHash(t *testing.T) {
 	// Create a temporary file with known content
 	tempDir, err := os.MkdirTemp("", "checksums-hash-test")
@@ -106,7 +104,7 @@ func TestFilterChecksums(t *testing.T) {
 	windows := spec.Windows
 	amd64 := spec.Amd64
 	arm64 := spec.Arm64
-	
+
 	testSpec := &spec.InstallSpec{
 		Name: spec.StringPtr("test-tool"),
 		Repo: spec.StringPtr("test-owner/test-repo"),
@@ -141,14 +139,14 @@ func TestFilterChecksums(t *testing.T) {
 
 	// Create checksums map with valid and invalid entries
 	checksums := map[string]string{
-		"test-tool-1.0.0-linux-amd64.tar.gz":  "abc123",  // Valid
-		"test-tool-1.0.0-darwin-amd64.tar.gz": "def456",  // Valid
-		"test-tool-1.0.0-darwin-arm64.tar.gz": "ghi789",  // Valid
-		"test-tool-1.0.0-windows-amd64.zip":   "jkl012",  // Valid (rule applied)
-		"test-tool-1.0.0-linux-386.tar.gz":    "mno345",  // Invalid (unsupported platform)
-		"README.md":                           "pqr678",  // Invalid (not an asset)
-		"checksums.txt":                       "stu901",  // Invalid (not an asset)
-		"test-tool-1.0.0.deb":                 "vwx234",  // Invalid (different format)
+		"test-tool-1.0.0-linux-amd64.tar.gz":  "abc123", // Valid
+		"test-tool-1.0.0-darwin-amd64.tar.gz": "def456", // Valid
+		"test-tool-1.0.0-darwin-arm64.tar.gz": "ghi789", // Valid
+		"test-tool-1.0.0-windows-amd64.zip":   "jkl012", // Valid (rule applied)
+		"test-tool-1.0.0-linux-386.tar.gz":    "mno345", // Invalid (unsupported platform)
+		"README.md":                           "pqr678", // Invalid (not an asset)
+		"checksums.txt":                       "stu901", // Invalid (not an asset)
+		"test-tool-1.0.0.deb":                 "vwx234", // Invalid (different format)
 	}
 
 	// Filter checksums
@@ -210,8 +208,7 @@ func TestFilterChecksumsNoAssetTemplate(t *testing.T) {
 	filtered := embedder.filterChecksums(checksums)
 
 	if len(filtered) != len(checksums) {
-		t.Errorf("Expected all checksums to be returned when no asset template, got %d of %d", 
+		t.Errorf("Expected all checksums to be returned when no asset template, got %d of %d",
 			len(filtered), len(checksums))
 	}
 }
-

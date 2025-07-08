@@ -140,7 +140,7 @@ func TestGeneratePossibleFilenames(t *testing.T) {
 	darwin := spec.Darwin
 	amd64 := spec.Amd64
 	arm64 := spec.Arm64
-	
+
 	testSpec := &spec.InstallSpec{
 		Name: spec.StringPtr("test-tool"),
 		Repo: spec.StringPtr("test-owner/test-repo"),
@@ -187,7 +187,7 @@ func TestGeneratePossibleFilenamesAllPlatforms(t *testing.T) {
 	// Test with no supported platforms - should generate all possible combinations
 	osLowercase := spec.OSLowercase
 	archLowercase := spec.ArchLowercase
-	
+
 	testSpec := &spec.InstallSpec{
 		Name: spec.StringPtr("test-tool"),
 		Repo: spec.StringPtr("test-owner/test-repo"),
@@ -213,7 +213,7 @@ func TestGeneratePossibleFilenamesAllPlatforms(t *testing.T) {
 	expectedCount := allOSCount * allArchCount
 
 	if len(filenames) != expectedCount {
-		t.Errorf("Expected %d filenames (all %d OS x %d Arch combinations), got %d", 
+		t.Errorf("Expected %d filenames (all %d OS x %d Arch combinations), got %d",
 			expectedCount, allOSCount, allArchCount, len(filenames))
 	}
 

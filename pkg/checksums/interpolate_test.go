@@ -25,7 +25,7 @@ func TestInterpolateTemplate(t *testing.T) {
 			},
 			version:  "v1.2.3",
 			template: "${NAME}_${VERSION}_checksums.txt",
-			expected: "mytool_v1.2.3_checksums.txt",
+			expected: "mytool_1.2.3_checksums.txt",
 		},
 		{
 			name: "with OS and ARCH variables",
@@ -38,7 +38,7 @@ func TestInterpolateTemplate(t *testing.T) {
 				"OS":   "linux",
 				"ARCH": "amd64",
 			},
-			expected: "mytool_v1.2.3_linux_amd64.tar.gz",
+			expected: "mytool_1.2.3_linux_amd64.tar.gz",
 		},
 		{
 			name: "with EXT variable",
@@ -52,7 +52,7 @@ func TestInterpolateTemplate(t *testing.T) {
 				"ARCH": "amd64",
 				"EXT":  ".zip",
 			},
-			expected: "mytool_v1.2.3_windows_amd64.zip",
+			expected: "mytool_1.2.3_windows_amd64.zip",
 		},
 		{
 			name: "unknown variable replaced with empty string",
@@ -61,7 +61,7 @@ func TestInterpolateTemplate(t *testing.T) {
 			},
 			version:  "v1.2.3",
 			template: "${NAME}_${UNKNOWN}_${VERSION}",
-			expected: "mytool__v1.2.3",
+			expected: "mytool__1.2.3",
 		},
 		{
 			name: "empty name uses empty string",
@@ -70,7 +70,7 @@ func TestInterpolateTemplate(t *testing.T) {
 			},
 			version:  "v1.2.3",
 			template: "${NAME}_${VERSION}",
-			expected: "_v1.2.3",
+			expected: "_1.2.3",
 		},
 		{
 			name: "REPO and REPO_OWNER/NAME are not supported",
@@ -121,7 +121,7 @@ func TestCreateChecksumFilename_Interpolation(t *testing.T) {
 				},
 			},
 			version:  "v1.2.3",
-			expected: "mytool_v1.2.3_checksums.txt",
+			expected: "mytool_1.2.3_checksums.txt",
 		},
 		{
 			name: "no checksums config returns empty",
@@ -231,7 +231,7 @@ func TestGenerateAssetFilename_Interpolation(t *testing.T) {
 			version:   "v1.2.3",
 			osInput:   "linux",
 			archInput: "amd64",
-			expected:  "mytool_v1.2.3_linux_amd64.tar.gz",
+			expected:  "mytool_1.2.3_linux_amd64.tar.gz",
 		},
 		{
 			name: "with extension placeholder",
@@ -245,7 +245,7 @@ func TestGenerateAssetFilename_Interpolation(t *testing.T) {
 			version:   "v1.2.3",
 			osInput:   "linux",
 			archInput: "amd64",
-			expected:  "mytool_v1.2.3_linux_amd64.tar.gz",
+			expected:  "mytool_1.2.3_linux_amd64.tar.gz",
 		},
 		{
 			name: "with rules override changing extension",
@@ -267,7 +267,7 @@ func TestGenerateAssetFilename_Interpolation(t *testing.T) {
 			version:   "v1.2.3",
 			osInput:   "windows",
 			archInput: "amd64",
-			expected:  "mytool_v1.2.3_windows_amd64.zip",
+			expected:  "mytool_1.2.3_windows_amd64.zip",
 		},
 		{
 			name: "error on missing asset config",
@@ -290,7 +290,7 @@ func TestGenerateAssetFilename_Interpolation(t *testing.T) {
 			version:   "v1.2.3",
 			osInput:   "linux",
 			archInput: "amd64",
-			expected:  "mytool_v1.2.3_linux_amd64.tar.gz",
+			expected:  "mytool_1.2.3_linux_amd64.tar.gz",
 		},
 	}
 
@@ -331,7 +331,7 @@ func TestInterpolationEdgeCases(t *testing.T) {
 			},
 			version:  "v1.2.3",
 			template: "${NAME}_{{VERSION}}_${VERSION}",
-			expected: "mytool_{{VERSION}}_v1.2.3",
+			expected: "mytool_{{VERSION}}_1.2.3",
 		},
 		{
 			name: "invalid syntax replaced with interpolated value",
@@ -340,7 +340,7 @@ func TestInterpolationEdgeCases(t *testing.T) {
 			},
 			version:  "v1.2.3",
 			template: "${NAME}_$VERSION_${VERSION}",
-			expected: "mytool_v1.2.3",
+			expected: "mytool_1.2.3",
 		},
 		{
 			name: "empty variables",

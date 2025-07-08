@@ -34,5 +34,11 @@ echo '# --- manually added ---' >> testdata/gum.binstaller.yml
 yq -i '.unpack.strip_components = 1' testdata/gum.binstaller.yml
 yq -i '.default_bindir = "./bin"' testdata/gum.binstaller.yml
 yq -i '.default_version = "v0.16.0"' testdata/gum.binstaller.yml
+# Add rule for 386 -> i386 mapping
+yq -i '.asset.rules += [{"when": {"arch": "386"}, "arch": "i386"}]' testdata/gum.binstaller.yml
+# Add rules for BSD OS mappings
+yq -i '.asset.rules += [{"when": {"os": "freebsd"}, "os": "Freebsd"}]' testdata/gum.binstaller.yml
+yq -i '.asset.rules += [{"when": {"os": "netbsd"}, "os": "Netbsd"}]' testdata/gum.binstaller.yml
+yq -i '.asset.rules += [{"when": {"os": "openbsd"}, "os": "Openbsd"}]' testdata/gum.binstaller.yml
 ./binst embed-checksums -c ./testdata/gum.binstaller.yml -m download --version v0.15.0
 ./binst embed-checksums -c ./testdata/gum.binstaller.yml -m download --version v0.16.0
