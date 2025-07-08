@@ -146,10 +146,7 @@ func (g *FilenameGenerator) interpolateTemplate(template string, additionalVars 
 	}
 
 	// VERSION should be without 'v' prefix according to spec documentation
-	version := g.Version
-	if strings.HasPrefix(version, "v") {
-		version = strings.TrimPrefix(version, "v")
-	}
+	version := strings.TrimPrefix(g.Version, "v")
 	envMap["VERSION"] = version
 
 	// Merge additional variables (OS, ARCH, EXT for asset templates)

@@ -321,10 +321,7 @@ func (e *Embedder) interpolateTemplate(template string, additionalVars map[strin
 	}
 
 	// VERSION should be without 'v' prefix according to spec documentation
-	version := e.Version
-	if strings.HasPrefix(version, "v") {
-		version = strings.TrimPrefix(version, "v")
-	}
+	version := strings.TrimPrefix(e.Version, "v")
 	envMap["VERSION"] = version
 
 	// Merge additional variables (OS, ARCH, EXT for asset templates)
