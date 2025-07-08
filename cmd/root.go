@@ -86,4 +86,5 @@ func init() {
 	RootCmd.AddCommand(InitCommand)
 	RootCmd.AddCommand(GenCommand)
 	RootCmd.AddCommand(EmbedChecksumsCommand)
+	RootCmd.AddCommand(TestCommand)
 }
