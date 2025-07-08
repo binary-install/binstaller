@@ -6,11 +6,12 @@
     "compile": "tsp compile .",
     "watch": "tsp compile . --watch",
     "format": "tsp format **/*.tsp",
-    "deno:fmt": "deno fmt add-quicktype-property-order.ts",
-    "deno:lint": "deno lint add-quicktype-property-order.ts",
+    "deno:fmt": "deno fmt add-quicktype-property-order.ts gen-platform-constants.ts",
+    "deno:lint": "deno lint add-quicktype-property-order.ts gen-platform-constants.ts",
     "deno:check": "npm run deno:fmt && npm run deno:lint",
     "gen:schema": "npm run format && npm run compile",
-    "gen:go": "./gen-go-with-fork.sh"
+    "gen:go": "./gen-go-with-fork.sh",
+    "gen:platforms": "deno run --allow-read --allow-write gen-platform-constants.ts"
   },
   "devDependencies": {
     "@typespec/compiler": "latest",

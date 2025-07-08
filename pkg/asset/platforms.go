@@ -1,3 +1,3 @@
-//go:generate go run ../../cmd/genplatforms-typespec-full/main.go ../../schema/main.tsp platforms_generated.go
+//go:generate deno run --allow-read --allow-write ../../schema/gen-platform-constants.ts
 
 package asset
