@@ -3,7 +3,7 @@ module github.com/binary-install/binstaller
 go 1.24.4
 
 require (
-	github.com/apex/log v1.1.4
+	github.com/apex/log v1.9.0
 	github.com/aquaproj/aqua/v2 v2.53.3
 	github.com/buildkite/interpolate v0.1.5
 	github.com/charmbracelet/fang v0.3.0
