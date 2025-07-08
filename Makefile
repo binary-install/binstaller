@@ -5,7 +5,7 @@ OS=$(shell uname -s)
 LDFLAGS=-ldflags "-X main.version=$(shell git describe --tags --always --dirty || echo dev) -X main.commit=$(shell git rev-parse HEAD || echo none)"
 
 # Test data files
-GO_SOURCES := $(shell find . -name '*.go' -not -path './vendor/*')
+GO_SOURCES := $(shell find . -name '*.go' -type f)
 SHELL_TEMPLATES := internal/shell/*.sh internal/shell/*.tmpl.sh
 TESTDATA_DIR := testdata
 BINSTALLER_CONFIGS := $(wildcard $(TESTDATA_DIR)/*.binstaller.yml)
@@ -17,29 +17,17 @@ TYPESPEC_SOURCES := $(SCHEMA_DIR)/main.tsp $(SCHEMA_DIR)/tspconfig.yaml
 JSON_SCHEMA := $(SCHEMA_DIR)/output/@typespec/json-schema/InstallSpec.json
 GENERATED_GO := pkg/spec/generated.go
 
-export PATH := ./bin:$(PATH)
+# Aqua tool management - https://aquaproj.github.io/
+export PATH := $(shell aqua root-dir)/bin:./bin:$(PATH)
+export AQUA_DISABLE_LAZY_INSTALL := 1
 export GO111MODULE := on
-# enable consistent Go 1.12/1.13 GOPROXY behavior.
+# Use Go module proxy
 export GOPROXY = https://proxy.golang.org
 
-bin/goreleaser:
-	mkdir -p bin
-	GOBIN=$(shell pwd)/bin go install github.com/goreleaser/goreleaser/v2@latest
+aqua-install: ## Install tools via aqua
+	aqua install
 
-bin/golangci-lint:
-	mkdir -p bin
-	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install.sh | sh -s -- -b ./bin v2.1.2
-
-bin/shellcheck:
-	mkdir -p bin
-ifeq ($(OS), Darwin)
-	curl -sfL -o ./bin/shellcheck https://github.com/caarlos0/shellcheck-docker/releases/download/v0.4.6/shellcheck_darwin
-else
-	curl -sfL -o ./bin/shellcheck https://github.com/caarlos0/shellcheck-docker/releases/download/v0.4.6/shellcheck
-endif
-	chmod +x ./bin/shellcheck
-
-setup: bin/golangci-lint bin/shellcheck ## Install all the build and lint dependencies
+setup: aqua-install ## Install all the build and lint dependencies
 	go mod download
 .PHONY: setup
 
@@ -67,15 +55,15 @@ cover: test-cover ## Run all the tests with coverage and opens the coverage repo
 	go tool cover -html=coverage.txt
 
 fmt: ## gofmt and goimports all go files
-	find . -name '*.go' -not -wholename './vendor/*' | while read -r file; do gofmt -w -s "$$file"; goimports -w "$$file"; done
+	find . -name '*.go' -type f | while read -r file; do gofmt -w -s "$$file"; goimports -w "$$file"; done
 
-lint: bin/golangci-lint schema-lint ## Run all the linters
-	./bin/golangci-lint run ./... --disable errcheck
+lint: aqua-install schema-lint ## Run all the linters
+	golangci-lint run ./... --disable errcheck
 
-ci: build test-all lint ## travis-ci entrypoint
+ci: build test-all lint ## Run CI checks
 	git diff .
 
-build: ## Build a beta version of binstaller
+build: ## Build binst binary
 	go build $(LDFLAGS) ./cmd/binst
 
 # Binary with dependency tracking (includes embedded shell templates and generated types)
@@ -105,7 +93,7 @@ test-run-installers: ## Run all installer scripts in parallel
 	@./test/run_installers.sh
 	@touch .testdata-timestamp
 
-test-run-installers-incremental: .testdata-timestamp $(INSTALL_SCRIPTS) ## Run only changed installer scripts
+test-run-installers-incremental: aqua-install .testdata-timestamp $(INSTALL_SCRIPTS) ## Run only changed installer scripts
 	@echo "Running incremental installer tests..."
 	@CHANGED_SCRIPTS=$$(find $(TESTDATA_DIR) -name "*.install.sh" -newer .testdata-timestamp 2>/dev/null || echo ""); \
 	if [ -n "$$CHANGED_SCRIPTS" ]; then \
@@ -159,12 +147,12 @@ test-clean: ## Clean up test artifacts
 
 .DEFAULT_GOAL := build
 
-.PHONY: ci test test-unit test-race test-cover test-all help clean binst-init test-gen-configs test-gen-installers test-run-installers test-run-installers-incremental test-aqua-source test-all-platforms test-integration test-incremental test-clean gen-schema gen-go gen
+.PHONY: ci test test-unit test-race test-cover test-all help clean binst-init test-gen-configs test-gen-installers test-run-installers test-run-installers-incremental test-aqua-source test-all-platforms test-integration test-incremental test-clean gen-schema gen-go gen aqua-install
 
 clean: ## clean up everything
 	go clean ./...
 	rm -f binstaller binst
-	rm -rf ./bin ./dist ./vendor
+	rm -rf ./bin ./dist
 	git gc --aggressive
 
 # Absolutely awesome: http://marmelab.com/blog/2016/02/29/auto-documented-makefile.html
