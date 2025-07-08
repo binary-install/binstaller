@@ -135,8 +135,8 @@ gen-go: $(GENERATED_GO) ## Generate Go structs from JSON Schema
 
 gen: gen-schema gen-go gen-platforms ## Generate JSON Schema, Go structs, and platform constants
 
-gen-platforms: ## Generate platform constants from spec
-	@echo "Generating platform constants..."
+gen-platforms: ## Generate platform constants from TypeSpec
+	@echo "Generating platform constants from TypeSpec..."
 	@cd pkg/asset && go generate
 
 schema-lint: ## Format and lint TypeSpec schema files
