@@ -58,7 +58,7 @@
             "properties": {
                 "template": {
                     "type": "string",
-                    "description": "Filename template with placeholders.\n\nAvailable placeholders:\n- ${NAME}: Binary name (from 'name' field or repository name)\n- ${VERSION}: Version to install (includes 'v' prefix if present in tag)\n- ${OS}: Operating system (e.g., 'linux', 'darwin', 'windows')\n- ${ARCH}: Architecture (e.g., 'amd64', 'arm64', '386')\n- ${EXT}: File extension (from 'default_extension' or rules)\n\nExamples:\n- \"${NAME}_${VERSION}_${OS}_${ARCH}.tar.gz\"\n- \"${NAME}-${VERSION}-${OS}-${ARCH}${EXT}\"\n- \"v${VERSION}/${NAME}_${OS}_${ARCH}.zip\""
+                    "description": "Filename template with placeholders.\n\nAvailable placeholders:\n- ${NAME}: Binary name (from 'name' field or repository name)\n- ${VERSION}: Version to install (without 'v' prefix, e.g., '1.0.0')\n- ${TAG}: Original tag with 'v' prefix if present (e.g., 'v1.0.0')\n- ${OS}: Operating system (e.g., 'linux', 'darwin', 'windows')\n- ${ARCH}: Architecture (e.g., 'amd64', 'arm64', '386')\n- ${EXT}: File extension (from 'default_extension' or rules)\n\nExamples:\n- \"${NAME}_${VERSION}_${OS}_${ARCH}.tar.gz\"\n- \"${NAME}-${VERSION}-${OS}-${ARCH}${EXT}\"\n- \"v${VERSION}/${NAME}_${OS}_${ARCH}.zip\""
                 },
                 "default_extension": {
                     "type": "string",
@@ -131,7 +131,7 @@
                 },
                 "embedded_checksums": {
                     "$ref": "#/$defs/RecordArrayEmbeddedChecksum",
-                    "description": "Pre-verified checksums organized by version.\n\nUse 'binst embed-checksums' command to automatically populate this.\nThe key is the version string (includes 'v' prefix if present in tag).\nThe value is an array of filename/hash pairs.\n\nThis allows offline installation and protects against\ncompromised checksum files."
+                    "description": "Pre-verified checksums organized by version.\n\nUse 'binst embed-checksums' command to automatically populate this.\nThe key is the version string (includes 'v' prefix if present in tag, e.g., 'v1.0.0').\nThe value is an array of filename/hash pairs.\n\nThis allows offline installation and protects against\ncompromised checksum files."
                 }
             },
             "quicktypePropertyOrder": [
