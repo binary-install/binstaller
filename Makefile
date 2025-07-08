@@ -133,7 +133,11 @@ gen-schema: $(JSON_SCHEMA) ## Generate JSON Schema from TypeSpec definitions
 
 gen-go: $(GENERATED_GO) ## Generate Go structs from JSON Schema
 
-gen: gen-schema gen-go ## Generate both JSON Schema and Go structs
+gen: gen-schema gen-go gen-platforms ## Generate JSON Schema, Go structs, and platform constants
+
+gen-platforms: ## Generate platform constants from spec
+	@echo "Generating platform constants..."
+	@cd pkg/asset && go generate
 
 schema-lint: ## Format and lint TypeSpec schema files
 	@echo "Installing schema dependencies..."
@@ -147,7 +151,7 @@ test-clean: ## Clean up test artifacts
 
 .DEFAULT_GOAL := build
 
-.PHONY: ci test test-unit test-race test-cover test-all help clean binst-init test-gen-configs test-gen-installers test-run-installers test-run-installers-incremental test-aqua-source test-all-platforms test-integration test-incremental test-clean gen-schema gen-go gen aqua-install
+.PHONY: ci test test-unit test-race test-cover test-all help clean binst-init test-gen-configs test-gen-installers test-run-installers test-run-installers-incremental test-aqua-source test-all-platforms test-integration test-incremental test-clean gen-schema gen-go gen gen-platforms aqua-install
 
 clean: ## clean up everything
 	go clean ./...

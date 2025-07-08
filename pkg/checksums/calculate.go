@@ -6,10 +6,10 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"strings"
 	"sync"
 
 	"github.com/apex/log"
+	"github.com/binary-install/binstaller/pkg/asset"
 	"github.com/binary-install/binstaller/pkg/httpclient"
 	"github.com/binary-install/binstaller/pkg/spec"
 )
@@ -24,8 +24,9 @@ func (e *Embedder) calculateChecksums() (map[string]string, error) {
 		// Use the supported platforms from the spec
 		platforms = e.Spec.SupportedPlatforms
 	} else {
-		// If no platforms specified, use common ones
-		platforms = getCommonPlatforms()
+		// If no platforms specified, use all possible combinations
+		generator := asset.NewFilenameGenerator(e.Spec, e.Version)
+		platforms = generator.GetAllPossiblePlatforms()
 	}
 
 	// Create a temporary directory for downloads
@@ -40,13 +41,16 @@ func (e *Embedder) calculateChecksums() (map[string]string, error) {
 	resultCh := make(chan *checksumResult, len(platforms))
 	errorCh := make(chan error, len(platforms))
 
+	// Create filename generator
+	generator := asset.NewFilenameGenerator(e.Spec, e.Version)
+
 	// Process each platform
 	for _, platform := range platforms {
 		wg.Add(1)
 		go func(p spec.Platform) {
 			defer wg.Done()
 
-			filename, err := e.generateAssetFilename(spec.PlatformOSString(p.OS), spec.PlatformArchString(p.Arch))
+			filename, err := generator.GenerateFilename(spec.PlatformOSString(p.OS), spec.PlatformArchString(p.Arch))
 			if err != nil {
 				errorCh <- fmt.Errorf("failed to generate asset filename for %s/%s: %w", spec.PlatformOSString(p.OS), spec.PlatformArchString(p.Arch), err)
 				return
@@ -113,74 +117,6 @@ type checksumResult struct {
 	Hash     string
 }
 
-// generateAssetFilename creates an asset filename for a specific OS and Arch
-func (e *Embedder) generateAssetFilename(osInput, archInput string) (string, error) {
-	if e.Spec == nil || e.Spec.Asset == nil || spec.StringValue(e.Spec.Asset.Template) == "" {
-		return "", fmt.Errorf("asset template not defined in spec")
-	}
-
-	// Keep original values for rule matching
-	osMatch := strings.ToLower(osInput)
-	archMatch := strings.ToLower(archInput)
-
-	// Create formatted values for template substitution
-	osValue := osMatch
-	archValue := archMatch
-
-	// Apply OS/Arch naming conventions for template values
-	if e.Spec.Asset.NamingConvention != nil {
-		if spec.NamingConventionOSString(e.Spec.Asset.NamingConvention.OS) == "titlecase" {
-			osValue = titleCase(osValue)
-		}
-	}
-
-	// Apply rules to get the right extension and override OS/Arch if needed
-	ext := spec.StringValue(e.Spec.Asset.DefaultExtension)
-	template := spec.StringValue(e.Spec.Asset.Template)
-
-	// Check if any rule applies - use osMatch/archMatch for condition checking
-	for _, rule := range e.Spec.Asset.Rules {
-		if rule.When != nil &&
-			(spec.StringValue(rule.When.OS) == "" || spec.StringValue(rule.When.OS) == osMatch) &&
-			(spec.StringValue(rule.When.Arch) == "" || spec.StringValue(rule.When.Arch) == archMatch) {
-			if spec.StringValue(rule.OS) != "" {
-				osValue = spec.StringValue(rule.OS)
-			}
-			if spec.StringValue(rule.Arch) != "" {
-				archValue = spec.StringValue(rule.Arch)
-			}
-			if spec.StringValue(rule.EXT) != "" {
-				ext = spec.StringValue(rule.EXT)
-			}
-			if spec.StringValue(rule.Template) != "" {
-				template = spec.StringValue(rule.Template)
-			}
-		}
-	}
-
-	// Asset templates support OS, ARCH, and EXT in addition to NAME and VERSION
-	additionalVars := map[string]string{
-		"OS":   osValue,
-		"ARCH": archValue,
-		"EXT":  ext,
-	}
-
-	// Perform variable substitution in the template
-	filename, err := e.interpolateTemplate(template, additionalVars)
-	if err != nil {
-		return "", fmt.Errorf("failed to interpolate asset template: %w", err)
-	}
-
-	return filename, nil
-}
-
-// titleCase converts a string to title case (first letter uppercase, rest lowercase)
-func titleCase(s string) string {
-	if s == "" {
-		return s
-	}
-	return strings.ToUpper(s[:1]) + strings.ToLower(s[1:])
-}
 
 // downloadFile downloads a file from a URL to a local path
 func downloadFile(url, filepath string) error {
@@ -218,21 +154,3 @@ func downloadFile(url, filepath string) error {
 	return nil
 }
 
-// getCommonPlatforms returns a list of common platforms
-func getCommonPlatforms() []spec.Platform {
-	linuxOS := spec.Linux
-	darwinOS := spec.Darwin
-	windowsOS := spec.Windows
-	amd64Arch := spec.Amd64
-	arm64Arch := spec.Arm64
-	x86Arch := spec.The386
-
-	return []spec.Platform{
-		{OS: &linuxOS, Arch: &amd64Arch},
-		{OS: &linuxOS, Arch: &arm64Arch},
-		{OS: &darwinOS, Arch: &amd64Arch},
-		{OS: &darwinOS, Arch: &arm64Arch},
-		{OS: &windowsOS, Arch: &amd64Arch},
-		{OS: &windowsOS, Arch: &x86Arch},
-	}
-}

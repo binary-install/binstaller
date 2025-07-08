@@ -4,6 +4,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/binary-install/binstaller/pkg/asset"
 	"github.com/binary-install/binstaller/pkg/spec"
 )
 
@@ -300,7 +301,8 @@ func TestGenerateAssetFilename_Interpolation(t *testing.T) {
 				Version: tt.version,
 			}
 
-			result, err := e.generateAssetFilename(tt.osInput, tt.archInput)
+			generator := asset.NewFilenameGenerator(e.Spec, e.Version)
+			result, err := generator.GenerateFilename(tt.osInput, tt.archInput)
 			if tt.expectError && err == nil {
 				t.Errorf("expected error but got none")
 			}

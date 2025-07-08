@@ -17,6 +17,7 @@ import (
 	"strings"
 
 	"github.com/apex/log"
+	"github.com/binary-install/binstaller/pkg/asset"
 	"github.com/binary-install/binstaller/pkg/httpclient"
 	"github.com/binary-install/binstaller/pkg/spec"
 	"github.com/buildkite/interpolate"
@@ -240,7 +241,13 @@ func (e *Embedder) downloadAndParseChecksumFile() (map[string]string, error) {
 	}
 
 	// Parse the checksum file
-	return parseChecksumFileInternal(tempFilePath)
+	checksums, err := parseChecksumFileInternal(tempFilePath)
+	if err != nil {
+		return nil, err
+	}
+
+	// Filter checksums based on asset template
+	return e.filterChecksums(checksums), nil
 }
 
 // parseChecksumFile parses a local checksum file
@@ -250,7 +257,13 @@ func (e *Embedder) parseChecksumFile() (map[string]string, error) {
 	}
 
 	log.Infof("Parsing checksums from file: %s", e.ChecksumFile)
-	return parseChecksumFileInternal(e.ChecksumFile)
+	checksums, err := parseChecksumFileInternal(e.ChecksumFile)
+	if err != nil {
+		return nil, err
+	}
+
+	// Filter checksums based on asset template
+	return e.filterChecksums(checksums), nil
 }
 
 // parseChecksumFileInternal parses a checksum file and returns a map of filename to hash
@@ -339,6 +352,31 @@ func (e *Embedder) createChecksumFilename() string {
 	}
 	return filename
 }
+
+// filterChecksums filters checksums to only include files matching possible asset filenames
+func (e *Embedder) filterChecksums(checksums map[string]string) map[string]string {
+	// Generate all possible asset filenames
+	generator := asset.NewFilenameGenerator(e.Spec, e.Version)
+	possibleFilenames := generator.GeneratePossibleFilenames()
+	if len(possibleFilenames) == 0 {
+		log.Warn("No possible asset filenames could be generated, returning all checksums")
+		return checksums
+	}
+
+	// Filter checksums
+	filtered := make(map[string]string)
+	for filename, hash := range checksums {
+		if possibleFilenames[filename] {
+			filtered[filename] = hash
+		} else {
+			log.Debugf("Filtering out checksum for non-matching file: %s", filename)
+		}
+	}
+
+	log.Infof("Filtered checksums: %d out of %d entries match asset template", len(filtered), len(checksums))
+	return filtered
+}
+
 
 // ComputeHash computes the hash of a file using the specified algorithm
 func ComputeHash(filepath string, algorithm string) (string, error) {
