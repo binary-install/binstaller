@@ -49,10 +49,21 @@ install: ## build and install
 binst-init: binst ## generate .config/binstaller.yml from .config/goreleaser.yml
 	./binst init --source goreleaser --file .config/goreleaser.yml --repo binary-install/binstaller
 
-test: ## Run all the tests
-	go test $(TEST_OPTIONS) -failfast -race -coverpkg=./... -covermode=atomic -coverprofile=coverage.txt $(SOURCE_FILES) -run $(TEST_PATTERN) -timeout=2m
+test: test-unit ## Run unit tests (fast)
 
-cover: test ## Run all the tests and opens the coverage report
+test-unit: ## Run unit tests without race detection or coverage
+	go test $(TEST_OPTIONS) -failfast -short ./... -run $(TEST_PATTERN) -timeout=30s
+
+test-race: ## Run unit tests with race detection
+	go test $(TEST_OPTIONS) -failfast -short -race ./... -run $(TEST_PATTERN) -timeout=1m
+
+test-cover: ## Run unit tests with coverage
+	go test $(TEST_OPTIONS) -failfast -short -race -coverpkg=./... -covermode=atomic -coverprofile=coverage.txt ./... -run $(TEST_PATTERN) -timeout=2m
+
+test-all: ## Run all tests including E2E
+	go test $(TEST_OPTIONS) -failfast -race ./... -run $(TEST_PATTERN) -timeout=5m
+
+cover: test-cover ## Run all the tests with coverage and opens the coverage report
 	go tool cover -html=coverage.txt
 
 fmt: ## gofmt and goimports all go files
@@ -61,7 +72,7 @@ fmt: ## gofmt and goimports all go files
 lint: bin/golangci-lint schema-lint ## Run all the linters
 	./bin/golangci-lint run ./... --disable errcheck
 
-ci: build test lint ## travis-ci entrypoint
+ci: build test-all lint ## travis-ci entrypoint
 	git diff .
 
 build: ## Build a beta version of binstaller
@@ -148,7 +159,7 @@ test-clean: ## Clean up test artifacts
 
 .DEFAULT_GOAL := build
 
-.PHONY: ci test help clean binst-init test-gen-configs test-gen-installers test-run-installers test-run-installers-incremental test-aqua-source test-all-platforms test-integration test-incremental test-clean gen-schema gen-go gen
+.PHONY: ci test test-unit test-race test-cover test-all help clean binst-init test-gen-configs test-gen-installers test-run-installers test-run-installers-incremental test-aqua-source test-all-platforms test-integration test-incremental test-clean gen-schema gen-go gen
 
 clean: ## clean up everything
 	go clean ./...
