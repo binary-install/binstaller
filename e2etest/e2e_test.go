@@ -118,27 +118,45 @@ func testInstallScript(t *testing.T, repo, binaryName, versionFlag, sha string) 
 }
 
 func TestReviewdogE2E(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping e2e test in short mode")
+	}
 	testInstallScript(t, "reviewdog/reviewdog", "reviewdog", "-version", "7e05fa3e78ba7f2be4999ca2d35b00a3fd92a783")
 }
 
 func TestGoreleaserE2E(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping e2e test in short mode")
+	}
 	testInstallScript(t, "goreleaser/goreleaser", "goreleaser", "--version", "79c76c229d50ca45ef77afa1745df0a0e438d237")
 }
 
 func TestGhSetupE2E(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping e2e test in short mode")
+	}
 	testInstallScript(t, "k1LoW/gh-setup", "gh-setup", "--help", "a2359e4bcda8af5d7e16e1b3fb0eeec1be267e63")
 }
 
 func TestSigspyE2E(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping e2e test in short mode")
+	}
 	testInstallScript(t, "actionutils/sigspy", "sigspy", "--help", "3e1c6f32072cd4b8309d00bd31f498903f71c422")
 }
 
 func TestGolangciLintE2E(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping e2e test in short mode")
+	}
 	testInstallScript(t, "golangci/golangci-lint", "golangci-lint", "--version", "6d2a94be6b20f1c06e95d79479c6fdc34a69c45f")
 }
 
 // TestTargetVersionGeneration tests the --target-version flag functionality
 func TestTargetVersionGeneration(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping e2e test in short mode")
+	}
 	// Create a temporary directory for test artifacts
 	tempDir := t.TempDir()
 
@@ -261,6 +279,9 @@ supported_platforms:
 
 // TestTargetVersionFlag tests the CLI flag validation
 func TestTargetVersionFlag(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping e2e test in short mode")
+	}
 	tempDir := t.TempDir()
 
 	// Create a minimal test config

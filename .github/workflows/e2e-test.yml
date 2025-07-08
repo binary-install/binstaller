@@ -32,6 +32,10 @@ jobs:
       with:
         go-version-file: 'go.mod'
 
+    - uses: aquaproj/aqua-installer@d1fe50798dbadd4eb5b98957290ca175f6b4870f # v4.0.2
+      with:
+        aqua_version: v2.50.0
+
     - name: Install dependencies
       run: make setup
 
