@@ -141,9 +141,16 @@ func (g *FilenameGenerator) GetAllPossiblePlatforms() []spec.Platform {
 func (g *FilenameGenerator) interpolateTemplate(template string, additionalVars map[string]string) (string, error) {
 	// Create base environment map with variables supported by all templates
 	envMap := map[string]string{
-		"NAME":    spec.StringValue(g.Spec.Name),
-		"VERSION": g.Version,
+		"NAME": spec.StringValue(g.Spec.Name),
+		"TAG":  g.Version, // Original tag with 'v' prefix if present
 	}
+
+	// VERSION should be without 'v' prefix according to spec documentation
+	version := g.Version
+	if strings.HasPrefix(version, "v") {
+		version = strings.TrimPrefix(version, "v")
+	}
+	envMap["VERSION"] = version
 
 	// Merge additional variables (OS, ARCH, EXT for asset templates)
 	for k, v := range additionalVars {
