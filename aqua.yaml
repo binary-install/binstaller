@@ -17,3 +17,4 @@ packages:
 - name: golangci/golangci-lint@v2.2.1
 - name: shenwei356/rush@v0.6.1
 - name: goreleaser/goreleaser@v2.5.1
+- name: denoland/deno@v2.4.1
