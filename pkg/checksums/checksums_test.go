@@ -6,6 +6,8 @@ import (
 	"testing"
 
 	"github.com/binary-install/binstaller/pkg/spec"
+	"github.com/goccy/go-yaml"
+	"github.com/goccy/go-yaml/parser"
 )
 
 func TestParseChecksumFileInternal(t *testing.T) {
@@ -212,3 +214,122 @@ func TestFilterChecksumsNoAssetTemplate(t *testing.T) {
 			len(filtered), len(checksums))
 	}
 }
+
+
+func TestEmbedder_EmbedWithMissingChecksumsField(t *testing.T) {
+	// Test that the embed command works when checksums field is missing (GitHub issue #84)
+	tempDir, err := os.MkdirTemp("", "embed-checksums-test")
+	if err != nil {
+		t.Fatalf("Failed to create temp dir: %v", err)
+	}
+	defer os.RemoveAll(tempDir)
+
+	// Create a config file WITHOUT a checksums field (mimics `binst init --source=github`)
+	configFile := filepath.Join(tempDir, "config.yml")
+	configContent := `name: test-tool
+repo: test-owner/test-repo
+asset:
+  template: ${NAME}-${VERSION}-${OS}-${ARCH}${EXT}
+  default_extension: .tar.gz
+  naming_convention:
+    os: lowercase
+    arch: lowercase
+  rules:
+    - when:
+        os: windows
+      ext: .zip
+supported_platforms:
+  - os: linux
+    arch: amd64
+  - os: darwin
+    arch: amd64
+  - os: windows
+    arch: amd64
+`
+	if err := os.WriteFile(configFile, []byte(configContent), 0644); err != nil {
+		t.Fatalf("Failed to write config file: %v", err)
+	}
+
+	// Create a temporary checksum file
+	checksumFile := filepath.Join(tempDir, "checksums.txt")
+	checksumContent := `abc123  test-tool-1.0.0-linux-amd64.tar.gz
+def456  test-tool-1.0.0-darwin-amd64.tar.gz
+ghi789  test-tool-1.0.0-windows-amd64.zip
+`
+	if err := os.WriteFile(checksumFile, []byte(checksumContent), 0644); err != nil {
+		t.Fatalf("Failed to write checksum file: %v", err)
+	}
+
+	// Parse the config file
+	ast, err := parser.ParseFile(configFile, parser.ParseComments)
+	if err != nil {
+		t.Fatalf("Failed to parse config file: %v", err)
+	}
+
+	yamlData, err := os.ReadFile(configFile)
+	if err != nil {
+		t.Fatalf("Failed to read config file: %v", err)
+	}
+
+	var installSpec spec.InstallSpec
+	if err := yaml.UnmarshalWithOptions(yamlData, &installSpec, yaml.UseOrderedMap()); err != nil {
+		t.Fatalf("Failed to unmarshal config: %v", err)
+	}
+
+	// Verify that checksums field doesn't exist initially
+	if installSpec.Checksums != nil {
+		t.Error("Expected checksums field to be nil initially")
+	}
+
+	// Create embedder with checksum-file mode
+	embedder := &Embedder{
+		Mode:         EmbedModeChecksumFile,
+		Version:      "1.0.0",
+		Spec:         &installSpec,
+		SpecAST:      ast,
+		ChecksumFile: checksumFile,
+	}
+
+	// This should not fail even though checksums field is missing
+	// Previously this would fail with "failed to find path ( $.checksums ): node not found"
+	if err := embedder.Embed(); err != nil {
+		t.Fatalf("Embed() failed: %v", err)
+	}
+
+	// Verify that checksums field was created
+	if installSpec.Checksums == nil {
+		t.Error("Expected checksums field to be created")
+	}
+
+	// Verify that checksums were embedded
+	if installSpec.Checksums.EmbeddedChecksums == nil {
+		t.Error("Expected embedded checksums to be created")
+	}
+
+	embeddedForVersion := installSpec.Checksums.EmbeddedChecksums["1.0.0"]
+	if len(embeddedForVersion) == 0 {
+		t.Error("Expected embedded checksums for version 1.0.0")
+	}
+
+	// Verify specific checksums
+	expectedChecksums := map[string]string{
+		"test-tool-1.0.0-linux-amd64.tar.gz":  "abc123",
+		"test-tool-1.0.0-darwin-amd64.tar.gz": "def456",
+		"test-tool-1.0.0-windows-amd64.zip":   "ghi789",
+	}
+
+	actualChecksums := make(map[string]string)
+	for _, checksum := range embeddedForVersion {
+		actualChecksums[spec.StringValue(checksum.Filename)] = spec.StringValue(checksum.Hash)
+	}
+
+	for expectedFilename, expectedHash := range expectedChecksums {
+		actualHash, exists := actualChecksums[expectedFilename]
+		if !exists {
+			t.Errorf("Expected checksum for %s not found", expectedFilename)
+		} else if actualHash != expectedHash {
+			t.Errorf("Checksum mismatch for %s: expected %s, got %s", expectedFilename, expectedHash, actualHash)
+		}
+	}
+}
+

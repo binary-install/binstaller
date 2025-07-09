@@ -125,13 +125,16 @@ func (e *Embedder) Embed() error {
 	}
 	// Create a checksumConfig with all existing checksums to preserve them
 	checksumConfig := spec.ChecksumConfig{
+		Algorithm:         e.Spec.Checksums.Algorithm,
+		Template:          e.Spec.Checksums.Template,
 		EmbeddedChecksums: e.Spec.Checksums.EmbeddedChecksums,
 	}
 	node, err := yaml.ValueToNode(checksumConfig)
 	if err != nil {
 		return err
 	}
-	if err := p.MergeFromNode(e.SpecAST, node); err != nil {
+	// Use ReplaceWithNode to handle cases where the checksums field doesn't exist
+	if err := p.ReplaceWithNode(e.SpecAST, node); err != nil {
 		return err
 	}
 	return nil
