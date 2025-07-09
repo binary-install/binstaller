@@ -51,18 +51,10 @@ jobs:
           
           # Allow Claude to run specific commands for binstaller project
           allowed_tools: |
-            Bash(make build)
-            Bash(make test)
-            Bash(make test-integration)
-            Bash(make lint)
-            Bash(make fmt)
-            Bash(go mod tidy)
-            Bash(go mod download)
-            Bash(go test ./...)
-            Bash(go build ./...)
-            Bash(go run ./...)
+            Bash(make:*)
+            Bash(go:*)
             Bash(./binst)
-            Bash(./binst *)
+            Bash(./binst:*)
             Bash(sh ./install.sh)
             Bash(bash ./install.sh)
             Bash(./install.sh)
