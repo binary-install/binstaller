@@ -17,6 +17,7 @@ import (
 	"github.com/binary-install/binstaller/pkg/asset"
 	"github.com/binary-install/binstaller/pkg/httpclient"
 	"github.com/binary-install/binstaller/pkg/spec"
+	"github.com/buildkite/interpolate"
 	"github.com/goccy/go-yaml"
 	"github.com/spf13/cobra"
 )
@@ -131,6 +132,7 @@ and running the actual installer script.`,
 					return fmt.Errorf("asset availability check failed: %w", err)
 				}
 			}
+			
 		} else {
 			// Only display the generated filenames if not checking assets
 			// (checkAssetsExist displays its own table with status)
@@ -284,6 +286,18 @@ func checkAssetsExist(ctx context.Context, installSpec *spec.InstallSpec, versio
 		}
 		fmt.Fprintf(w, "%s\t%s\t%s\n", platform, filename, status)
 	}
+	
+	// Add checksums row if configured
+	if installSpec.Checksums != nil && installSpec.Checksums.Template != nil {
+		checksumFilename, err := generateChecksumFilename(installSpec, version)
+		if err == nil {
+			status := "✓ EXISTS"
+			if !existingAssets[checksumFilename] {
+				status = "✗ MISSING"
+			}
+			fmt.Fprintf(w, "checksums\t%s\t%s\n", checksumFilename, status)
+		}
+	}
 
 	w.Flush()
 
@@ -291,6 +305,14 @@ func checkAssetsExist(ctx context.Context, installSpec *spec.InstallSpec, versio
 	filenameToPlat := make(map[string]string)
 	for platform, filename := range assetFilenames {
 		filenameToPlat[filename] = platform
+	}
+	
+	// Also add checksums filename to the map if configured
+	if installSpec.Checksums != nil && installSpec.Checksums.Template != nil {
+		checksumFilename, err := generateChecksumFilename(installSpec, version)
+		if err == nil {
+			filenameToPlat[checksumFilename] = "checksums"
+		}
 	}
 
 	// Display unmatched assets from the release
@@ -447,7 +469,20 @@ func checkAssetsExistWithDetection(ctx context.Context, installSpec *spec.Instal
 	// Track matched and unmatched assets
 	var unmatchedAssets []string
 	
+	// Check if checksums file is configured
+	checksumFilename := ""
+	if installSpec.Checksums != nil && installSpec.Checksums.Template != nil {
+		if cf, err := generateChecksumFilename(installSpec, version); err == nil {
+			checksumFilename = cf
+		}
+	}
+	
 	for _, assetName := range releaseAssets {
+		// Check if this is the checksums file
+		if checksumFilename != "" && assetName == checksumFilename {
+			continue // Will be handled separately
+		}
+		
 		// Skip non-binary assets (will be shown separately)
 		if isNonBinaryAsset(assetName) {
 			unmatchedAssets = append(unmatchedAssets, assetName)
@@ -467,6 +502,23 @@ func checkAssetsExistWithDetection(ctx context.Context, installSpec *spec.Instal
 			fmt.Fprintf(w, "%s\t%s\t✓ MATCHED\n", assetName, platform)
 		} else {
 			fmt.Fprintf(w, "%s\t-\t✗ NO MATCH\n", assetName)
+		}
+	}
+	
+	// Add checksums row if configured
+	if installSpec.Checksums != nil && installSpec.Checksums.Template != nil {
+		checksumFilename, err := generateChecksumFilename(installSpec, version)
+		if err == nil {
+			if releaseAssetMap[checksumFilename] {
+				fmt.Fprintf(w, "%s\tchecksums\t✓ MATCHED\n", checksumFilename)
+				// Remove from unmatchedAssets if it exists there
+				for i, asset := range unmatchedAssets {
+					if asset == checksumFilename {
+						unmatchedAssets = append(unmatchedAssets[:i], unmatchedAssets[i+1:]...)
+						break
+					}
+				}
+			}
 		}
 	}
 	
@@ -547,6 +599,41 @@ func displayUnmatchedAssets(releaseAssets []string, assetFilenames map[string]st
 		}
 		w.Flush()
 	}
+}
+
+// generateChecksumFilename generates the checksums filename using the template
+func generateChecksumFilename(installSpec *spec.InstallSpec, version string) (string, error) {
+	checksumTemplate := spec.StringValue(installSpec.Checksums.Template)
+	if checksumTemplate == "" {
+		return "", fmt.Errorf("checksums template not specified")
+	}
+
+	// Create environment map for interpolation
+	envMap := map[string]string{
+		"NAME":    spec.StringValue(installSpec.Name),
+		"TAG":     version,
+		"VERSION": strings.TrimPrefix(version, "v"),
+	}
+
+	// Perform variable substitution
+	env := interpolate.NewMapEnv(envMap)
+	checksumFilename, err := interpolate.Interpolate(env, checksumTemplate)
+	if err != nil {
+		return "", fmt.Errorf("failed to interpolate checksums template: %w", err)
+	}
+
+	return checksumFilename, nil
+}
+
+// removeFromSlice removes a string from a slice
+func removeFromSlice(slice []string, item string) []string {
+	result := make([]string, 0, len(slice))
+	for _, s := range slice {
+		if s != item {
+			result = append(result, s)
+		}
+	}
+	return result
 }
 
 func init() {
