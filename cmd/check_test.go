@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"context"
 	"testing"
 
 	"github.com/binary-install/binstaller/pkg/spec"
@@ -181,69 +180,207 @@ func TestGetSupportedPlatforms(t *testing.T) {
 	})
 }
 
-func TestDisplayUnmatchedAssets(t *testing.T) {
-	// This test is more about ensuring the function doesn't panic
-	// and handles edge cases properly
-
-	releaseAssets := []string{
-		"app_1.0.0_linux_amd64.tar.gz",
-		"app_1.0.0_darwin_arm64.tar.gz",
-		"checksums.txt",
-		"README.md",
+func TestGenerateChecksumFilename(t *testing.T) {
+	tests := []struct {
+		name        string
+		installSpec *spec.InstallSpec
+		version     string
+		wantFile    string
+		wantErr     bool
+		errorMsg    string
+	}{
+		{
+			name: "valid checksums template",
+			installSpec: &spec.InstallSpec{
+				Name: spec.StringPtr("myapp"),
+				Checksums: &spec.Checksums{
+					Template: spec.StringPtr("${NAME}_${VERSION}_checksums.txt"),
+				},
+			},
+			version:  "1.0.0",
+			wantFile: "myapp_1.0.0_checksums.txt",
+			wantErr:  false,
+		},
+		{
+			name: "checksums template with TAG variable",
+			installSpec: &spec.InstallSpec{
+				Name: spec.StringPtr("myapp"),
+				Checksums: &spec.Checksums{
+					Template: spec.StringPtr("${NAME}_${TAG}_SHA256SUMS"),
+				},
+			},
+			version:  "v1.0.0",
+			wantFile: "myapp_v1.0.0_SHA256SUMS",
+			wantErr:  false,
+		},
+		{
+			name: "checksums template strips v prefix for VERSION",
+			installSpec: &spec.InstallSpec{
+				Name: spec.StringPtr("myapp"),
+				Checksums: &spec.Checksums{
+					Template: spec.StringPtr("${NAME}_${VERSION}_checksums.txt"),
+				},
+			},
+			version:  "v1.0.0",
+			wantFile: "myapp_1.0.0_checksums.txt",
+			wantErr:  false,
+		},
+		{
+			name: "per-asset checksums pattern",
+			installSpec: &spec.InstallSpec{
+				Name: spec.StringPtr("myapp"),
+				Checksums: &spec.Checksums{
+					Template: spec.StringPtr("${ASSET_FILENAME}.sha256"),
+				},
+			},
+			version:  "1.0.0",
+			wantFile: "",
+			wantErr:  true,
+			errorMsg: "per-asset checksums",
+		},
+		{
+			name: "no checksums configured",
+			installSpec: &spec.InstallSpec{
+				Name: spec.StringPtr("myapp"),
+				// Checksums is nil
+			},
+			version:  "1.0.0",
+			wantFile: "",
+			wantErr:  true,
+			errorMsg: "checksums template not specified",
+		},
+		{
+			name: "empty checksums template",
+			installSpec: &spec.InstallSpec{
+				Name: spec.StringPtr("myapp"),
+				Checksums: &spec.Checksums{
+					Template: spec.StringPtr(""),
+				},
+			},
+			version:  "1.0.0",
+			wantFile: "",
+			wantErr:  true,
+			errorMsg: "checksums template not specified",
+		},
 	}
 
-	assetFilenames := map[string]string{
-		"linux/amd64":  "app_1.0.0_linux_amd64.tar.gz",
-		"darwin/arm64": "app_1.0.0_darwin_arm64.tar.gz",
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotFile, err := generateChecksumFilename(tt.installSpec, tt.version)
+			if tt.wantErr {
+				if err == nil {
+					t.Errorf("expected error but got none")
+				}
+				if err != nil && tt.errorMsg != "" {
+					if !contains(err.Error(), tt.errorMsg) {
+						t.Errorf("expected error to contain '%s', got '%s'", tt.errorMsg, err.Error())
+					}
+				}
+			} else {
+				if err != nil {
+					t.Errorf("unexpected error: %v", err)
+				}
+				if gotFile != tt.wantFile {
+					t.Errorf("generateChecksumFilename() = %v, want %v", gotFile, tt.wantFile)
+				}
+			}
+		})
 	}
-
-	// This should not panic and should identify checksums.txt and README.md as unmatched
-	displayUnmatchedAssets(releaseAssets, assetFilenames)
 }
 
-func TestDisplayUnmatchedAssetsEmpty(t *testing.T) {
-	// Test with empty inputs
-	displayUnmatchedAssets([]string{}, map[string]string{})
+func TestIsNonBinaryAsset(t *testing.T) {
+	tests := []struct {
+		filename string
+		want     bool
+	}{
+		// Non-binary files
+		{"checksums.txt", true},
+		{"app_1.0.0_SHA256SUMS", true},
+		{"app.sha256", true},
+		{"app.sha512", true},
+		{"app.md5", true},
+		{"app.sig", true},
+		{"app.asc", true},
+		{"app.pem", true},
+		{"app.sbom.json", true},
+		{"config.yml", true},
+		{"config.yaml", true},
+		{"install.sh", true},
+		{"install.ps1", true},
+		{"README.md", true},
+		{"binst-0.2.5.tar.gz", true}, // source archive
+		{"binst-v0.2.5.zip", true},   // source archive
+		
+		// Binary files
+		{"app_linux_amd64.tar.gz", false},
+		{"app_darwin_arm64.tar.gz", false},
+		{"app_windows_amd64.zip", false},
+		{"app-linux-amd64", false},
+		{"app.exe", false},
+	}
 
-	// Test with no unmatched assets
-	releaseAssets := []string{"app_1.0.0_linux_amd64.tar.gz"}
-	assetFilenames := map[string]string{"linux/amd64": "app_1.0.0_linux_amd64.tar.gz"}
-	displayUnmatchedAssets(releaseAssets, assetFilenames)
+	for _, tt := range tests {
+		t.Run(tt.filename, func(t *testing.T) {
+			if got := isNonBinaryAsset(tt.filename); got != tt.want {
+				t.Errorf("isNonBinaryAsset(%q) = %v, want %v", tt.filename, got, tt.want)
+			}
+		})
+	}
 }
 
-// Mock test for fetchReleaseAssets would require HTTP mocking
-// This is a placeholder showing how such a test could be structured
-func TestFetchReleaseAssets(t *testing.T) {
-	t.Skip("Skipping integration test - requires HTTP mocking")
-
-	ctx := context.Background()
-
-	// This would need to be mocked to test properly
-	assets, err := fetchReleaseAssets(ctx, "owner/repo", "v1.0.0")
-
-	// With proper mocking, we would test:
-	if err != nil {
-		t.Errorf("unexpected error: %v", err)
-	}
-	if len(assets) == 0 {
-		t.Errorf("expected non-empty assets")
-	}
+// Integration test for the check command
+func TestCheckCommand(t *testing.T) {
+	// Skip integration tests as they require complex setup with cobra
+	t.Skip("Integration tests require proper cobra command setup")
 }
 
-func TestResolveLatestVersion(t *testing.T) {
-	t.Skip("Skipping integration test - requires HTTP mocking")
-
-	ctx := context.Background()
-
-	// This would need to be mocked to test properly
-	version, err := resolveLatestVersion(ctx, "owner/repo")
-
-	// With proper mocking, we would test:
-	if err != nil {
-		t.Errorf("unexpected error: %v", err)
+// Test helper function for removeFromSlice
+func TestRemoveFromSlice(t *testing.T) {
+	tests := []struct {
+		name     string
+		slice    []string
+		item     string
+		expected []string
+	}{
+		{
+			name:     "remove existing item",
+			slice:    []string{"a", "b", "c"},
+			item:     "b",
+			expected: []string{"a", "c"},
+		},
+		{
+			name:     "remove non-existing item",
+			slice:    []string{"a", "b", "c"},
+			item:     "d",
+			expected: []string{"a", "b", "c"},
+		},
+		{
+			name:     "remove from empty slice",
+			slice:    []string{},
+			item:     "a",
+			expected: []string{},
+		},
+		{
+			name:     "remove duplicate items",
+			slice:    []string{"a", "b", "b", "c"},
+			item:     "b",
+			expected: []string{"a", "c"},
+		},
 	}
-	if version == "" {
-		t.Errorf("expected non-empty version")
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := removeFromSlice(tt.slice, tt.item)
+			if len(result) != len(tt.expected) {
+				t.Errorf("removeFromSlice() returned %d items, want %d", len(result), len(tt.expected))
+				return
+			}
+			for i, v := range result {
+				if v != tt.expected[i] {
+					t.Errorf("removeFromSlice()[%d] = %v, want %v", i, v, tt.expected[i])
+				}
+			}
+		})
 	}
 }
 

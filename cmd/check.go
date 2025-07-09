@@ -631,7 +631,7 @@ func isNonBinaryAsset(filename string) bool {
 	nonBinaryPatterns := []string{
 		".txt", ".sha256", ".sha512", ".md5", ".sig", ".asc", ".pem",
 		".sbom", ".json", ".yml", ".yaml", ".sh", ".ps1", ".md",
-		"checksums", "SHASUMS", "README",
+		"checksums", "SHASUMS", "SHA256SUMS", "README",
 	}
 	
 	for _, pattern := range nonBinaryPatterns {
@@ -659,6 +659,10 @@ func isNonBinaryAsset(filename string) bool {
 
 // generateChecksumFilename generates the checksums filename using the template
 func generateChecksumFilename(installSpec *spec.InstallSpec, version string) (string, error) {
+	if installSpec.Checksums == nil || installSpec.Checksums.Template == nil {
+		return "", fmt.Errorf("checksums template not specified")
+	}
+	
 	checksumTemplate := spec.StringValue(installSpec.Checksums.Template)
 	if checksumTemplate == "" {
 		return "", fmt.Errorf("checksums template not specified")
