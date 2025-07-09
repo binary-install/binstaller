@@ -30,11 +30,6 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Setup aqua PATH
-        run: |
-          echo "${AQUA_ROOT_DIR:-$HOME/.local/share/aquaproj-aqua}/bin" >> $GITHUB_PATH
-        shell: bash
-
       - name: Run Claude Code
         id: claude
         uses: anthropics/claude-code-action@beta

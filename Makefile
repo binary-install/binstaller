@@ -39,6 +39,11 @@ $(AQUA_BIN):
 	@./aqua-installer
 	@rm -f aqua-installer
 	@echo "aqua installed successfully"
+	@# Add aqua to GITHUB_PATH if running in GitHub Actions
+	@if [ -n "$$GITHUB_PATH" ]; then \
+		echo "$(AQUA_ROOT_DIR)/bin" >> $$GITHUB_PATH; \
+		echo "Added aqua to GITHUB_PATH"; \
+	fi
 
 aqua-install: $(AQUA_BIN) ## Install tools via aqua
 	$(AQUA_BIN) install
