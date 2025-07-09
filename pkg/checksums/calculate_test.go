@@ -29,19 +29,16 @@ func TestFetchReleaseAssets(t *testing.T) {
 				{
 					Name:               "test-1.0.0-linux-amd64.tar.gz",
 					BrowserDownloadURL: "https://github.com/test/repo/releases/download/v1.0.0/test-1.0.0-linux-amd64.tar.gz",
-					Size:               1024,
-					SHA256:             "abc123def456",
+					Digest:             "sha256:abc123def456",
 				},
 				{
 					Name:               "test-1.0.0-darwin-amd64.tar.gz",
 					BrowserDownloadURL: "https://github.com/test/repo/releases/download/v1.0.0/test-1.0.0-darwin-amd64.tar.gz",
-					Size:               1024,
 					Digest:             "sha256:def456ghi789",
 				},
 				{
 					Name:               "test-1.0.0-windows-amd64.zip",
 					BrowserDownloadURL: "https://github.com/test/repo/releases/download/v1.0.0/test-1.0.0-windows-amd64.zip",
-					Size:               1024,
 				},
 			},
 		}
@@ -100,7 +97,7 @@ func TestFetchReleaseAssets(t *testing.T) {
 
 	expectedAssets := map[string]string{
 		"test-1.0.0-linux-amd64.tar.gz":  "abc123def456",
-		"test-1.0.0-darwin-amd64.tar.gz": "",
+		"test-1.0.0-darwin-amd64.tar.gz": "def456ghi789",
 		"test-1.0.0-windows-amd64.zip":   "",
 	}
 
@@ -111,8 +108,14 @@ func TestFetchReleaseAssets(t *testing.T) {
 			continue
 		}
 
-		if asset.SHA256 != expectedSHA256 {
-			t.Errorf("For asset %s, expected SHA256 %s, got %s", asset.Name, expectedSHA256, asset.SHA256)
+		// Extract SHA256 from digest field if available
+		actualSHA256 := ""
+		if asset.Digest != "" && strings.HasPrefix(asset.Digest, "sha256:") {
+			actualSHA256 = strings.TrimPrefix(asset.Digest, "sha256:")
+		}
+
+		if actualSHA256 != expectedSHA256 {
+			t.Errorf("For asset %s, expected SHA256 %s, got %s", asset.Name, expectedSHA256, actualSHA256)
 		}
 	}
 }
@@ -140,7 +143,7 @@ func TestMatchAssetsToTemplate(t *testing.T) {
 		{
 			Name:               "test-1.0.0-linux-amd64.tar.gz",
 			BrowserDownloadURL: "https://github.com/test/repo/releases/download/v1.0.0/test-1.0.0-linux-amd64.tar.gz",
-			SHA256:             "abc123def456",
+			Digest:             "sha256:abc123def456",
 		},
 		{
 			Name:               "test-1.0.0-darwin-amd64.tar.gz",
@@ -206,7 +209,7 @@ func TestMatchAssetsToTemplateWithoutSupportedPlatforms(t *testing.T) {
 		{
 			Name:               "test-1.0.0-linux-amd64.tar.gz",
 			BrowserDownloadURL: "https://github.com/test/repo/releases/download/v1.0.0/test-1.0.0-linux-amd64.tar.gz",
-			SHA256:             "abc123def456",
+			Digest:             "sha256:abc123def456",
 		},
 		{
 			Name:               "test-1.0.0-darwin-amd64.tar.gz",
@@ -340,13 +343,11 @@ func TestCalculateChecksumsFull(t *testing.T) {
 					{
 						Name:               "test-1.0.0-linux-amd64.tar.gz",
 						BrowserDownloadURL: "http://localhost/download/test-1.0.0-linux-amd64.tar.gz",
-						Size:               1024,
-						SHA256:             "abc123def4567890123456789012345678901234567890123456789012345678", // Mock SHA256
+						Digest:             "sha256:abc123def4567890123456789012345678901234567890123456789012345678", // Mock SHA256
 					},
 					{
 						Name:               "test-1.0.0-darwin-amd64.tar.gz",
 						BrowserDownloadURL: "http://localhost/download/test-1.0.0-darwin-amd64.tar.gz",
-						Size:               1024,
 						// No digest - should be downloaded
 					},
 				},

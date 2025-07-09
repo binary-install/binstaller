@@ -26,8 +26,6 @@ type GitHubReleaseResponse struct {
 type GitHubReleaseAsset struct {
 	Name               string `json:"name"`
 	BrowserDownloadURL string `json:"browser_download_url"`
-	Size               int64  `json:"size"`
-	SHA256             string `json:"sha256,omitempty"`
 	// GitHub API sometimes includes digest information
 	Digest string `json:"digest,omitempty"`
 }
@@ -216,11 +214,9 @@ func (e *Embedder) matchAssetsToTemplate(assets []GitHubReleaseAsset) ([]assetWi
 		// Look for matching asset
 		for _, asset := range assets {
 			if asset.Name == filename {
-				// Extract SHA256 from various possible fields
+				// Extract SHA256 from digest field if available
 				sha256 := ""
-				if asset.SHA256 != "" {
-					sha256 = asset.SHA256
-				} else if asset.Digest != "" {
+				if asset.Digest != "" {
 					// Parse digest format like "sha256:abcd1234..."
 					if strings.HasPrefix(asset.Digest, "sha256:") {
 						sha256 = strings.TrimPrefix(asset.Digest, "sha256:")
