@@ -5,16 +5,33 @@ import (
 	"io"
 	"os"
 	"strings"
+	"sync"
 
 	"github.com/charmbracelet/colorprofile"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/spf13/cobra"
+	"golang.org/x/term"
 )
 
 // Style definitions
 var (
 	// Color profile detection
 	profile = colorprofile.Detect(os.Stdout, os.Environ())
+
+	// Terminal width detection
+	terminalWidth = sync.OnceValue(func() int {
+		// Check if stdout is a terminal
+		if !term.IsTerminal(int(os.Stdout.Fd())) {
+			return 80
+		}
+		
+		w, _, err := term.GetSize(int(os.Stdout.Fd()))
+		if err != nil {
+			return 80
+		}
+		// Use terminal width but cap at 80 for readability
+		return min(w, 80)
+	})
 
 	// Styles with adaptive colors based on terminal capabilities
 	headerStyle = func() lipgloss.Style {
@@ -99,7 +116,7 @@ func processCommandWithConfig(cmd *cobra.Command, prefix string, config *Helpful
 
 	// Add separator between commands
 	fmt.Fprintln(config.Output)
-	fmt.Fprintln(config.Output, separatorStyle.Render(strings.Repeat("─", 80)))
+	fmt.Fprintln(config.Output, separatorStyle.Render(strings.Repeat("─", terminalWidth())))
 	fmt.Fprintln(config.Output)
 
 	// Process subcommands
@@ -131,4 +148,12 @@ func buildCommandPath(cmd *cobra.Command, prefix string) string {
 
 func init() {
 	// The helpful command is registered in root.go
+}
+
+// min returns the minimum of two integers
+func min(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
 }
