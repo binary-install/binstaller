@@ -131,8 +131,17 @@ func (e *Embedder) Embed() error {
 	if err != nil {
 		return err
 	}
+	// Try to merge into the existing checksums field, or replace it if it doesn't exist
 	if err := p.MergeFromNode(e.SpecAST, node); err != nil {
-		return err
+		// If merge fails (likely because checksums field doesn't exist), replace the entire field
+		if strings.Contains(err.Error(), "node not found") {
+			// Replace the entire checksums field in the AST
+			if err := p.ReplaceWithNode(e.SpecAST, node); err != nil {
+				return fmt.Errorf("failed to create checksums field: %w", err)
+			}
+		} else {
+			return err
+		}
 	}
 	return nil
 }

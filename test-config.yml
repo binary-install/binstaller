@@ -1,0 +1,17 @@
+name: shellcheck
+repo: koalaman/shellcheck
+assets:
+  - template: "shellcheck-${VERSION}.${OS}.${ARCH}.tar.xz"
+    os_mapping:
+      linux: linux
+      darwin: darwin
+      windows: windows
+    arch_mapping:
+      x86_64: x86_64
+      aarch64: aarch64
+    replacements:
+      windows: 
+        ext: zip
+        template: "shellcheck-${VERSION}.${OS}.${ARCH}.zip"
+env:
+  SHELLCHECK_VERSION: "${VERSION}"
