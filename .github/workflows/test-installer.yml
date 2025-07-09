@@ -28,6 +28,14 @@ jobs:
       - name: Build binst
         run: go build -o binst ./cmd/binst
 
+      - name: Check binstaller config
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "🔍 Validating binstaller configuration..."
+          ./binst check
+          echo "✅ Configuration validation passed"
+
       - name: Generate test install script
         run: ./binst gen -o test-install.sh
 
