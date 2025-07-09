@@ -26,6 +26,7 @@ var (
 	// Flags for check command
 	checkVersion     string
 	checkCheckAssets bool
+	checkIgnorePatterns []string
 )
 
 // CheckCommand represents the check command
@@ -67,7 +68,10 @@ Examples:
   binst check --check-assets=false
 
   # Check with a specific version
-  binst check --version v1.2.3`,
+  binst check --version v1.2.3
+
+  # Ignore additional file patterns
+  binst check --ignore "\.AppImage$" --ignore ".*-musl.*"`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		log.Info("Running check command...")
 
@@ -364,7 +368,7 @@ func checkAssetsExist(ctx context.Context, installSpec *spec.InstallSpec, versio
 
 	// Add remaining assets from release
 	for asset := range existingAssets {
-		if isIgnoredAsset(asset) {
+		if isIgnoredAsset(asset, checkIgnorePatterns) {
 			allAssets = append(allAssets, assetEntry{
 				platform: "-",
 				filename: asset,
@@ -592,7 +596,7 @@ func checkAssetsExistWithDetection(ctx context.Context, installSpec *spec.Instal
 		var info assetInfo
 		info.name = assetName
 
-		if isIgnoredAsset(assetName) {
+		if isIgnoredAsset(assetName, checkIgnorePatterns) {
 			// Ignored assets (signatures, checksums, package formats, etc.)
 			info.platform = "-"
 			info.status = "-"
@@ -678,7 +682,21 @@ func checkAssetsExistWithDetection(ctx context.Context, installSpec *spec.Instal
 
 // isIgnoredAsset checks if an asset should be ignored by binstaller
 // This includes documentation, signatures, package formats not supported by binstaller, etc.
-func isIgnoredAsset(filename string) bool {
+// Custom patterns can be provided to extend the default ignore list.
+func isIgnoredAsset(filename string, customPatterns []string) bool {
+	// Check custom regex patterns first
+	for _, pattern := range customPatterns {
+		matched, err := regexp.MatchString(pattern, filename)
+		if err != nil {
+			log.Warnf("Invalid regex pattern '%s': %v", pattern, err)
+			continue
+		}
+		if matched {
+			return true
+		}
+	}
+	
+	// Check default patterns
 	ignoredPatterns := []string{
 		// Documentation and metadata
 		".txt", ".md", "README", "LICENSE", "CHANGELOG", "NOTICE",
@@ -766,4 +784,5 @@ func init() {
 	// Flags specific to check command
 	CheckCommand.Flags().StringVar(&checkVersion, "version", "", "Check with specific version (default: uses default_version from spec)")
 	CheckCommand.Flags().BoolVar(&checkCheckAssets, "check-assets", true, "Check if generated assets exist in GitHub release")
+	CheckCommand.Flags().StringSliceVar(&checkIgnorePatterns, "ignore", nil, "Additional regex patterns to ignore assets (can be specified multiple times)")
 }
