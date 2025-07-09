@@ -85,10 +85,29 @@ func init() {
 	// Mark 'config' flag for auto-detection? Cobra doesn't directly support this.
 	// We'll handle default detection logic within commands if the flag is empty.
 
-	// Add subcommands in semantic order (workflow order)
+	// Add command groups
+	RootCmd.AddGroup(&cobra.Group{
+		ID:    "workflow",
+		Title: "Workflow Commands:",
+	})
+	RootCmd.AddGroup(&cobra.Group{
+		ID:    "utility",
+		Title: "Utility Commands:",
+	})
+
+	// Set group for built-in commands
+	RootCmd.SetHelpCommandGroupID("utility")
+	RootCmd.SetCompletionCommandGroupID("utility")
+
+	// Add subcommands with groups
+	InitCommand.GroupID = "workflow"
+	CheckCommand.GroupID = "workflow"
+	EmbedChecksumsCommand.GroupID = "workflow"
+	GenCommand.GroupID = "workflow"
+	
 	RootCmd.AddCommand(InitCommand)           // Step 1: Initialize config
 	RootCmd.AddCommand(CheckCommand)          // Step 2: Validate config
 	RootCmd.AddCommand(EmbedChecksumsCommand) // Step 3: Embed checksums (optional)
 	RootCmd.AddCommand(GenCommand)            // Step 4: Generate installer
-	RootCmd.AddCommand(HelpfulCommand)
+	RootCmd.AddCommand(HelpfulCommand)        // Hidden command, no group needed
 }
