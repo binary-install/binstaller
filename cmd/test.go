@@ -86,8 +86,24 @@ and running the actual installer script.`,
 		if version == "" {
 			version = spec.StringValue(installSpec.DefaultVersion)
 		}
-		if version == "" || version == "latest" {
-			version = "1.0.0" // Use example version for testing
+		
+		// If checking assets and version is not specified or is "latest",
+		// resolve the actual latest version from GitHub
+		if testCheckAssets && (version == "" || version == "latest") {
+			ctx := context.Background()
+			repo := spec.StringValue(installSpec.Repo)
+			if repo != "" {
+				resolvedVersion, err := resolveLatestVersion(ctx, repo)
+				if err != nil {
+					log.WithError(err).Warn("Failed to resolve latest version, using default")
+					version = "1.0.0" // Fallback to example version
+				} else {
+					log.Infof("Resolved latest version: %s", resolvedVersion)
+					version = resolvedVersion
+				}
+			}
+		} else if version == "" || version == "latest" {
+			version = "1.0.0" // Use example version for testing when not checking assets
 		}
 
 		assetFilenames, err := generateAllAssetFilenames(&installSpec, version)
@@ -223,20 +239,11 @@ func checkAssetsExist(ctx context.Context, installSpec *spec.InstallSpec, versio
 		return fmt.Errorf("repository not specified")
 	}
 
-	// Resolve version to actual tag if needed
-	actualVersion := version
-	if version == "latest" {
-		resolvedVersion, err := resolveLatestVersion(ctx, repo)
-		if err != nil {
-			return fmt.Errorf("failed to resolve latest version: %w", err)
-		}
-		actualVersion = resolvedVersion
-	}
-
-	log.Infof("Checking assets for version: %s", actualVersion)
+	// Version should already be resolved at this point
+	log.Infof("Checking assets for version: %s", version)
 
 	// Fetch all release assets once
-	releaseAssets, err := fetchReleaseAssets(ctx, repo, actualVersion)
+	releaseAssets, err := fetchReleaseAssets(ctx, repo, version)
 	if err != nil {
 		return fmt.Errorf("failed to fetch release assets: %w", err)
 	}
