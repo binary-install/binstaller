@@ -313,7 +313,7 @@ func TestIsNonBinaryAsset(t *testing.T) {
 		{"LICENSE.md", true},
 		{"binst-0.2.5.tar.gz", true}, // source archive
 		{"binst-v0.2.5.zip", true},   // source archive
-		
+
 		// Binary files
 		{"app_linux_amd64.tar.gz", false},
 		{"app_darwin_arm64.tar.gz", false},

@@ -113,7 +113,7 @@ Examples:
 		if version == "" {
 			version = spec.StringValue(installSpec.DefaultVersion)
 		}
-		
+
 		// If checking assets and version is not specified or is "latest",
 		// resolve the actual latest version from GitHub
 		if checkCheckAssets && (version == "" || version == "latest") {
@@ -157,7 +157,7 @@ Examples:
 					return fmt.Errorf("asset availability check failed: %w", err)
 				}
 			}
-			
+
 		} else {
 			// Only display the generated filenames if not checking assets
 			// (checkAssetsExist displays its own table with status)
@@ -329,7 +329,7 @@ func checkAssetsExist(ctx context.Context, installSpec *spec.InstallSpec, versio
 		// Mark as processed
 		delete(existingAssets, filename)
 	}
-	
+
 	// Add checksums if configured
 	if checksumError == "per-asset" {
 		allAssets = append(allAssets, assetEntry{
@@ -452,7 +452,6 @@ func fetchReleaseAssets(ctx context.Context, repo, version string) ([]string, er
 	}
 	req = req.WithContext(ctx)
 	req.Header.Set("Accept", "application/vnd.github.v3+json")
-	
 
 	client := &http.Client{
 		Timeout: 30 * time.Second,
@@ -502,25 +501,25 @@ func checkAssetsExistWithDetection(ctx context.Context, installSpec *spec.Instal
 
 	// Create filename generator
 	generator := asset.NewFilenameGenerator(installSpec, version)
-	
+
 	// Get all possible platforms using the same approach as embed-checksums
 	platforms := generator.GetAllPossiblePlatforms()
-	
+
 	// Generate all possible asset filenames
 	assetFilenames := make(map[string]string) // filename -> platform
 	for _, platform := range platforms {
 		os := spec.PlatformOSString(platform.OS)
 		arch := spec.PlatformArchString(platform.Arch)
-		
+
 		if os == "" || arch == "" {
 			continue
 		}
-		
+
 		filename, err := generator.GenerateFilename(os, arch)
 		if err != nil {
 			continue
 		}
-		
+
 		if filename != "" {
 			platformKey := fmt.Sprintf("%s/%s", os, arch)
 			// Store the first matching platform for each filename
@@ -529,25 +528,25 @@ func checkAssetsExistWithDetection(ctx context.Context, installSpec *spec.Instal
 			}
 		}
 	}
-	
+
 	// Create a map of release assets for quick lookup
 	releaseAssetMap := make(map[string]bool)
 	for _, asset := range releaseAssets {
 		releaseAssetMap[asset] = true
 	}
-	
+
 	// Sort filenames for consistent output
 	filenames := make([]string, 0, len(assetFilenames))
 	for filename := range assetFilenames {
 		filenames = append(filenames, filename)
 	}
 	sort.Strings(filenames)
-	
+
 	// Display results based on release assets (not all possible combinations)
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
 	fmt.Fprintln(w, "ASSET FILENAME\tDETECTED PLATFORM\tSTATUS")
 	fmt.Fprintln(w, "--------------\t-----------------\t------")
-	
+
 	// Check if checksums file is configured
 	checksumFilename := ""
 	if installSpec.Checksums != nil && installSpec.Checksums.Template != nil {
@@ -555,7 +554,7 @@ func checkAssetsExistWithDetection(ctx context.Context, installSpec *spec.Instal
 			checksumFilename = cf
 		}
 	}
-	
+
 	// First pass: categorize assets
 	type assetInfo struct {
 		name     string
@@ -563,17 +562,17 @@ func checkAssetsExistWithDetection(ctx context.Context, installSpec *spec.Instal
 		status   string
 	}
 	var assets []assetInfo
-	
+
 	for _, assetName := range releaseAssets {
 		// Check if this is the checksums file
 		if checksumFilename != "" && assetName == checksumFilename {
 			continue // Will be handled separately
 		}
-		
+
 		// Determine the type and status of the asset
 		var info assetInfo
 		info.name = assetName
-		
+
 		if isNonBinaryAsset(assetName) {
 			// Non-binary assets (signatures, checksums, etc.)
 			info.platform = "-"
@@ -587,7 +586,7 @@ func checkAssetsExistWithDetection(ctx context.Context, installSpec *spec.Instal
 					break
 				}
 			}
-			
+
 			if platform != "" {
 				info.platform = platform
 				info.status = "✓ MATCHED"
@@ -596,10 +595,10 @@ func checkAssetsExistWithDetection(ctx context.Context, installSpec *spec.Instal
 				info.status = "✗ NO MATCH"
 			}
 		}
-		
+
 		assets = append(assets, info)
 	}
-	
+
 	// Sort assets: MATCHED first, then NO MATCH, then non-binary
 	sort.Slice(assets, func(i, j int) bool {
 		// Define sort priority
@@ -613,22 +612,22 @@ func checkAssetsExistWithDetection(ctx context.Context, installSpec *spec.Instal
 				return 2
 			}
 		}
-		
+
 		pi := getPriority(assets[i].status)
 		pj := getPriority(assets[j].status)
-		
+
 		if pi != pj {
 			return pi < pj
 		}
 		// If same priority, sort by name
 		return assets[i].name < assets[j].name
 	})
-	
+
 	// Display sorted assets
 	for _, asset := range assets {
 		fmt.Fprintf(w, "%s\t%s\t%s\n", asset.name, asset.platform, asset.status)
 	}
-	
+
 	// Add checksums row if configured
 	if installSpec.Checksums != nil && installSpec.Checksums.Template != nil {
 		checksumFilename, err := generateChecksumFilename(installSpec, version)
@@ -645,9 +644,9 @@ func checkAssetsExistWithDetection(ctx context.Context, installSpec *spec.Instal
 			}
 		}
 	}
-	
+
 	w.Flush()
-	
+
 	return nil
 }
 
@@ -658,13 +657,13 @@ func isNonBinaryAsset(filename string) bool {
 		".sbom", ".json", ".yml", ".yaml", ".sh", ".ps1", ".md",
 		"checksums", "SHASUMS", "SHA256SUMS", "README", "LICENSE",
 	}
-	
+
 	for _, pattern := range nonBinaryPatterns {
 		if strings.Contains(filename, pattern) {
 			return true
 		}
 	}
-	
+
 	// Check if it's a source archive (e.g., "binst-0.2.5.tar.gz")
 	if strings.Contains(filename, "-") && (strings.HasSuffix(filename, ".tar.gz") || strings.HasSuffix(filename, ".zip")) {
 		// Simple heuristic: if filename contains a dash followed by version-like pattern
@@ -677,17 +676,16 @@ func isNonBinaryAsset(filename string) bool {
 			}
 		}
 	}
-	
+
 	return false
 }
-
 
 // generateChecksumFilename generates the checksums filename using the template
 func generateChecksumFilename(installSpec *spec.InstallSpec, version string) (string, error) {
 	if installSpec.Checksums == nil || installSpec.Checksums.Template == nil {
 		return "", fmt.Errorf("checksums template not specified")
 	}
-	
+
 	checksumTemplate := spec.StringValue(installSpec.Checksums.Template)
 	if checksumTemplate == "" {
 		return "", fmt.Errorf("checksums template not specified")
