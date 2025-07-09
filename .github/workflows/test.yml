@@ -66,3 +66,16 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: make test-aqua-source
+
+    - name: Test check command
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        echo "::group::Testing check command"
+        make test-check
+        echo "::endgroup::"
+        
+        # Test help output
+        echo "::group::Check command help"
+        ./binst check --help
+        echo "::endgroup::"

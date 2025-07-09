@@ -114,7 +114,23 @@ test-all-platforms: binst ## Test reviewdog installer across all supported platf
 	@echo "Testing all supported platforms..."
 	@./test/all-supported-platforms-reviewdog.sh
 
-test-integration: test-gen-configs test-gen-installers test-run-installers ## Run full integration test suite
+test-check: binst ## Test check command with various configurations
+	@echo "Testing check command..."
+	@echo "=== Testing default config ==="
+	@./binst check
+	@echo
+	@echo "=== Testing with specific version ==="
+	@./binst check --version v0.2.0
+	@echo
+	@echo "=== Testing without asset verification ==="
+	@./binst check --check-assets=false
+	@echo
+	@echo "=== Testing with ignore patterns ==="
+	@./binst check -c testdata/bat.binstaller.yml --ignore ".*-musl.*" --ignore "\.deb$$" || true
+	@echo
+	@echo "Check command tests completed"
+
+test-integration: test-gen-configs test-gen-installers test-run-installers test-check ## Run full integration test suite
 	@echo "Integration tests completed"
 
 test-incremental: test-gen-installers test-run-installers-incremental ## Run incremental tests (only changed files)
