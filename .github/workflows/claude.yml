@@ -40,8 +40,8 @@ jobs:
           additional_permissions: |
             actions: read
           
-          # Optional: Specify model (defaults to Claude Sonnet 4, uncomment for Claude Opus 4)
-          # model: "claude-opus-4-20250514"
+          # Use Claude Opus 4 for better code understanding and more autonomous operation
+          model: "claude-opus-4-20250514"
           
           # Optional: Customize the trigger phrase (default: @claude)
           # trigger_phrase: "/claude"
@@ -49,14 +49,29 @@ jobs:
           # Optional: Trigger when specific user is assigned to an issue
           # assignee_trigger: "claude-bot"
           
-          # Optional: Allow Claude to run specific commands
-          # allowed_tools: "Bash(npm install),Bash(npm run build),Bash(npm run test:*),Bash(npm run lint:*)"
-          
-          # Optional: Add custom instructions for Claude to customize its behavior for your project
-          # custom_instructions: |
-          #   Follow our coding standards
-          #   Ensure all new code has tests
-          #   Use TypeScript for new files
+          # Allow Claude to run specific commands for binstaller project
+          allowed_tools: |
+            Bash(make build)
+            Bash(make test)
+            Bash(make test-integration)
+            Bash(make lint)
+            Bash(make fmt)
+            Bash(go mod tidy)
+            Bash(go mod download)
+            Bash(go test ./...)
+            Bash(go build ./...)
+            Bash(go run ./...)
+            Bash(./binst)
+            Bash(./binst *)
+            Bash(sh ./install.sh)
+            Bash(bash ./install.sh)
+            Bash(./install.sh)
+            Bash(sh ./installer.sh)
+            Bash(bash ./installer.sh)
+            Bash(./installer.sh)
+            Bash(git status)
+            Bash(git diff)
+            Bash(git log --oneline -n 10)
           
           # Optional: Custom environment variables for Claude
           # claude_env: |
