@@ -7,9 +7,10 @@ usage() {
   cat <<EOF
 $this: download ${NAME} from ${REPO}
 
-Usage: $this [-b bindir] [-d]{{- if not .TargetVersion }} [tag]{{- end }}
+Usage: $this [-b bindir] [-d] [-n|--dry-run]{{- if not .TargetVersion }} [tag]{{- end }}
   -b sets bindir or installation directory, Defaults to {{ deref .DefaultBinDir }}
   -d turns on debug logging
+  -n, --dry-run dry run mode - show what would be done without actually doing it
   {{- if .TargetVersion }}
    This installer is configured for {{ .TargetVersion }} only.
   {{- else }}
@@ -49,13 +50,32 @@ find_embedded_checksum() {
 
 parse_args() {
   BINDIR="{{ deref .DefaultBinDir }}"
-  while getopts "b:dqh?x" arg; do
+  DRY_RUN=false
+  
+  # Handle long options before getopts
+  FILTERED_ARGS=""
+  for arg in "$@"; do
+    case "$arg" in
+    --dry-run)
+      DRY_RUN=true
+      ;;
+    *)
+      FILTERED_ARGS="$FILTERED_ARGS $arg"
+      ;;
+    esac
+  done
+  
+  # Reset positional parameters with filtered args
+  eval set -- "$FILTERED_ARGS"
+  
+  while getopts "b:dqh?xn" arg; do
     case "$arg" in
     b) BINDIR="$OPTARG" ;;
     d) log_set_priority 10 ;;
     q) log_set_priority 3 ;;
     h | \?) usage "$0" ;;
     x) set -x ;;
+    n) DRY_RUN=true ;;
     esac
   done
   shift $((OPTIND - 1))
@@ -150,6 +170,36 @@ execute() {
   CHECKSUM_URL=""
   if [ -n "$CHECKSUM_FILENAME" ]; then
     CHECKSUM_URL="${GITHUB_DOWNLOAD}/${TAG}/${CHECKSUM_FILENAME}"
+  fi
+
+  # --- Dry Run Mode ---
+  if [ "$DRY_RUN" = "true" ]; then
+    log_info "[DRY RUN] Detected OS: ${OS}"
+    log_info "[DRY RUN] Detected Architecture: ${ARCH}"
+    log_info "[DRY RUN] Would download: ${ASSET_URL}"
+    if [ -n "$CHECKSUM_URL" ]; then
+      log_info "[DRY RUN] Would verify checksum from: ${CHECKSUM_URL}"
+    elif [ -n "$(find_embedded_checksum "$VERSION" "$ASSET_FILENAME")" ]; then
+      log_info "[DRY RUN] Would verify checksum using embedded checksums"
+    else
+      log_info "[DRY RUN] Would skip checksum verification (no checksum available)"
+    fi
+    
+    {{- range $i, $binary := .Asset.Binaries }}
+    BINARY_NAME='{{ deref $binary.Name }}'
+    {{- if (hasBinaryOverride $.Asset) }}
+    if [ -n "$BINARY_NAME_{{ $i }}" ]; then
+      BINARY_NAME="$BINARY_NAME_{{ $i }}"
+    fi
+    {{- end }}
+    if [ "${UNAME_OS}" = "windows" ]; then
+      case "${BINARY_NAME}" in *.exe) ;; *) BINARY_NAME="${BINARY_NAME}.exe" ;; esac
+    fi
+    log_info "[DRY RUN] Would install ${BINARY_NAME} to: ${BINDIR}/${BINARY_NAME}"
+    {{- end }}
+    
+    log_info "[DRY RUN] Installation would complete successfully"
+    return 0
   fi
 
   # --- Download and Verify ---
