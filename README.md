@@ -280,7 +280,7 @@ Understanding the status indicators:
 - `✗ MISSING` - Asset generated from config not found in release
 - `✗ NO MATCH` - Release asset exists but doesn't match any configured platform
 - `⚠ NOT SUPPORTED` - Feature not supported (e.g., per-asset checksums)
-- `-` - Non-binary file (e.g., .txt, .json, .sbom, LICENSE)
+- `-` - Ignored file (docs, signatures, package formats like .deb/.dmg)
 
 **Note:** We strongly recommend setting `GITHUB_TOKEN` when using the `check` command to avoid GitHub API rate limits:
 

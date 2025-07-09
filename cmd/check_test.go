@@ -288,12 +288,21 @@ func TestGenerateChecksumFilename(t *testing.T) {
 	}
 }
 
-func TestIsNonBinaryAsset(t *testing.T) {
+func TestIsIgnoredAsset(t *testing.T) {
 	tests := []struct {
 		filename string
 		want     bool
 	}{
-		// Non-binary files
+		// Documentation and metadata
+		{"README.md", true},
+		{"README", true},
+		{"LICENSE", true},
+		{"LICENSE.txt", true},
+		{"LICENSE.md", true},
+		{"CHANGELOG.md", true},
+		{"NOTICE", true},
+		
+		// Signatures and checksums
 		{"checksums.txt", true},
 		{"app_1.0.0_SHA256SUMS", true},
 		{"app.sha256", true},
@@ -302,17 +311,34 @@ func TestIsNonBinaryAsset(t *testing.T) {
 		{"app.sig", true},
 		{"app.asc", true},
 		{"app.pem", true},
+		
+		// SBOM and metadata
 		{"app.sbom.json", true},
 		{"config.yml", true},
 		{"config.yaml", true},
+		
+		// Scripts
 		{"install.sh", true},
 		{"install.ps1", true},
-		{"README.md", true},
-		{"LICENSE", true},
-		{"LICENSE.txt", true},
-		{"LICENSE.md", true},
-		{"binst-0.2.5.tar.gz", true}, // source archive
-		{"binst-v0.2.5.zip", true},   // source archive
+		{"setup.bat", true},
+		
+		// Package formats
+		{"app_amd64.deb", true},
+		{"app-1.0.0.rpm", true},
+		{"app.pkg", true},
+		{"app.dmg", true},
+		{"app-installer.msi", true},
+		{"app.apk", true},
+		{"app.snap", true},
+		{"app.flatpak", true},
+		
+		// Development files
+		{"app.pdb", true},
+		{"app.debug", true},
+		
+		// Source archives
+		{"binst-0.2.5.tar.gz", true},
+		{"binst-v0.2.5.zip", true},
 
 		// Binary files
 		{"app_linux_amd64.tar.gz", false},
@@ -324,8 +350,8 @@ func TestIsNonBinaryAsset(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.filename, func(t *testing.T) {
-			if got := isNonBinaryAsset(tt.filename); got != tt.want {
-				t.Errorf("isNonBinaryAsset(%q) = %v, want %v", tt.filename, got, tt.want)
+			if got := isIgnoredAsset(tt.filename); got != tt.want {
+				t.Errorf("isIgnoredAsset(%q) = %v, want %v", tt.filename, got, tt.want)
 			}
 		})
 	}

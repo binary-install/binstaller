@@ -45,7 +45,7 @@ Asset Status Meanings:
   ✗ MISSING      - Asset generated from config not found in release
   ✗ NO MATCH     - Release asset exists but doesn't match any configured platform
   ⚠ NOT SUPPORTED - Feature not supported (e.g., per-asset checksums)
-  -              - Non-binary file (e.g., .txt, .json, .sbom)
+  -              - Ignored file (docs, signatures, package formats like .deb/.dmg)
 
 The unified table shows:
 1. Configured platforms and their generated filenames
@@ -364,7 +364,7 @@ func checkAssetsExist(ctx context.Context, installSpec *spec.InstallSpec, versio
 
 	// Add remaining assets from release
 	for asset := range existingAssets {
-		if isNonBinaryAsset(asset) {
+		if isIgnoredAsset(asset) {
 			allAssets = append(allAssets, assetEntry{
 				platform: "-",
 				filename: asset,
@@ -592,8 +592,8 @@ func checkAssetsExistWithDetection(ctx context.Context, installSpec *spec.Instal
 		var info assetInfo
 		info.name = assetName
 
-		if isNonBinaryAsset(assetName) {
-			// Non-binary assets (signatures, checksums, etc.)
+		if isIgnoredAsset(assetName) {
+			// Ignored assets (signatures, checksums, package formats, etc.)
 			info.platform = "-"
 			info.status = "-"
 		} else {
@@ -676,15 +676,26 @@ func checkAssetsExistWithDetection(ctx context.Context, installSpec *spec.Instal
 	return nil
 }
 
-// isNonBinaryAsset checks if an asset is likely not a binary (e.g., checksums, signatures)
-func isNonBinaryAsset(filename string) bool {
-	nonBinaryPatterns := []string{
-		".txt", ".sha256", ".sha512", ".md5", ".sig", ".asc", ".pem",
-		".sbom", ".json", ".yml", ".yaml", ".sh", ".ps1", ".md",
-		"checksums", "SHASUMS", "SHA256SUMS", "README", "LICENSE",
+// isIgnoredAsset checks if an asset should be ignored by binstaller
+// This includes documentation, signatures, package formats not supported by binstaller, etc.
+func isIgnoredAsset(filename string) bool {
+	ignoredPatterns := []string{
+		// Documentation and metadata
+		".txt", ".md", "README", "LICENSE", "CHANGELOG", "NOTICE",
+		// Signatures and checksums
+		".sha256", ".sha512", ".md5", ".sig", ".asc", ".pem",
+		"checksums", "SHASUMS", "SHA256SUMS",
+		// SBOM and other metadata
+		".sbom", ".json", ".yml", ".yaml",
+		// Scripts (usually installers or helpers, not the binary itself)
+		".sh", ".ps1", ".bat",
+		// Package formats not handled by binstaller
+		".deb", ".rpm", ".pkg", ".dmg", ".msi", ".apk", ".snap", ".flatpak",
+		// Development files
+		".pdb", ".debug",
 	}
 
-	for _, pattern := range nonBinaryPatterns {
+	for _, pattern := range ignoredPatterns {
 		if strings.Contains(filename, pattern) {
 			return true
 		}
