@@ -85,6 +85,15 @@ jobs:
             Bash(diff:*)
             Bash(test:*)
             Bash(wc:*)
+            Bash(yq:*)
+            Bash(sh:*)
+            Bash(shellcheck:*)
+            Bash(golangci-lint:*)
+            Bash(rush:*)
+            Bash(goreleaser:*)
+            Bash(deno:*)
+            Bash(goimports:*)
+            Bash(npm:*)
           
           # Optional: Custom environment variables for Claude
           # claude_env: |
