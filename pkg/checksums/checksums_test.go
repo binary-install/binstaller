@@ -3,6 +3,7 @@ package checksums
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/binary-install/binstaller/pkg/spec"
@@ -330,6 +331,163 @@ ghi789  test-tool-1.0.0-windows-amd64.zip
 		} else if actualHash != expectedHash {
 			t.Errorf("Checksum mismatch for %s: expected %s, got %s", expectedFilename, expectedHash, actualHash)
 		}
+	}
+}
+
+func TestEmbedder_EmbedWithExistingChecksumsFieldAndComments(t *testing.T) {
+	// Test that the embed command preserves comments when checksums field already exists
+	tempDir, err := os.MkdirTemp("", "embed-checksums-comment-test")
+	if err != nil {
+		t.Fatalf("Failed to create temp dir: %v", err)
+	}
+	defer os.RemoveAll(tempDir)
+
+	// Create a config file WITH a checksums field and comments
+	configFile := filepath.Join(tempDir, "config.yml")
+	configContent := `name: test-tool
+repo: test-owner/test-repo
+asset:
+  template: ${NAME}-${VERSION}-${OS}-${ARCH}${EXT}
+  default_extension: .tar.gz
+  naming_convention:
+    os: lowercase
+    arch: lowercase
+  rules:
+    - when:
+        os: windows
+      ext: .zip
+supported_platforms:
+  - os: linux
+    arch: amd64
+  - os: darwin
+    arch: amd64
+  - os: windows
+    arch: amd64
+checksums:
+  # This is a comment about the checksum algorithm
+  algorithm: sha256
+  # This is a comment about the template
+  template: checksums.txt
+  # This is a comment about embedded checksums
+  embedded_checksums:
+    v0.9.0:
+      - filename: test-tool-0.9.0-linux-amd64.tar.gz
+        hash: old123
+`
+	if err := os.WriteFile(configFile, []byte(configContent), 0644); err != nil {
+		t.Fatalf("Failed to write config file: %v", err)
+	}
+
+	// Create a temporary checksum file for new version
+	checksumFile := filepath.Join(tempDir, "checksums.txt")
+	checksumContent := `abc123  test-tool-1.0.0-linux-amd64.tar.gz
+def456  test-tool-1.0.0-darwin-amd64.tar.gz
+ghi789  test-tool-1.0.0-windows-amd64.zip
+`
+	if err := os.WriteFile(checksumFile, []byte(checksumContent), 0644); err != nil {
+		t.Fatalf("Failed to write checksum file: %v", err)
+	}
+
+	// Parse the config file
+	ast, err := parser.ParseFile(configFile, parser.ParseComments)
+	if err != nil {
+		t.Fatalf("Failed to parse config file: %v", err)
+	}
+
+	yamlData, err := os.ReadFile(configFile)
+	if err != nil {
+		t.Fatalf("Failed to read config file: %v", err)
+	}
+
+	var installSpec spec.InstallSpec
+	if err := yaml.UnmarshalWithOptions(yamlData, &installSpec, yaml.UseOrderedMap()); err != nil {
+		t.Fatalf("Failed to unmarshal config: %v", err)
+	}
+
+	// Verify that checksums field exists initially
+	if installSpec.Checksums == nil {
+		t.Error("Expected checksums field to exist initially")
+	}
+
+	// Create embedder with checksum-file mode
+	embedder := &Embedder{
+		Mode:         EmbedModeChecksumFile,
+		Version:      "1.0.0",
+		Spec:         &installSpec,
+		SpecAST:      ast,
+		ChecksumFile: checksumFile,
+	}
+
+	// This should not fail and should preserve existing fields and comments
+	if err := embedder.Embed(); err != nil {
+		t.Fatalf("Embed() failed: %v", err)
+	}
+
+	// Verify that checksums field still exists
+	if installSpec.Checksums == nil {
+		t.Error("Expected checksums field to still exist")
+	}
+
+	// Verify that existing algorithm and template are preserved
+	if installSpec.Checksums.Algorithm == nil || *installSpec.Checksums.Algorithm != spec.Sha256 {
+		t.Error("Expected algorithm to be preserved as sha256")
+	}
+
+	if installSpec.Checksums.Template == nil || spec.StringValue(installSpec.Checksums.Template) != "checksums.txt" {
+		t.Error("Expected template to be preserved as checksums.txt")
+	}
+
+	// Verify that both old and new checksums exist
+	if installSpec.Checksums.EmbeddedChecksums == nil {
+		t.Error("Expected embedded checksums to exist")
+	}
+
+	// Check old version is preserved
+	oldVersion := installSpec.Checksums.EmbeddedChecksums["v0.9.0"]
+	if len(oldVersion) == 0 {
+		t.Error("Expected old version v0.9.0 checksums to be preserved")
+	}
+
+	// Check new version is added
+	newVersion := installSpec.Checksums.EmbeddedChecksums["1.0.0"]
+	if len(newVersion) == 0 {
+		t.Error("Expected new version 1.0.0 checksums to be added")
+	}
+
+	// Verify specific new checksums
+	expectedChecksums := map[string]string{
+		"test-tool-1.0.0-linux-amd64.tar.gz":  "abc123",
+		"test-tool-1.0.0-darwin-amd64.tar.gz": "def456",
+		"test-tool-1.0.0-windows-amd64.zip":   "ghi789",
+	}
+
+	actualChecksums := make(map[string]string)
+	for _, checksum := range newVersion {
+		actualChecksums[spec.StringValue(checksum.Filename)] = spec.StringValue(checksum.Hash)
+	}
+
+	for expectedFilename, expectedHash := range expectedChecksums {
+		actualHash, exists := actualChecksums[expectedFilename]
+		if !exists {
+			t.Errorf("Expected checksum for %s not found", expectedFilename)
+		} else if actualHash != expectedHash {
+			t.Errorf("Checksum mismatch for %s: expected %s, got %s", expectedFilename, expectedHash, actualHash)
+		}
+	}
+
+	// Convert AST back to YAML to check if comments are preserved
+	yamlContent := ast.String()
+
+	// Check if comments are preserved (this tests the MergeFromNode vs ReplaceWithNode behavior)
+	// Note: This test will help us verify that our fallback strategy works correctly
+	if !strings.Contains(yamlContent, "# This is a comment about the checksum algorithm") {
+		t.Error("Expected algorithm comment to be preserved")
+	}
+	if !strings.Contains(yamlContent, "# This is a comment about the template") {
+		t.Error("Expected template comment to be preserved")
+	}
+	if !strings.Contains(yamlContent, "# This is a comment about embedded checksums") {
+		t.Error("Expected embedded checksums comment to be preserved")
 	}
 }
 

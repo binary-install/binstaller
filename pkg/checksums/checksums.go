@@ -133,9 +133,14 @@ func (e *Embedder) Embed() error {
 	if err != nil {
 		return err
 	}
-	// Use ReplaceWithNode to handle cases where the checksums field doesn't exist
-	if err := p.ReplaceWithNode(e.SpecAST, node); err != nil {
-		return err
+	// Try MergeFromNode first to preserve comments when checksums field exists
+	// If that fails (e.g., checksums field doesn't exist), fallback to ReplaceWithNode
+	if err := p.MergeFromNode(e.SpecAST, node); err != nil {
+		// MergeFromNode failed, likely because checksums field doesn't exist
+		// Use ReplaceWithNode to handle cases where the checksums field doesn't exist
+		if err := p.ReplaceWithNode(e.SpecAST, node); err != nil {
+			return err
+		}
 	}
 	return nil
 }
