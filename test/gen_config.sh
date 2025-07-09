@@ -42,3 +42,6 @@ yq -i '.asset.rules += [{"when": {"os": "netbsd"}, "os": "Netbsd"}]' testdata/gu
 yq -i '.asset.rules += [{"when": {"os": "openbsd"}, "os": "Openbsd"}]' testdata/gum.binstaller.yml
 ./binst embed-checksums -c ./testdata/gum.binstaller.yml -m download --version v0.15.0
 ./binst embed-checksums -c ./testdata/gum.binstaller.yml -m download --version v0.16.0
+# Test GitHub release digest
+./binst init --source aqua --repo Songmu/tagpr --output=testdata/tagpr.binstaller.yml --sha='1436b9b02096f39ace945d9c56adb7a5b11df186'
+./binst embed-checksums -c ./testdata/tagpr.binstaller.yml  --mode calculate --version v1.7.0
