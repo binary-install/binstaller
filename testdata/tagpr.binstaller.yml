@@ -1,0 +1,27 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/binary-install/binstaller/main/schema/output/@typespec/json-schema/InstallSpec.json
+schema: v1
+name: tagpr
+repo: Songmu/tagpr
+asset:
+  template: tagpr_${TAG}_${OS}_${ARCH}${EXT}
+  default_extension: .zip
+  binaries:
+  - name: tagpr
+    path: tagpr_${TAG}_${OS}_${ARCH}/tagpr
+  rules:
+  - when:
+      os: linux
+    ext: .tar.gz
+checksums:
+  algorithm: sha256
+  template: SHA256SUMS
+  embedded_checksums:
+    v1.7.0:
+    - filename: tagpr_v1.7.0_darwin_amd64.zip
+      hash: fc270753b67d54aa3a8caa9b27cc9c597aa359482c725782d05b41d468a47e7f
+    - filename: tagpr_v1.7.0_darwin_arm64.zip
+      hash: e60b0ba2934e72785236c76a5f7bcdc00c82a7f9b4d89feed74614c16469a8b9
+    - filename: tagpr_v1.7.0_linux_amd64.tar.gz
+      hash: a256615cb5fac33e7f317fe7d3583aa300bb55a910c19499f9a67e7e39bfac79
+    - filename: tagpr_v1.7.0_linux_arm64.tar.gz
+      hash: 7492ec863f6aa5abaca0a239c4198258832fb8817130a1f3021595987361701c
