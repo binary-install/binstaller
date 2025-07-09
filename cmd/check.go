@@ -290,7 +290,12 @@ func checkAssetsExist(ctx context.Context, installSpec *spec.InstallSpec, versio
 	// Add checksums row if configured
 	if installSpec.Checksums != nil && installSpec.Checksums.Template != nil {
 		checksumFilename, err := generateChecksumFilename(installSpec, version)
-		if err == nil {
+		if err != nil {
+			// Show error message for unsupported checksums configuration
+			if strings.Contains(err.Error(), "per-asset checksums") {
+				fmt.Fprintf(w, "checksums\t(per-asset pattern)\t⚠ NOT SUPPORTED\n")
+			}
+		} else {
 			status := "✓ EXISTS"
 			if !existingAssets[checksumFilename] {
 				status = "✗ MISSING"
@@ -508,7 +513,12 @@ func checkAssetsExistWithDetection(ctx context.Context, installSpec *spec.Instal
 	// Add checksums row if configured
 	if installSpec.Checksums != nil && installSpec.Checksums.Template != nil {
 		checksumFilename, err := generateChecksumFilename(installSpec, version)
-		if err == nil {
+		if err != nil {
+			// Show error message for unsupported checksums configuration
+			if strings.Contains(err.Error(), "per-asset checksums") {
+				fmt.Fprintf(w, "(per-asset pattern)\tchecksums\t⚠ NOT SUPPORTED\n")
+			}
+		} else {
 			if releaseAssetMap[checksumFilename] {
 				fmt.Fprintf(w, "%s\tchecksums\t✓ MATCHED\n", checksumFilename)
 				// Remove from unmatchedAssets if it exists there
@@ -606,6 +616,12 @@ func generateChecksumFilename(installSpec *spec.InstallSpec, version string) (st
 	checksumTemplate := spec.StringValue(installSpec.Checksums.Template)
 	if checksumTemplate == "" {
 		return "", fmt.Errorf("checksums template not specified")
+	}
+
+	// Check if template uses ASSET_FILENAME
+	if strings.Contains(checksumTemplate, "${ASSET_FILENAME}") {
+		// This is a per-asset checksum pattern, not supported in check command
+		return "", fmt.Errorf("per-asset checksums (${ASSET_FILENAME}) not supported in check command")
 	}
 
 	// Create environment map for interpolation
