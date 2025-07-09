@@ -141,3 +141,15 @@ func NamingConventionOSPtr(s string) *NamingConventionOS {
 	n := NamingConventionOS(s)
 	return &n
 }
+
+// SupportedPlatformOSPtr converts string to SupportedPlatformOS pointer
+func SupportedPlatformOSPtr(s string) *SupportedPlatformOS {
+	n := SupportedPlatformOS(s)
+	return &n
+}
+
+// SupportedPlatformArchPtr converts string to SupportedPlatformArch pointer
+func SupportedPlatformArchPtr(s string) *SupportedPlatformArch {
+	n := SupportedPlatformArch(s)
+	return &n
+}
