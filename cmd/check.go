@@ -55,10 +55,8 @@ The unified table shows:
 
 Exit Codes:
   0 - All checks passed (no MISSING or NO MATCH statuses)
-  1 - Configuration issues detected (MISSING assets or NO MATCH files)
-
-Examples:
-  # Check the default config file
+  1 - Configuration issues detected (MISSING assets or NO MATCH files)`,
+	Example: `  # Check the default config file
   binst check
 
   # Check a specific config file

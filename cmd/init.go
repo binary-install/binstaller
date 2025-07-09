@@ -30,6 +30,29 @@ var InitCommand = &cobra.Command{
 	Short: "Generate an InstallSpec config file from various sources",
 	Long: `Initializes a binstaller configuration file (.config/binstaller.yml) by detecting
 settings from a source like a GoReleaser config file or a GitHub repository.`,
+	Example: `  # Initialize from GitHub releases
+  binst init --source=github --repo=junegunn/fzf
+
+  # Initialize from local GoReleaser config
+  binst init --source=goreleaser --file=.goreleaser.yml
+
+  # Initialize from GoReleaser config in a GitHub repo
+  binst init --source=goreleaser --repo=owner/repo
+
+  # Initialize from GoReleaser with specific commit SHA
+  binst init --source=goreleaser --repo=owner/repo --sha=abc123
+
+  # Initialize from Aqua registry for a specific package
+  binst init --source=aqua --repo=junegunn/fzf
+
+  # Initialize from Aqua registry with custom output file
+  binst init --source=aqua --repo=junegunn/fzf -o fzf.binstaller.yml
+
+  # Initialize from local Aqua registry file
+  binst init --source=aqua --file=path/to/registry.yaml
+
+  # Initialize from Aqua registry via stdin
+  cat registry.yaml | binst init --source=aqua --file=-`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		log.Infof("Running init command...")
 

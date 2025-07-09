@@ -30,6 +30,26 @@ This command supports three modes of operation:
 - download: Fetches the checksum file from GitHub releases
 - checksum-file: Uses a local checksum file
 - calculate: Downloads the assets and calculates checksums directly`,
+	Example: `  # Embed checksums by downloading checksum file from GitHub
+  binst embed-checksums --version v1.0.0 --mode download
+
+  # Embed checksums from a local checksum file
+  binst embed-checksums --version v1.0.0 --mode checksum-file --file checksums.txt
+
+  # Calculate checksums by downloading assets (GITHUB_TOKEN recommended)
+  export GITHUB_TOKEN=$(gh auth token)
+  binst embed-checksums --version v1.0.0 --mode calculate
+
+  # Embed checksums for latest version
+  binst embed-checksums --version latest --mode download
+
+  # Embed checksums with custom config and output
+  binst embed-checksums --config myapp.yml --version v2.0.0 --mode download -o myapp-checksums.yml
+
+  # Typical workflow with embed-checksums
+  binst init --source=github --repo=owner/repo
+  binst embed-checksums --version v1.0.0 --mode download
+  binst gen -o install.sh`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		log.Info("Running embed-checksums command...")
 
