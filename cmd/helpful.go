@@ -35,6 +35,14 @@ var (
 	}()
 )
 
+// HelpfulConfig configures the helpful command behavior
+type HelpfulConfig struct {
+	// SkipFunc determines if a command should be skipped
+	SkipFunc func(cmd *cobra.Command) bool
+	// Output writer
+	Output io.Writer
+}
+
 // HelpfulCommand represents the helpful command
 var HelpfulCommand = &cobra.Command{
 	Use:   "helpful",
@@ -43,20 +51,35 @@ var HelpfulCommand = &cobra.Command{
 This is especially useful for getting a complete overview of the tool's capabilities,
 including for LLMs or automated documentation tools.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		// Get root command
-		root := cmd.Root()
-
-		// Process root command and all subcommands
-		processCommand(root, "", os.Stdout)
-
-		return nil
+		config := &HelpfulConfig{
+			SkipFunc: func(c *cobra.Command) bool {
+				// Skip the helpful command itself
+				if c == cmd {
+					return true
+				}
+				return defaultSkipFunc(c)
+			},
+			Output: os.Stdout,
+		}
+		return RunHelpful(cmd, config)
 	},
 }
 
-// processCommand recursively processes a command and its subcommands
-func processCommand(cmd *cobra.Command, prefix string, w io.Writer) {
+// RunHelpful executes the helpful command with the given configuration
+func RunHelpful(cmd *cobra.Command, config *HelpfulConfig) error {
+	// Get root command
+	root := cmd.Root()
+
+	// Process root command and all subcommands
+	processCommandWithConfig(root, "", config)
+
+	return nil
+}
+
+// processCommandWithConfig recursively processes a command and its subcommands with config
+func processCommandWithConfig(cmd *cobra.Command, prefix string, config *HelpfulConfig) {
 	// Skip certain commands
-	if shouldSkipCommand(cmd) {
+	if config.SkipFunc != nil && config.SkipFunc(cmd) {
 		return
 	}
 
@@ -64,37 +87,37 @@ func processCommand(cmd *cobra.Command, prefix string, w io.Writer) {
 	cmdPath := buildCommandPath(cmd, prefix)
 
 	// Write section header (styled)
-	if cmdPath != "binst" { // Skip header for root command
-		fmt.Fprintln(w)
-		fmt.Fprintln(w, headerStyle.Render(fmt.Sprintf("## %s", cmdPath)))
-		fmt.Fprintln(w)
+	if cmdPath != cmd.Root().Name() { // Skip header for root command
+		fmt.Fprintln(config.Output)
+		fmt.Fprintln(config.Output, headerStyle.Render(fmt.Sprintf("## %s", cmdPath)))
+		fmt.Fprintln(config.Output)
 	}
 
 	// Use the command's built-in Help() function
-	cmd.SetOut(w)
+	cmd.SetOut(config.Output)
 	cmd.Help()
 
 	// Add separator between commands
-	fmt.Fprintln(w)
-	fmt.Fprintln(w, separatorStyle.Render(strings.Repeat("─", 80)))
-	fmt.Fprintln(w)
+	fmt.Fprintln(config.Output)
+	fmt.Fprintln(config.Output, separatorStyle.Render(strings.Repeat("─", 80)))
+	fmt.Fprintln(config.Output)
 
 	// Process subcommands
 	for _, subCmd := range cmd.Commands() {
-		if !subCmd.Hidden && subCmd.Name() != "help" {
-			processCommand(subCmd, cmdPath, w)
+		if !subCmd.Hidden {
+			processCommandWithConfig(subCmd, cmdPath, config)
 		}
 	}
 }
 
-// shouldSkipCommand determines if a command should be skipped
-func shouldSkipCommand(cmd *cobra.Command) bool {
-	skipCommands := []string{"completion", "help", "helpful"}
-	for _, skip := range skipCommands {
-		if cmd.Name() == skip {
-			return true
-		}
+// defaultSkipFunc is the default skip function that skips standard utility commands
+func defaultSkipFunc(cmd *cobra.Command) bool {
+	// Skip commands that are typically not useful in comprehensive help
+	switch cmd.Name() {
+	case "completion", "help":
+		return true
 	}
+	
 	return false
 }
 
