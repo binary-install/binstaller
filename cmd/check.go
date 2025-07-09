@@ -33,12 +33,37 @@ var CheckCommand = &cobra.Command{
 	Use:   "check",
 	Short: "Check and validate an InstallSpec config file",
 	Long: `Checks an InstallSpec configuration file by:
-- Validating the configuration format
-- Generating all possible asset filenames for supported platforms
-- Checking if assets exist in the GitHub release (default: enabled)
+- Validating the configuration format and required fields
+- Generating asset filenames for all configured platforms
+- Verifying if assets exist in the GitHub release (default: enabled)
+- Validating checksums template configuration
 
-This makes it easy to validate your configuration without generating
-and running the actual installer script.`,
+This helps validate your configuration before generating installer scripts.
+
+Asset Status Meanings:
+  ✓ EXISTS       - Asset generated from config exists in GitHub release
+  ✗ MISSING      - Asset generated from config not found in release
+  ✗ NO MATCH     - Release asset exists but doesn't match any configured platform
+  ⚠ NOT SUPPORTED - Feature not supported (e.g., per-asset checksums)
+  -              - Non-binary file (e.g., .txt, .json, .sbom)
+
+The unified table shows:
+1. Configured platforms and their generated filenames
+2. Checksums file status (if configured)
+3. Unmatched release assets that might need configuration
+
+Examples:
+  # Check the default config file
+  binst check
+
+  # Check a specific config file
+  binst check -c myapp.binstaller.yml
+
+  # Check without verifying GitHub assets
+  binst check --check-assets=false
+
+  # Check with a specific version
+  binst check --version v1.2.3`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		log.Info("Running check command...")
 
