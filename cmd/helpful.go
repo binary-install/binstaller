@@ -37,10 +37,11 @@ var (
 
 // HelpfulCommand represents the helpful command
 var HelpfulCommand = &cobra.Command{
-	Use:    "helpful",
-	Short:  "Display comprehensive help for all commands",
-	Long:   `Displays help information for all binstaller commands in a single, styled output.`,
-	Hidden: true, // Hide from normal help output
+	Use:   "helpful",
+	Short: "Display comprehensive help for all commands",
+	Long: `Displays help information for all binstaller commands in a single, styled output.
+This is especially useful for getting a complete overview of the tool's capabilities,
+including for LLMs or automated documentation tools.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		// Get root command
 		root := cmd.Root()

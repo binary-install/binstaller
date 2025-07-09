@@ -104,10 +104,11 @@ func init() {
 	CheckCommand.GroupID = "workflow"
 	EmbedChecksumsCommand.GroupID = "workflow"
 	GenCommand.GroupID = "workflow"
+	HelpfulCommand.GroupID = "utility"
 	
 	RootCmd.AddCommand(InitCommand)           // Step 1: Initialize config
 	RootCmd.AddCommand(CheckCommand)          // Step 2: Validate config
 	RootCmd.AddCommand(EmbedChecksumsCommand) // Step 3: Embed checksums (optional)
 	RootCmd.AddCommand(GenCommand)            // Step 4: Generate installer
-	RootCmd.AddCommand(HelpfulCommand)        // Hidden command, no group needed
+	RootCmd.AddCommand(HelpfulCommand)        // Utility: Comprehensive help for LLMs
 }
