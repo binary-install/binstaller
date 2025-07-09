@@ -252,7 +252,42 @@ While binstaller works without authentication, we recommend setting `GITHUB_TOKE
 **When GITHUB_TOKEN is needed:**
 - `binst init` with any source (github, goreleaser, aqua)
 - `binst embed-checksums` with `--mode download` or `--mode calculate`
+- `binst check` when verifying asset availability (recommended)
 - Especially important for `--mode calculate` which downloads multiple release assets
+
+### Validating Configuration with `check` Command
+
+The `check` command validates your binstaller configuration and verifies that the generated asset filenames match what's available in GitHub releases:
+
+```bash
+# Check the default config file
+binst check
+
+# Check a specific config file
+binst check -c myapp.binstaller.yml
+
+# Check with a specific version
+binst check --version v1.2.3
+```
+
+The command displays a unified table showing:
+- **Configured platforms**: Asset filenames generated from your config
+- **Checksums file**: Status of the checksums file (if configured)
+- **Release assets**: All assets in the GitHub release with their match status
+
+Understanding the status indicators:
+- `✓ EXISTS` - Asset generated from config exists in GitHub release
+- `✗ MISSING` - Asset generated from config not found in release
+- `✗ NO MATCH` - Release asset exists but doesn't match any configured platform
+- `⚠ NOT SUPPORTED` - Feature not supported (e.g., per-asset checksums)
+- `-` - Non-binary file (e.g., .txt, .json, .sbom, LICENSE)
+
+**Note:** We strongly recommend setting `GITHUB_TOKEN` when using the `check` command to avoid GitHub API rate limits:
+
+```bash
+export GITHUB_TOKEN=$(gh auth token)
+binst check
+```
 
 ## ⚙️ Configuration Format
 
