@@ -338,8 +338,7 @@ func resolveLatestVersion(ctx context.Context, repo string) (string, error) {
 	req.Header.Set("Accept", "application/vnd.github.v3+json")
 
 	client := &http.Client{
-		Timeout:   30 * time.Second,
-		Transport: httpclient.NewGitHubClient().Transport,
+		Timeout: 30 * time.Second,
 	}
 	resp, err := client.Do(req)
 	if err != nil {
@@ -372,10 +371,10 @@ func fetchReleaseAssets(ctx context.Context, repo, version string) ([]string, er
 	}
 	req = req.WithContext(ctx)
 	req.Header.Set("Accept", "application/vnd.github.v3+json")
+	
 
 	client := &http.Client{
-		Timeout:   30 * time.Second,
-		Transport: httpclient.NewGitHubClient().Transport,
+		Timeout: 30 * time.Second,
 	}
 	resp, err := client.Do(req)
 	if err != nil {
@@ -468,12 +467,6 @@ func checkAssetsExistWithDetection(ctx context.Context, installSpec *spec.Instal
 	fmt.Fprintln(w, "ASSET FILENAME\tDETECTED PLATFORM\tSTATUS")
 	fmt.Fprintln(w, "--------------\t-----------------\t------")
 	
-	// Sort release assets for consistent output
-	sort.Strings(releaseAssets)
-	
-	// Track matched and unmatched assets
-	var unmatchedAssets []string
-	
 	// Check if checksums file is configured
 	checksumFilename := ""
 	if installSpec.Checksums != nil && installSpec.Checksums.Template != nil {
@@ -482,32 +475,77 @@ func checkAssetsExistWithDetection(ctx context.Context, installSpec *spec.Instal
 		}
 	}
 	
+	// First pass: categorize assets
+	type assetInfo struct {
+		name     string
+		platform string
+		status   string
+	}
+	var assets []assetInfo
+	
 	for _, assetName := range releaseAssets {
 		// Check if this is the checksums file
 		if checksumFilename != "" && assetName == checksumFilename {
 			continue // Will be handled separately
 		}
 		
-		// Skip non-binary assets (will be shown separately)
-		if isNonBinaryAsset(assetName) {
-			unmatchedAssets = append(unmatchedAssets, assetName)
-			continue
-		}
+		// Determine the type and status of the asset
+		var info assetInfo
+		info.name = assetName
 		
-		// Check if this asset matches any generated filename
-		platform := ""
-		for filename, plat := range assetFilenames {
-			if filename == assetName {
-				platform = plat
-				break
+		if isNonBinaryAsset(assetName) {
+			// Non-binary assets (signatures, checksums, etc.)
+			info.platform = "-"
+			info.status = "-"
+		} else {
+			// Check if this asset matches any generated filename
+			platform := ""
+			for filename, plat := range assetFilenames {
+				if filename == assetName {
+					platform = plat
+					break
+				}
+			}
+			
+			if platform != "" {
+				info.platform = platform
+				info.status = "✓ MATCHED"
+			} else {
+				info.platform = "-"
+				info.status = "✗ NO MATCH"
 			}
 		}
 		
-		if platform != "" {
-			fmt.Fprintf(w, "%s\t%s\t✓ MATCHED\n", assetName, platform)
-		} else {
-			fmt.Fprintf(w, "%s\t-\t✗ NO MATCH\n", assetName)
+		assets = append(assets, info)
+	}
+	
+	// Sort assets: MATCHED first, then NO MATCH, then non-binary
+	sort.Slice(assets, func(i, j int) bool {
+		// Define sort priority
+		getPriority := func(status string) int {
+			switch status {
+			case "✓ MATCHED":
+				return 0
+			case "✗ NO MATCH":
+				return 1
+			default: // "-"
+				return 2
+			}
 		}
+		
+		pi := getPriority(assets[i].status)
+		pj := getPriority(assets[j].status)
+		
+		if pi != pj {
+			return pi < pj
+		}
+		// If same priority, sort by name
+		return assets[i].name < assets[j].name
+	})
+	
+	// Display sorted assets
+	for _, asset := range assets {
+		fmt.Fprintf(w, "%s\t%s\t%s\n", asset.name, asset.platform, asset.status)
 	}
 	
 	// Add checksums row if configured
@@ -521,31 +559,13 @@ func checkAssetsExistWithDetection(ctx context.Context, installSpec *spec.Instal
 		} else {
 			if releaseAssetMap[checksumFilename] {
 				fmt.Fprintf(w, "%s\tchecksums\t✓ MATCHED\n", checksumFilename)
-				// Remove from unmatchedAssets if it exists there
-				for i, asset := range unmatchedAssets {
-					if asset == checksumFilename {
-						unmatchedAssets = append(unmatchedAssets[:i], unmatchedAssets[i+1:]...)
-						break
-					}
-				}
+			} else {
+				fmt.Fprintf(w, "%s\tchecksums\t✗ MISSING\n", checksumFilename)
 			}
 		}
 	}
 	
 	w.Flush()
-	
-	// Display non-binary assets separately
-	if len(unmatchedAssets) > 0 {
-		fmt.Println("\nOther assets in release:")
-		w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-		fmt.Fprintln(w, "ASSET FILENAME")
-		fmt.Fprintln(w, "--------------")
-		
-		for _, asset := range unmatchedAssets {
-			fmt.Fprintf(w, "%s\n", asset)
-		}
-		w.Flush()
-	}
 	
 	return nil
 }
