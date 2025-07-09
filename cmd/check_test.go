@@ -308,6 +308,9 @@ func TestIsNonBinaryAsset(t *testing.T) {
 		{"install.sh", true},
 		{"install.ps1", true},
 		{"README.md", true},
+		{"LICENSE", true},
+		{"LICENSE.txt", true},
+		{"LICENSE.md", true},
 		{"binst-0.2.5.tar.gz", true}, // source archive
 		{"binst-v0.2.5.zip", true},   // source archive
 		

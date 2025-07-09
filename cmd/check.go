@@ -656,7 +656,7 @@ func isNonBinaryAsset(filename string) bool {
 	nonBinaryPatterns := []string{
 		".txt", ".sha256", ".sha512", ".md5", ".sig", ".asc", ".pem",
 		".sbom", ".json", ".yml", ".yaml", ".sh", ".ps1", ".md",
-		"checksums", "SHASUMS", "SHA256SUMS", "README",
+		"checksums", "SHASUMS", "SHA256SUMS", "README", "LICENSE",
 	}
 	
 	for _, pattern := range nonBinaryPatterns {
