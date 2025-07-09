@@ -9,7 +9,6 @@ import (
 	"os"
 	"regexp"
 	"sort"
-	"strings"
 	"text/tabwriter"
 	"time"
 
@@ -82,7 +81,7 @@ and running the actual installer script.`,
 
 		// Generate asset filenames for all supported platforms
 		log.Info("Generating asset filenames for all supported platforms...")
-		
+
 		version := testVersion
 		if version == "" {
 			version = spec.StringValue(installSpec.DefaultVersion)
@@ -97,9 +96,6 @@ and running the actual installer script.`,
 			return fmt.Errorf("failed to generate asset filenames: %w", err)
 		}
 
-		// Display the generated filenames
-		displayAssetFilenames(assetFilenames)
-
 		// Check if assets exist in GitHub release if requested
 		if testCheckAssets {
 			log.Info("Checking if assets exist in GitHub release...")
@@ -109,6 +105,10 @@ and running the actual installer script.`,
 				log.WithError(err).Error("Asset availability check failed")
 				return fmt.Errorf("asset availability check failed: %w", err)
 			}
+		} else {
+			// Only display the generated filenames if not checking assets
+			// (checkAssetsExist displays its own table with status)
+			displayAssetFilenames(assetFilenames)
 		}
 
 		log.Info("✓ Test completed successfully")
@@ -150,14 +150,14 @@ func generateAllAssetFilenames(installSpec *spec.InstallSpec, version string) (m
 	for _, platform := range platforms {
 		os := spec.PlatformOSString(platform.OS)
 		arch := spec.PlatformArchString(platform.Arch)
-		
+
 		if os == "" || arch == "" {
 			continue
 		}
 
 		// Create filename generator
 		generator := asset.NewFilenameGenerator(installSpec, version)
-		
+
 		// Generate filename for this platform
 		filename, err := generator.GenerateFilename(os, arch)
 		if err != nil {
@@ -247,12 +247,20 @@ func checkAssetsExist(ctx context.Context, installSpec *spec.InstallSpec, versio
 		existingAssets[asset] = true
 	}
 
+	// Sort platforms for consistent output
+	platforms := make([]string, 0, len(assetFilenames))
+	for platform := range assetFilenames {
+		platforms = append(platforms, platform)
+	}
+	sort.Strings(platforms)
+
 	// Check each generated asset
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
 	fmt.Fprintln(w, "PLATFORM\tASSET FILENAME\tSTATUS")
 	fmt.Fprintln(w, "--------\t--------------\t------")
 
-	for platform, filename := range assetFilenames {
+	for _, platform := range platforms {
+		filename := assetFilenames[platform]
 		status := "✓ EXISTS"
 		if !existingAssets[filename] {
 			status = "✗ MISSING"
@@ -271,7 +279,7 @@ func checkAssetsExist(ctx context.Context, installSpec *spec.InstallSpec, versio
 // resolveLatestVersion resolves "latest" to the actual latest release tag
 func resolveLatestVersion(ctx context.Context, repo string) (string, error) {
 	url := fmt.Sprintf("https://api.github.com/repos/%s/releases/latest", repo)
-	
+
 	req, err := httpclient.NewRequestWithGitHubAuth("GET", url)
 	if err != nil {
 		return "", fmt.Errorf("failed to create request: %w", err)
@@ -280,7 +288,7 @@ func resolveLatestVersion(ctx context.Context, repo string) (string, error) {
 	req.Header.Set("Accept", "application/vnd.github.v3+json")
 
 	client := &http.Client{
-		Timeout: 30 * time.Second,
+		Timeout:   30 * time.Second,
 		Transport: httpclient.NewGitHubClient().Transport,
 	}
 	resp, err := client.Do(req)
@@ -296,7 +304,7 @@ func resolveLatestVersion(ctx context.Context, repo string) (string, error) {
 	var release struct {
 		TagName string `json:"tag_name"`
 	}
-	
+
 	if err := json.NewDecoder(resp.Body).Decode(&release); err != nil {
 		return "", fmt.Errorf("failed to parse release response: %w", err)
 	}
@@ -307,7 +315,7 @@ func resolveLatestVersion(ctx context.Context, repo string) (string, error) {
 // fetchReleaseAssets fetches all assets from a GitHub release
 func fetchReleaseAssets(ctx context.Context, repo, version string) ([]string, error) {
 	url := fmt.Sprintf("https://api.github.com/repos/%s/releases/tags/%s", repo, url.PathEscape(version))
-	
+
 	req, err := httpclient.NewRequestWithGitHubAuth("GET", url)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
@@ -316,7 +324,7 @@ func fetchReleaseAssets(ctx context.Context, repo, version string) ([]string, er
 	req.Header.Set("Accept", "application/vnd.github.v3+json")
 
 	client := &http.Client{
-		Timeout: 30 * time.Second,
+		Timeout:   30 * time.Second,
 		Transport: httpclient.NewGitHubClient().Transport,
 	}
 	resp, err := client.Do(req)
@@ -334,7 +342,7 @@ func fetchReleaseAssets(ctx context.Context, repo, version string) ([]string, er
 			Name string `json:"name"`
 		} `json:"assets"`
 	}
-	
+
 	if err := json.NewDecoder(resp.Body).Decode(&release); err != nil {
 		return nil, fmt.Errorf("failed to parse release response: %w", err)
 	}
@@ -369,7 +377,7 @@ func displayUnmatchedAssets(releaseAssets []string, assetFilenames map[string]st
 		w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
 		fmt.Fprintln(w, "ASSET FILENAME")
 		fmt.Fprintln(w, "--------------")
-		
+
 		sort.Strings(unmatchedAssets)
 		for _, asset := range unmatchedAssets {
 			fmt.Fprintf(w, "%s\n", asset)
@@ -377,7 +385,6 @@ func displayUnmatchedAssets(releaseAssets []string, assetFilenames map[string]st
 		w.Flush()
 	}
 }
-
 
 func init() {
 	// Flags specific to test command

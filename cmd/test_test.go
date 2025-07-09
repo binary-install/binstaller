@@ -160,19 +160,19 @@ func TestGetSupportedPlatforms(t *testing.T) {
 		if len(platforms) != 6 {
 			t.Errorf("expected 6 platforms, got %d", len(platforms))
 		}
-		
+
 		// Check that we have the expected default platforms
 		platformStrs := make([]string, len(platforms))
 		for i, p := range platforms {
 			platformStrs[i] = spec.PlatformOSString(p.OS) + "/" + spec.PlatformArchString(p.Arch)
 		}
-		
+
 		expectedPlatforms := []string{
 			"linux/amd64", "linux/arm64",
 			"darwin/amd64", "darwin/arm64",
 			"windows/amd64", "windows/arm64",
 		}
-		
+
 		for _, expected := range expectedPlatforms {
 			if !containsString(platformStrs, expected) {
 				t.Errorf("expected platform %s not found in %v", expected, platformStrs)
@@ -184,19 +184,19 @@ func TestGetSupportedPlatforms(t *testing.T) {
 func TestDisplayUnmatchedAssets(t *testing.T) {
 	// This test is more about ensuring the function doesn't panic
 	// and handles edge cases properly
-	
+
 	releaseAssets := []string{
 		"app_1.0.0_linux_amd64.tar.gz",
 		"app_1.0.0_darwin_arm64.tar.gz",
 		"checksums.txt",
 		"README.md",
 	}
-	
+
 	assetFilenames := map[string]string{
 		"linux/amd64":  "app_1.0.0_linux_amd64.tar.gz",
 		"darwin/arm64": "app_1.0.0_darwin_arm64.tar.gz",
 	}
-	
+
 	// This should not panic and should identify checksums.txt and README.md as unmatched
 	displayUnmatchedAssets(releaseAssets, assetFilenames)
 }
@@ -204,7 +204,7 @@ func TestDisplayUnmatchedAssets(t *testing.T) {
 func TestDisplayUnmatchedAssetsEmpty(t *testing.T) {
 	// Test with empty inputs
 	displayUnmatchedAssets([]string{}, map[string]string{})
-	
+
 	// Test with no unmatched assets
 	releaseAssets := []string{"app_1.0.0_linux_amd64.tar.gz"}
 	assetFilenames := map[string]string{"linux/amd64": "app_1.0.0_linux_amd64.tar.gz"}
@@ -215,12 +215,12 @@ func TestDisplayUnmatchedAssetsEmpty(t *testing.T) {
 // This is a placeholder showing how such a test could be structured
 func TestFetchReleaseAssets(t *testing.T) {
 	t.Skip("Skipping integration test - requires HTTP mocking")
-	
+
 	ctx := context.Background()
-	
+
 	// This would need to be mocked to test properly
 	assets, err := fetchReleaseAssets(ctx, "owner/repo", "v1.0.0")
-	
+
 	// With proper mocking, we would test:
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)
@@ -232,12 +232,12 @@ func TestFetchReleaseAssets(t *testing.T) {
 
 func TestResolveLatestVersion(t *testing.T) {
 	t.Skip("Skipping integration test - requires HTTP mocking")
-	
+
 	ctx := context.Background()
-	
+
 	// This would need to be mocked to test properly
 	version, err := resolveLatestVersion(ctx, "owner/repo")
-	
+
 	// With proper mocking, we would test:
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)
@@ -249,9 +249,9 @@ func TestResolveLatestVersion(t *testing.T) {
 
 // Helper functions for testing
 func contains(s, substr string) bool {
-	return len(s) > 0 && len(substr) > 0 && 
-		(s == substr || len(s) > len(substr) && 
-			(s[:len(substr)] == substr || s[len(s)-len(substr):] == substr || 
+	return len(s) > 0 && len(substr) > 0 &&
+		(s == substr || len(s) > len(substr) &&
+			(s[:len(substr)] == substr || s[len(s)-len(substr):] == substr ||
 				containsSubstring(s, substr)))
 }
 
