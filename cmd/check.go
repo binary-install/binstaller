@@ -52,6 +52,10 @@ The unified table shows:
 2. Checksums file status (if configured)
 3. Unmatched release assets that might need configuration
 
+Exit Codes:
+  0 - All checks passed (no MISSING or NO MATCH statuses)
+  1 - Configuration issues detected (MISSING assets or NO MATCH files)
+
 Examples:
   # Check the default config file
   binst check
@@ -291,6 +295,9 @@ func checkAssetsExist(ctx context.Context, installSpec *spec.InstallSpec, versio
 		existingAssets[asset] = true
 	}
 
+	// Track if we have any issues
+	hasIssues := false
+
 	// Check checksums filename if configured
 	checksumFilename := ""
 	checksumError := ""
@@ -319,6 +326,7 @@ func checkAssetsExist(ctx context.Context, installSpec *spec.InstallSpec, versio
 		status := "✓ EXISTS"
 		if !existingAssets[filename] {
 			status = "✗ MISSING"
+			hasIssues = true
 		}
 		allAssets = append(allAssets, assetEntry{
 			platform: platform,
@@ -343,6 +351,8 @@ func checkAssetsExist(ctx context.Context, installSpec *spec.InstallSpec, versio
 		if existingAssets[checksumFilename] {
 			status = "✓ EXISTS"
 			delete(existingAssets, checksumFilename)
+		} else {
+			hasIssues = true
 		}
 		allAssets = append(allAssets, assetEntry{
 			platform: "checksums",
@@ -368,6 +378,7 @@ func checkAssetsExist(ctx context.Context, installSpec *spec.InstallSpec, versio
 				status:   "✗ NO MATCH",
 				priority: 1,
 			})
+			hasIssues = true
 		}
 	}
 
@@ -403,6 +414,11 @@ func checkAssetsExist(ctx context.Context, installSpec *spec.InstallSpec, versio
 	}
 
 	w.Flush()
+
+	// Return error if there are any issues
+	if hasIssues {
+		return fmt.Errorf("configuration issues detected: missing assets or unmatched files")
+	}
 
 	return nil
 }
@@ -502,6 +518,9 @@ func checkAssetsExistWithDetection(ctx context.Context, installSpec *spec.Instal
 	// Create filename generator
 	generator := asset.NewFilenameGenerator(installSpec, version)
 
+	// Track if we have any issues
+	hasIssues := false
+
 	// Get all possible platforms using the same approach as embed-checksums
 	platforms := generator.GetAllPossiblePlatforms()
 
@@ -593,6 +612,7 @@ func checkAssetsExistWithDetection(ctx context.Context, installSpec *spec.Instal
 			} else {
 				info.platform = "-"
 				info.status = "✗ NO MATCH"
+				hasIssues = true
 			}
 		}
 
@@ -641,11 +661,17 @@ func checkAssetsExistWithDetection(ctx context.Context, installSpec *spec.Instal
 				fmt.Fprintf(w, "%s\tchecksums\t✓ MATCHED\n", checksumFilename)
 			} else {
 				fmt.Fprintf(w, "%s\tchecksums\t✗ MISSING\n", checksumFilename)
+				hasIssues = true
 			}
 		}
 	}
 
 	w.Flush()
+
+	// Return error if there are any issues
+	if hasIssues {
+		return fmt.Errorf("configuration issues detected: missing assets or unmatched files")
+	}
 
 	return nil
 }
