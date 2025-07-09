@@ -21,16 +21,16 @@ import (
 )
 
 var (
-	// Flags for test command
-	testVersion     string
-	testCheckAssets bool
+	// Flags for check command
+	checkVersion     string
+	checkCheckAssets bool
 )
 
-// TestCommand represents the test command
-var TestCommand = &cobra.Command{
-	Use:   "test",
-	Short: "Test and validate an InstallSpec config file",
-	Long: `Tests an InstallSpec configuration file by:
+// CheckCommand represents the check command
+var CheckCommand = &cobra.Command{
+	Use:   "check",
+	Short: "Check and validate an InstallSpec config file",
+	Long: `Checks an InstallSpec configuration file by:
 - Validating the configuration format
 - Generating all possible asset filenames for supported platforms
 - Optionally checking if assets exist in the GitHub release
@@ -38,7 +38,7 @@ var TestCommand = &cobra.Command{
 This makes it easy to validate your configuration without generating
 and running the actual installer script.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		log.Info("Running test command...")
+		log.Info("Running check command...")
 
 		// Determine config file path using common logic
 		cfgFile, err := resolveConfigFile(configFile)
@@ -82,14 +82,14 @@ and running the actual installer script.`,
 		// Generate asset filenames for all supported platforms
 		log.Info("Generating asset filenames for all supported platforms...")
 
-		version := testVersion
+		version := checkVersion
 		if version == "" {
 			version = spec.StringValue(installSpec.DefaultVersion)
 		}
 		
 		// If checking assets and version is not specified or is "latest",
 		// resolve the actual latest version from GitHub
-		if testCheckAssets && (version == "" || version == "latest") {
+		if checkCheckAssets && (version == "" || version == "latest") {
 			ctx := context.Background()
 			repo := spec.StringValue(installSpec.Repo)
 			if repo != "" {
@@ -113,7 +113,7 @@ and running the actual installer script.`,
 		}
 
 		// Check if assets exist in GitHub release if requested
-		if testCheckAssets {
+		if checkCheckAssets {
 			log.Info("Checking if assets exist in GitHub release...")
 			ctx := context.Background()
 			err := checkAssetsExist(ctx, &installSpec, version, assetFilenames)
@@ -127,7 +127,7 @@ and running the actual installer script.`,
 			displayAssetFilenames(assetFilenames)
 		}
 
-		log.Info("✓ Test completed successfully")
+		log.Info("✓ Check completed successfully")
 		return nil
 	},
 }
@@ -394,7 +394,7 @@ func displayUnmatchedAssets(releaseAssets []string, assetFilenames map[string]st
 }
 
 func init() {
-	// Flags specific to test command
-	TestCommand.Flags().StringVar(&testVersion, "version", "", "Test with specific version (default: uses default_version from spec)")
-	TestCommand.Flags().BoolVar(&testCheckAssets, "check-assets", false, "Check if generated assets exist in GitHub release")
+	// Flags specific to check command
+	CheckCommand.Flags().StringVar(&checkVersion, "version", "", "Check with specific version (default: uses default_version from spec)")
+	CheckCommand.Flags().BoolVar(&checkCheckAssets, "check-assets", false, "Check if generated assets exist in GitHub release")
 }
