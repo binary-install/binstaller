@@ -287,8 +287,14 @@ func checkAssetsExist(ctx context.Context, installSpec *spec.InstallSpec, versio
 
 	w.Flush()
 
+	// Create a reverse map (filename -> platform) for displayUnmatchedAssets
+	filenameToPlat := make(map[string]string)
+	for platform, filename := range assetFilenames {
+		filenameToPlat[filename] = platform
+	}
+
 	// Display unmatched assets from the release
-	displayUnmatchedAssets(releaseAssets, assetFilenames)
+	displayUnmatchedAssets(releaseAssets, filenameToPlat)
 
 	return nil
 }
