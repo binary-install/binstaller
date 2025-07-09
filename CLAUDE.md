@@ -17,16 +17,27 @@ make lint
 # Run before committing
 make fmt
 make test-integration
+
+# Get comprehensive help for all binst commands
+./binst helpful
 ```
 
 ## Project Structure
 
 - `cmd/binst/main.go` - Entry point
-- `cmd/` - CLI commands (init.go, gen.go, embed_checksums.go)
+- `cmd/` - CLI commands:
+  - `init.go` - Initialize new binstaller configuration
+  - `gen.go` - Generate installation scripts
+  - `embed_checksums.go` - Embed checksums into scripts
+  - `check.go` - Check and validate configurations
+  - `helpful.go` - Display comprehensive help
 - `pkg/spec/` - Configuration spec (`.config/binstaller.yml` format)
-- `pkg/datasource/` - Adapters for GitHub, GoReleaser, Aqua
-- `internal/shell/` - Shell script templates
-- `pkg/checksums/` - Checksum handling
+- `pkg/datasource/` - Adapters for GitHub, GoReleaser, Aqua registry
+- `pkg/asset/` - Asset filename parsing and platform handling
+- `pkg/checksums/` - Checksum calculation and verification
+- `internal/shell/` - Shell script templates and generation
+- `schema/` - TypeSpec definitions for JSON schema generation
+- `testdata/` - Example configurations and generated installers
 
 ## Important Notes
 
