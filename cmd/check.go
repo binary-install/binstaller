@@ -9,6 +9,7 @@ import (
 	"os"
 	"regexp"
 	"sort"
+	"strings"
 	"text/tabwriter"
 	"time"
 
@@ -116,10 +117,19 @@ and running the actual installer script.`,
 		if checkCheckAssets {
 			log.Info("Checking if assets exist in GitHub release...")
 			ctx := context.Background()
-			err := checkAssetsExist(ctx, &installSpec, version, assetFilenames)
-			if err != nil {
-				log.WithError(err).Error("Asset availability check failed")
-				return fmt.Errorf("asset availability check failed: %w", err)
+			// When check-assets is on and no platforms specified, use asset-based detection
+			if len(installSpec.SupportedPlatforms) == 0 {
+				err := checkAssetsExistWithDetection(ctx, &installSpec, version)
+				if err != nil {
+					log.WithError(err).Error("Asset availability check failed")
+					return fmt.Errorf("asset availability check failed: %w", err)
+				}
+			} else {
+				err := checkAssetsExist(ctx, &installSpec, version, assetFilenames)
+				if err != nil {
+					log.WithError(err).Error("Asset availability check failed")
+					return fmt.Errorf("asset availability check failed: %w", err)
+				}
 			}
 		} else {
 			// Only display the generated filenames if not checking assets
@@ -362,11 +372,151 @@ func fetchReleaseAssets(ctx context.Context, repo, version string) ([]string, er
 	return assets, nil
 }
 
+// checkAssetsExistWithDetection checks assets by trying all possible platform combinations
+func checkAssetsExistWithDetection(ctx context.Context, installSpec *spec.InstallSpec, version string) error {
+	repo := spec.StringValue(installSpec.Repo)
+	if repo == "" {
+		return fmt.Errorf("repository not specified")
+	}
+
+	log.Infof("Checking assets for version: %s", version)
+
+	// Fetch all release assets
+	releaseAssets, err := fetchReleaseAssets(ctx, repo, version)
+	if err != nil {
+		return fmt.Errorf("failed to fetch release assets: %w", err)
+	}
+
+	// Create filename generator
+	generator := asset.NewFilenameGenerator(installSpec, version)
+	
+	// Get all possible platforms using the same approach as embed-checksums
+	platforms := generator.GetAllPossiblePlatforms()
+	
+	// Generate all possible asset filenames
+	assetFilenames := make(map[string]string) // filename -> platform
+	for _, platform := range platforms {
+		os := spec.PlatformOSString(platform.OS)
+		arch := spec.PlatformArchString(platform.Arch)
+		
+		if os == "" || arch == "" {
+			continue
+		}
+		
+		filename, err := generator.GenerateFilename(os, arch)
+		if err != nil {
+			continue
+		}
+		
+		if filename != "" {
+			platformKey := fmt.Sprintf("%s/%s", os, arch)
+			// Store the first matching platform for each filename
+			if _, exists := assetFilenames[filename]; !exists {
+				assetFilenames[filename] = platformKey
+			}
+		}
+	}
+	
+	// Create a map of release assets for quick lookup
+	releaseAssetMap := make(map[string]bool)
+	for _, asset := range releaseAssets {
+		releaseAssetMap[asset] = true
+	}
+	
+	// Sort filenames for consistent output
+	filenames := make([]string, 0, len(assetFilenames))
+	for filename := range assetFilenames {
+		filenames = append(filenames, filename)
+	}
+	sort.Strings(filenames)
+	
+	// Display results based on release assets (not all possible combinations)
+	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
+	fmt.Fprintln(w, "ASSET FILENAME\tDETECTED PLATFORM\tSTATUS")
+	fmt.Fprintln(w, "--------------\t-----------------\t------")
+	
+	// Sort release assets for consistent output
+	sort.Strings(releaseAssets)
+	
+	// Track matched and unmatched assets
+	var unmatchedAssets []string
+	
+	for _, assetName := range releaseAssets {
+		// Skip non-binary assets (will be shown separately)
+		if isNonBinaryAsset(assetName) {
+			unmatchedAssets = append(unmatchedAssets, assetName)
+			continue
+		}
+		
+		// Check if this asset matches any generated filename
+		platform := ""
+		for filename, plat := range assetFilenames {
+			if filename == assetName {
+				platform = plat
+				break
+			}
+		}
+		
+		if platform != "" {
+			fmt.Fprintf(w, "%s\t%s\t✓ MATCHED\n", assetName, platform)
+		} else {
+			fmt.Fprintf(w, "%s\t-\t✗ NO MATCH\n", assetName)
+		}
+	}
+	
+	w.Flush()
+	
+	// Display non-binary assets separately
+	if len(unmatchedAssets) > 0 {
+		fmt.Println("\nOther assets in release:")
+		w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
+		fmt.Fprintln(w, "ASSET FILENAME")
+		fmt.Fprintln(w, "--------------")
+		
+		for _, asset := range unmatchedAssets {
+			fmt.Fprintf(w, "%s\n", asset)
+		}
+		w.Flush()
+	}
+	
+	return nil
+}
+
+// isNonBinaryAsset checks if an asset is likely not a binary (e.g., checksums, signatures)
+func isNonBinaryAsset(filename string) bool {
+	nonBinaryPatterns := []string{
+		".txt", ".sha256", ".sha512", ".md5", ".sig", ".asc", ".pem",
+		".sbom", ".json", ".yml", ".yaml", ".sh", ".ps1", ".md",
+		"checksums", "SHASUMS", "README",
+	}
+	
+	for _, pattern := range nonBinaryPatterns {
+		if strings.Contains(filename, pattern) {
+			return true
+		}
+	}
+	
+	// Check if it's a source archive (e.g., "binst-0.2.5.tar.gz")
+	if strings.Contains(filename, "-") && (strings.HasSuffix(filename, ".tar.gz") || strings.HasSuffix(filename, ".zip")) {
+		// Simple heuristic: if filename contains a dash followed by version-like pattern
+		parts := strings.Split(filename, "-")
+		if len(parts) >= 2 {
+			// Check if the part after dash looks like a version
+			versionPart := strings.TrimSuffix(strings.TrimSuffix(parts[len(parts)-1], ".tar.gz"), ".zip")
+			if strings.Contains(versionPart, ".") || strings.HasPrefix(versionPart, "v") {
+				return true
+			}
+		}
+	}
+	
+	return false
+}
+
 // displayUnmatchedAssets displays release assets that don't have matching entries
 func displayUnmatchedAssets(releaseAssets []string, assetFilenames map[string]string) {
 	// Create a map of expected filenames for quick lookup
 	expectedAssets := make(map[string]bool)
-	for _, filename := range assetFilenames {
+	for filename := range assetFilenames {
 		expectedAssets[filename] = true
 	}
 
