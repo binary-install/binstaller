@@ -266,62 +266,118 @@ func checkAssetsExist(ctx context.Context, installSpec *spec.InstallSpec, versio
 		existingAssets[asset] = true
 	}
 
-	// Sort platforms for consistent output
-	platforms := make([]string, 0, len(assetFilenames))
-	for platform := range assetFilenames {
-		platforms = append(platforms, platform)
+	// Check checksums filename if configured
+	checksumFilename := ""
+	checksumError := ""
+	if installSpec.Checksums != nil && installSpec.Checksums.Template != nil {
+		cf, err := generateChecksumFilename(installSpec, version)
+		if err != nil {
+			if strings.Contains(err.Error(), "per-asset checksums") {
+				checksumError = "per-asset"
+			}
+		} else {
+			checksumFilename = cf
+		}
 	}
-	sort.Strings(platforms)
 
-	// Check each generated asset
-	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-	fmt.Fprintln(w, "PLATFORM\tASSET FILENAME\tSTATUS")
-	fmt.Fprintln(w, "--------\t--------------\t------")
+	// Build a comprehensive list of all assets
+	type assetEntry struct {
+		platform string
+		filename string
+		status   string
+		priority int // 0=configured, 1=other binary, 2=non-binary
+	}
+	var allAssets []assetEntry
 
-	for _, platform := range platforms {
-		filename := assetFilenames[platform]
+	// Add configured platform assets
+	for platform, filename := range assetFilenames {
 		status := "✓ EXISTS"
 		if !existingAssets[filename] {
 			status = "✗ MISSING"
 		}
-		fmt.Fprintf(w, "%s\t%s\t%s\n", platform, filename, status)
+		allAssets = append(allAssets, assetEntry{
+			platform: platform,
+			filename: filename,
+			status:   status,
+			priority: 0,
+		})
+		// Mark as processed
+		delete(existingAssets, filename)
 	}
 	
-	// Add checksums row if configured
-	if installSpec.Checksums != nil && installSpec.Checksums.Template != nil {
-		checksumFilename, err := generateChecksumFilename(installSpec, version)
-		if err != nil {
-			// Show error message for unsupported checksums configuration
-			if strings.Contains(err.Error(), "per-asset checksums") {
-				fmt.Fprintf(w, "checksums\t(per-asset pattern)\t⚠ NOT SUPPORTED\n")
-			}
-		} else {
-			status := "✓ EXISTS"
-			if !existingAssets[checksumFilename] {
-				status = "✗ MISSING"
-			}
-			fmt.Fprintf(w, "checksums\t%s\t%s\n", checksumFilename, status)
+	// Add checksums if configured
+	if checksumError == "per-asset" {
+		allAssets = append(allAssets, assetEntry{
+			platform: "checksums",
+			filename: "(per-asset pattern)",
+			status:   "⚠ NOT SUPPORTED",
+			priority: 0,
+		})
+	} else if checksumFilename != "" {
+		status := "✗ MISSING"
+		if existingAssets[checksumFilename] {
+			status = "✓ EXISTS"
+			delete(existingAssets, checksumFilename)
 		}
+		allAssets = append(allAssets, assetEntry{
+			platform: "checksums",
+			filename: checksumFilename,
+			status:   status,
+			priority: 0,
+		})
+	}
+
+	// Add remaining assets from release
+	for asset := range existingAssets {
+		if isNonBinaryAsset(asset) {
+			allAssets = append(allAssets, assetEntry{
+				platform: "-",
+				filename: asset,
+				status:   "-",
+				priority: 2,
+			})
+		} else {
+			allAssets = append(allAssets, assetEntry{
+				platform: "-",
+				filename: asset,
+				status:   "✗ NO MATCH",
+				priority: 1,
+			})
+		}
+	}
+
+	// Sort: configured first, then other binaries, then non-binaries
+	// Within each group, sort by status (EXISTS before MISSING) and name
+	sort.Slice(allAssets, func(i, j int) bool {
+		if allAssets[i].priority != allAssets[j].priority {
+			return allAssets[i].priority < allAssets[j].priority
+		}
+		// Same priority - sort by status
+		if allAssets[i].status != allAssets[j].status {
+			// Define status order
+			statusOrder := map[string]int{
+				"✓ EXISTS":        0,
+				"✗ MISSING":       1,
+				"✗ NO MATCH":      2,
+				"⚠ NOT SUPPORTED": 3,
+				"-":               4,
+			}
+			return statusOrder[allAssets[i].status] < statusOrder[allAssets[j].status]
+		}
+		// Same status - sort by filename
+		return allAssets[i].filename < allAssets[j].filename
+	})
+
+	// Display unified table
+	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
+	fmt.Fprintln(w, "PLATFORM\tASSET FILENAME\tSTATUS")
+	fmt.Fprintln(w, "--------\t--------------\t------")
+
+	for _, asset := range allAssets {
+		fmt.Fprintf(w, "%s\t%s\t%s\n", asset.platform, asset.filename, asset.status)
 	}
 
 	w.Flush()
-
-	// Create a reverse map (filename -> platform) for displayUnmatchedAssets
-	filenameToPlat := make(map[string]string)
-	for platform, filename := range assetFilenames {
-		filenameToPlat[filename] = platform
-	}
-	
-	// Also add checksums filename to the map if configured
-	if installSpec.Checksums != nil && installSpec.Checksums.Template != nil {
-		checksumFilename, err := generateChecksumFilename(installSpec, version)
-		if err == nil {
-			filenameToPlat[checksumFilename] = "checksums"
-		}
-	}
-
-	// Display unmatched assets from the release
-	displayUnmatchedAssets(releaseAssets, filenameToPlat)
 
 	return nil
 }
@@ -600,36 +656,6 @@ func isNonBinaryAsset(filename string) bool {
 	return false
 }
 
-// displayUnmatchedAssets displays release assets that don't have matching entries
-func displayUnmatchedAssets(releaseAssets []string, assetFilenames map[string]string) {
-	// Create a map of expected filenames for quick lookup
-	expectedAssets := make(map[string]bool)
-	for filename := range assetFilenames {
-		expectedAssets[filename] = true
-	}
-
-	// Find unmatched assets
-	unmatchedAssets := make([]string, 0)
-	for _, asset := range releaseAssets {
-		if !expectedAssets[asset] {
-			unmatchedAssets = append(unmatchedAssets, asset)
-		}
-	}
-
-	// Display unmatched assets if any
-	if len(unmatchedAssets) > 0 {
-		fmt.Println("\nUnmatched assets in release (no corresponding platform):")
-		w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-		fmt.Fprintln(w, "ASSET FILENAME")
-		fmt.Fprintln(w, "--------------")
-
-		sort.Strings(unmatchedAssets)
-		for _, asset := range unmatchedAssets {
-			fmt.Fprintf(w, "%s\n", asset)
-		}
-		w.Flush()
-	}
-}
 
 // generateChecksumFilename generates the checksums filename using the template
 func generateChecksumFilename(installSpec *spec.InstallSpec, version string) (string, error) {
