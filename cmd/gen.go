@@ -26,6 +26,36 @@ var GenCommand = &cobra.Command{
 	Short: "Generate an installer script from an InstallSpec config file",
 	Long: `Reads an InstallSpec configuration file (e.g., .binstaller.yml) and
 generates a POSIX-compatible shell installer script.`,
+	Example: `  # Generate installer script using default config
+  binst gen
+
+  # Generate installer with custom output file
+  binst gen -o install.sh
+
+  # Generate installer from specific config file
+  binst gen --config myapp.binstaller.yml -o myapp-install.sh
+
+  # Generate installer from stdin
+  cat myapp.binstaller.yml | binst gen --config - -o install.sh
+
+  # Generate installer for a specific version only
+  binst gen --target-version v1.2.3 -o install-v1.2.3.sh
+
+  # Typical workflow with init and gen
+  binst init --source=github --repo=owner/repo
+  binst gen -o install.sh
+
+  # Generate and execute installer script directly
+  binst gen | sh
+
+  # View generated script's help
+  binst gen | sh -s -- -h
+
+  # Install to custom directory
+  binst gen | sh -s -- -b /usr/local/bin
+
+  # Install specific version
+  binst gen | sh -s -- v1.2.3`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		log.Info("Running gen command...")
 

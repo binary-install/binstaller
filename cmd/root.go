@@ -44,11 +44,12 @@ var (
 // RootCmd represents the base command when called without any subcommands
 var RootCmd = &cobra.Command{
 	Use:   "binst",
-	Short: "binst installs binaries from various sources using a spec file.",
-	Long: `binstaller (binst) is a tool to generate installer scripts or directly
-install binaries based on an InstallSpec configuration file.
+	Short: "Config-driven secure shell-script installer generator",
+	Long: `binstaller (binst) is a config-driven secure shell-script installer generator that
+creates reproducible installation scripts for static binaries distributed via GitHub releases.
 
-It supports generating the spec from sources like GoReleaser config or GitHub releases.`,
+It works with Go binaries, Rust binaries, and any other static binaries - as long as they're
+released on GitHub, binstaller can generate installation scripts for them.`,
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
 		log.SetHandler(cli.Default)
 		if verbose {
@@ -74,6 +75,9 @@ func Execute() {
 }
 
 func init() {
+	// Disable automatic command sorting to maintain semantic order
+	cobra.EnableCommandSorting = false
+
 	// Add global flags
 	RootCmd.PersistentFlags().StringVarP(&configFile, "config", "c", "", "Path to InstallSpec config file (default: "+DefaultConfigPathYML+")")
 	RootCmd.PersistentFlags().BoolVar(&verbose, "verbose", false, "Increase log verbosity")
@@ -82,9 +86,30 @@ func init() {
 	// Mark 'config' flag for auto-detection? Cobra doesn't directly support this.
 	// We'll handle default detection logic within commands if the flag is empty.
 
-	// Add subcommands
-	RootCmd.AddCommand(InitCommand)
-	RootCmd.AddCommand(GenCommand)
-	RootCmd.AddCommand(EmbedChecksumsCommand)
-	RootCmd.AddCommand(CheckCommand)
+	// Add command groups
+	RootCmd.AddGroup(&cobra.Group{
+		ID:    "workflow",
+		Title: "Workflow Commands:",
+	})
+	RootCmd.AddGroup(&cobra.Group{
+		ID:    "utility",
+		Title: "Utility Commands:",
+	})
+
+	// Set group for built-in commands
+	RootCmd.SetHelpCommandGroupID("utility")
+	RootCmd.SetCompletionCommandGroupID("utility")
+
+	// Add subcommands with groups
+	InitCommand.GroupID = "workflow"
+	CheckCommand.GroupID = "workflow"
+	EmbedChecksumsCommand.GroupID = "workflow"
+	GenCommand.GroupID = "workflow"
+	HelpfulCommand.GroupID = "utility"
+	
+	RootCmd.AddCommand(InitCommand)           // Step 1: Initialize config
+	RootCmd.AddCommand(CheckCommand)          // Step 2: Validate config
+	RootCmd.AddCommand(EmbedChecksumsCommand) // Step 3: Embed checksums (optional)
+	RootCmd.AddCommand(GenCommand)            // Step 4: Generate installer
+	RootCmd.AddCommand(HelpfulCommand)        // Utility: Comprehensive help for LLMs
 }
