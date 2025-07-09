@@ -18,14 +18,35 @@ JSON_SCHEMA := $(SCHEMA_DIR)/output/@typespec/json-schema/InstallSpec.json
 GENERATED_GO := pkg/spec/generated.go
 
 # Aqua tool management - https://aquaproj.github.io/
-export PATH := $(shell aqua root-dir)/bin:./bin:$(PATH)
+AQUA_VERSION := v3.1.2
+AQUA_INSTALLER_SHA256 := 9a5afb16da7191fbbc0c0240a67e79eecb0f765697ace74c70421377c99f0423
+AQUA_ROOT_DIR ?= $(HOME)/.local/share/aquaproj-aqua
+
+# Check if aqua is installed
+AQUA_BIN := $(shell which aqua 2>/dev/null || echo "$(AQUA_ROOT_DIR)/bin/aqua")
+export PATH := $(AQUA_ROOT_DIR)/bin:./bin:$(PATH)
 export AQUA_DISABLE_LAZY_INSTALL := 1
 export GO111MODULE := on
 # Use Go module proxy
 export GOPROXY = https://proxy.golang.org
 
-aqua-install: ## Install tools via aqua
-	aqua install
+# Install aqua if not present
+$(AQUA_BIN):
+	@echo "Installing aqua $(AQUA_VERSION)..."
+	@curl -sSfL -O https://raw.githubusercontent.com/aquaproj/aqua-installer/$(AQUA_VERSION)/aqua-installer
+	@echo "$(AQUA_INSTALLER_SHA256)  aqua-installer" | sha256sum -c -
+	@chmod +x aqua-installer
+	@./aqua-installer
+	@rm -f aqua-installer
+	@echo "aqua installed successfully"
+	@# Add aqua to GITHUB_PATH if running in GitHub Actions
+	@if [ -n "$$GITHUB_PATH" ]; then \
+		echo "$(AQUA_ROOT_DIR)/bin" >> $$GITHUB_PATH; \
+		echo "Added aqua to GITHUB_PATH"; \
+	fi
+
+aqua-install: $(AQUA_BIN) ## Install tools via aqua
+	$(AQUA_BIN) install
 
 setup: aqua-install ## Install all the build and lint dependencies
 	go mod download
@@ -93,7 +114,7 @@ test-run-installers: ## Run all installer scripts in parallel
 	@./test/run_installers.sh
 	@touch .testdata-timestamp
 
-test-run-installers-incremental: aqua-install .testdata-timestamp $(INSTALL_SCRIPTS) ## Run only changed installer scripts
+test-run-installers-incremental: $(AQUA_BIN) aqua-install .testdata-timestamp $(INSTALL_SCRIPTS) ## Run only changed installer scripts
 	@echo "Running incremental installer tests..."
 	@CHANGED_SCRIPTS=$$(find $(TESTDATA_DIR) -name "*.install.sh" -newer .testdata-timestamp 2>/dev/null || echo ""); \
 	if [ -n "$$CHANGED_SCRIPTS" ]; then \
