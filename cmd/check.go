@@ -33,7 +33,7 @@ var CheckCommand = &cobra.Command{
 	Long: `Checks an InstallSpec configuration file by:
 - Validating the configuration format
 - Generating all possible asset filenames for supported platforms
-- Optionally checking if assets exist in the GitHub release
+- Checking if assets exist in the GitHub release (default: enabled)
 
 This makes it easy to validate your configuration without generating
 and running the actual installer script.`,
@@ -396,5 +396,5 @@ func displayUnmatchedAssets(releaseAssets []string, assetFilenames map[string]st
 func init() {
 	// Flags specific to check command
 	CheckCommand.Flags().StringVar(&checkVersion, "version", "", "Check with specific version (default: uses default_version from spec)")
-	CheckCommand.Flags().BoolVar(&checkCheckAssets, "check-assets", false, "Check if generated assets exist in GitHub release")
+	CheckCommand.Flags().BoolVar(&checkCheckAssets, "check-assets", true, "Check if generated assets exist in GitHub release")
 }
