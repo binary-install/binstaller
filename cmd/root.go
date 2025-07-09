@@ -44,11 +44,12 @@ var (
 // RootCmd represents the base command when called without any subcommands
 var RootCmd = &cobra.Command{
 	Use:   "binst",
-	Short: "binst installs binaries from various sources using a spec file.",
-	Long: `binstaller (binst) is a tool to generate installer scripts or directly
-install binaries based on an InstallSpec configuration file.
+	Short: "Config-driven secure shell-script installer generator",
+	Long: `binstaller (binst) is a config-driven secure shell-script installer generator that
+creates reproducible installation scripts for static binaries distributed via GitHub releases.
 
-It supports generating the spec from sources like GoReleaser config or GitHub releases.`,
+It works with Go binaries, Rust binaries, and any other static binaries - as long as they're
+released on GitHub, binstaller can generate installation scripts for them.`,
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
 		log.SetHandler(cli.Default)
 		if verbose {
