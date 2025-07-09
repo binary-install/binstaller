@@ -74,6 +74,9 @@ func Execute() {
 }
 
 func init() {
+	// Disable automatic command sorting to maintain semantic order
+	cobra.EnableCommandSorting = false
+
 	// Add global flags
 	RootCmd.PersistentFlags().StringVarP(&configFile, "config", "c", "", "Path to InstallSpec config file (default: "+DefaultConfigPathYML+")")
 	RootCmd.PersistentFlags().BoolVar(&verbose, "verbose", false, "Increase log verbosity")
@@ -82,10 +85,10 @@ func init() {
 	// Mark 'config' flag for auto-detection? Cobra doesn't directly support this.
 	// We'll handle default detection logic within commands if the flag is empty.
 
-	// Add subcommands
-	RootCmd.AddCommand(InitCommand)
-	RootCmd.AddCommand(GenCommand)
-	RootCmd.AddCommand(EmbedChecksumsCommand)
-	RootCmd.AddCommand(CheckCommand)
+	// Add subcommands in semantic order (workflow order)
+	RootCmd.AddCommand(InitCommand)           // Step 1: Initialize config
+	RootCmd.AddCommand(CheckCommand)          // Step 2: Validate config
+	RootCmd.AddCommand(EmbedChecksumsCommand) // Step 3: Embed checksums (optional)
+	RootCmd.AddCommand(GenCommand)            // Step 4: Generate installer
 	RootCmd.AddCommand(HelpfulCommand)
 }
