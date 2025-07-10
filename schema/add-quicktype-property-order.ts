@@ -173,12 +173,13 @@ async function processJsonSchema(
     }
   }
 
-  // Write back the modified schema
+  // Write to temporary file instead of modifying the original
+  const tmpPath = `${jsonSchemaPath}.tmp`;
   await Deno.writeTextFile(
-    jsonSchemaPath,
+    tmpPath,
     JSON.stringify(schema, null, 4) + "\n",
   );
-  console.log(`✅ Added quicktypePropertyOrder to ${jsonSchemaPath}`);
+  console.log(`✅ Added quicktypePropertyOrder to ${tmpPath}`);
 }
 
 // Main execution

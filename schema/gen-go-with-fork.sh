@@ -44,16 +44,20 @@ fi
 
 deno run --allow-read --allow-write --allow-env add-quicktype-property-order.ts
 
-# Generate Go structs
+# Generate Go structs using the temporary file
 echo "🚀 Generating Go structs..."
 node "$QUICKTYPE_DIR/dist/index.js" \
-    --src "output/@typespec/json-schema/InstallSpec.json" \
+    --src "output/@typespec/json-schema/InstallSpec.json.tmp" \
     --src-lang schema \
     --lang go \
     --package spec \
     -o "../pkg/spec/generated.go" \
     --all-properties-optional \
     --top-level InstallSpec
+
+# Clean up temporary file
+echo "🧹 Cleaning up temporary file..."
+rm -f "output/@typespec/json-schema/InstallSpec.json.tmp"
 
 echo "✅ Go structs generated successfully!"
 echo "📄 Output: $SCRIPT_DIR/../pkg/spec/generated.go"
