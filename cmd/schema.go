@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"path/filepath"
 	"sort"
 
+	"github.com/binary-install/binstaller/schema"
 	"github.com/goccy/go-yaml"
 	"github.com/spf13/cobra"
 )
@@ -24,7 +24,7 @@ in various formats (YAML, JSON, TypeSpec) and allows filtering by type.`,
 		format, _ := cmd.Flags().GetString("format")
 		typeFilter, _ := cmd.Flags().GetString("type")
 		list, _ := cmd.Flags().GetBool("list")
-		
+
 		return RunSchema(format, typeFilter, list, os.Stdout)
 	},
 }
@@ -61,36 +61,7 @@ func RunSchema(format, typeFilter string, list bool, output interface{}) error {
 
 // loadInstallSpecSchema loads and parses the InstallSpec JSON schema
 func loadInstallSpecSchema() (interface{}, error) {
-	// Try multiple possible paths for the schema file
-	possiblePaths := []string{
-		// From test directory
-		filepath.Join("..", "schema", "output", "@typespec", "json-schema", "InstallSpec.json"),
-		// From project root
-		filepath.Join("schema", "output", "@typespec", "json-schema", "InstallSpec.json"),
-		// From cmd directory
-		filepath.Join("..", "..", "schema", "output", "@typespec", "json-schema", "InstallSpec.json"),
-	}
-	
-	var installSpecJSON []byte
-	var err error
-	
-	for _, schemaPath := range possiblePaths {
-		installSpecJSON, err = os.ReadFile(schemaPath)
-		if err == nil {
-			break
-		}
-	}
-	
-	if err != nil {
-		return nil, fmt.Errorf("failed to read schema file from any of the expected locations: %w", err)
-	}
-
-	var jsonSchema interface{}
-	if err := json.Unmarshal(installSpecJSON, &jsonSchema); err != nil {
-		return nil, fmt.Errorf("failed to parse JSON schema: %w", err)
-	}
-
-	return jsonSchema, nil
+	return schema.GetInstallSpecSchema()
 }
 
 // convertToYAML converts a JSON schema to YAML format
@@ -113,31 +84,7 @@ func convertToJSON(schema interface{}) ([]byte, error) {
 
 // convertToTypeSpec reads and returns the TypeSpec source file
 func convertToTypeSpec() ([]byte, error) {
-	// Try multiple possible paths for the TypeSpec file
-	possiblePaths := []string{
-		// From test directory
-		filepath.Join("..", "schema", "main.tsp"),
-		// From project root
-		filepath.Join("schema", "main.tsp"),
-		// From cmd directory
-		filepath.Join("..", "..", "schema", "main.tsp"),
-	}
-	
-	var typeSpecBytes []byte
-	var err error
-	
-	for _, typeSpecPath := range possiblePaths {
-		typeSpecBytes, err = os.ReadFile(typeSpecPath)
-		if err == nil {
-			break
-		}
-	}
-	
-	if err != nil {
-		return nil, fmt.Errorf("failed to read TypeSpec file from any of the expected locations: %w", err)
-	}
-	
-	return typeSpecBytes, nil
+	return schema.GetTypeSpecSource(), nil
 }
 
 // filterSchemaByType extracts a specific type from the schema's $defs section
@@ -146,7 +93,7 @@ func filterSchemaByType(schema interface{}, typeName string) (interface{}, error
 	if !ok {
 		return nil, fmt.Errorf("schema is not a map")
 	}
-	
+
 	// Check if the type is the root InstallSpec
 	if typeName == "InstallSpec" {
 		// Return the root schema without $defs
@@ -158,23 +105,23 @@ func filterSchemaByType(schema interface{}, typeName string) (interface{}, error
 		}
 		return rootSchema, nil
 	}
-	
+
 	// Look for the type in $defs
 	defs, ok := schemaMap["$defs"]
 	if !ok {
 		return nil, fmt.Errorf("schema does not contain $defs section")
 	}
-	
+
 	defsMap, ok := defs.(map[string]interface{})
 	if !ok {
 		return nil, fmt.Errorf("$defs is not a map")
 	}
-	
+
 	typeDef, ok := defsMap[typeName]
 	if !ok {
 		return nil, fmt.Errorf("type %s not found in $defs", typeName)
 	}
-	
+
 	return typeDef, nil
 }
 
@@ -184,32 +131,32 @@ func listSchemaTypes(writer io.Writer) error {
 	if err != nil {
 		return fmt.Errorf("failed to load schema: %w", err)
 	}
-	
+
 	schemaMap, ok := schema.(map[string]interface{})
 	if !ok {
 		return fmt.Errorf("schema is not a map")
 	}
-	
+
 	// Get types from $defs
 	defs, ok := schemaMap["$defs"]
 	if !ok {
 		return fmt.Errorf("schema does not contain $defs section")
 	}
-	
+
 	defsMap, ok := defs.(map[string]interface{})
 	if !ok {
 		return fmt.Errorf("$defs is not a map")
 	}
-	
+
 	// Collect all type names
 	typeNames := []string{"InstallSpec"}
 	for typeName := range defsMap {
 		typeNames = append(typeNames, typeName)
 	}
-	
+
 	// Sort alphabetically
 	sort.Strings(typeNames)
-	
+
 	// Output sorted list
 	for _, typeName := range typeNames {
 		_, err = fmt.Fprintln(writer, typeName)
@@ -217,7 +164,7 @@ func listSchemaTypes(writer io.Writer) error {
 			return err
 		}
 	}
-	
+
 	return nil
 }
 
@@ -230,7 +177,7 @@ func convertSchemaToFormat(schema interface{}, format string, typeFilter string)
 		}
 		return convertToTypeSpec()
 	}
-	
+
 	// Load schema if not provided
 	if schema == nil {
 		var err error
@@ -239,7 +186,7 @@ func convertSchemaToFormat(schema interface{}, format string, typeFilter string)
 			return nil, fmt.Errorf("failed to load schema: %w", err)
 		}
 	}
-	
+
 	// Apply type filtering if specified
 	if typeFilter != "" {
 		filteredSchema, err := filterSchemaByType(schema, typeFilter)
@@ -248,7 +195,7 @@ func convertSchemaToFormat(schema interface{}, format string, typeFilter string)
 		}
 		schema = filteredSchema
 	}
-	
+
 	// Convert to requested format
 	switch format {
 	case "yaml":

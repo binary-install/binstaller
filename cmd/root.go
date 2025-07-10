@@ -107,7 +107,7 @@ func init() {
 	GenCommand.GroupID = "workflow"
 	HelpfulCommand.GroupID = "utility"
 	SchemaCommand.GroupID = "utility"
-	
+
 	RootCmd.AddCommand(InitCommand)           // Step 1: Initialize config
 	RootCmd.AddCommand(CheckCommand)          // Step 2: Validate config
 	RootCmd.AddCommand(EmbedChecksumsCommand) // Step 3: Embed checksums (optional)
