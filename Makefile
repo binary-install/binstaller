@@ -55,7 +55,7 @@ $(AQUA_BIN):
 	fi
 
 aqua-install: $(AQUA_BIN) ## Install tools via aqua
-	$(AQUA_BIN) install
+	$(AQUA_BIN) install --only-link
 
 setup: aqua-install ## Install all the build and lint dependencies
 	go mod download
