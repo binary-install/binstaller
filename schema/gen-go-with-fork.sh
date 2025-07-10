@@ -42,12 +42,18 @@ if ! command -v deno &> /dev/null; then
     exit 1
 fi
 
-deno run --allow-read --allow-write --allow-env add-quicktype-property-order.ts
+# Create a temporary file
+TMP_SCHEMA=$(mktemp -t "InstallSpec.XXXXXX.json")
+echo "📄 Using temporary file: $TMP_SCHEMA"
+
+# Run deno script with the output path
+deno run --allow-read --allow-write --allow-env add-quicktype-property-order.ts \
+    --output "$TMP_SCHEMA"
 
 # Generate Go structs using the temporary file
 echo "🚀 Generating Go structs..."
 node "$QUICKTYPE_DIR/dist/index.js" \
-    --src "output/@typespec/json-schema/InstallSpec.json.tmp" \
+    --src "$TMP_SCHEMA" \
     --src-lang schema \
     --lang go \
     --package spec \
@@ -57,7 +63,7 @@ node "$QUICKTYPE_DIR/dist/index.js" \
 
 # Clean up temporary file
 echo "🧹 Cleaning up temporary file..."
-rm -f "output/@typespec/json-schema/InstallSpec.json.tmp"
+rm -f "$TMP_SCHEMA"
 
 echo "✅ Go structs generated successfully!"
 echo "📄 Output: $SCRIPT_DIR/../pkg/spec/generated.go"

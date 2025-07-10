@@ -126,6 +126,7 @@ function addPropertyOrder(
 async function processJsonSchema(
   jsonSchemaPath: string,
   typespecModels: TypeSpecModel[],
+  outputPath: string,
   rootModelName?: string,
 ): Promise<void> {
   // Read JSON Schema
@@ -173,22 +174,22 @@ async function processJsonSchema(
     }
   }
 
-  // Write to temporary file instead of modifying the original
-  const tmpPath = `${jsonSchemaPath}.tmp`;
+  // Write to specified output path
   await Deno.writeTextFile(
-    tmpPath,
+    outputPath,
     JSON.stringify(schema, null, 4) + "\n",
   );
-  console.log(`✅ Added quicktypePropertyOrder to ${tmpPath}`);
+  console.log(`✅ Added quicktypePropertyOrder to ${outputPath}`);
 }
 
 // Main execution
 async function main() {
   const args = parse(Deno.args, {
-    string: ["typespec", "schema", "root"],
+    string: ["typespec", "schema", "output", "root"],
     alias: {
       t: "typespec",
       s: "schema",
+      o: "output",
       r: "root",
     },
     default: {
@@ -220,6 +221,14 @@ async function main() {
     Deno.exit(1);
   }
 
+  // Output path is required
+  if (!args.output) {
+    console.error("❌ Output path is required. Use --output or -o option.");
+    Deno.exit(1);
+  }
+
+  const outputPath = args.output as string;
+
   console.log("📖 Parsing TypeSpec file using @typespec/compiler...");
   const models = await parseTypeSpecFile(typespecPath);
   console.log(`Found ${models.length} models`);
@@ -228,6 +237,7 @@ async function main() {
   await processJsonSchema(
     jsonSchemaPath,
     models,
+    outputPath,
     args.root as string | undefined,
   );
 
@@ -241,6 +251,7 @@ Usage: deno run --allow-read --allow-write add-quicktype-property-order.ts [opti
 Options:
   -t, --typespec <path>   Path to TypeSpec file (default: main.tsp)
   -s, --schema <path>     Path to JSON Schema file (default: output/@typespec/json-schema/InstallSpec.json)
+  -o, --output <path>     Output path for modified schema (required)
   -r, --root <name>       Root model name (auto-detected if not provided)
   --help                  Show this help message
 `);
