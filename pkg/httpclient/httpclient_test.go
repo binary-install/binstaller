@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"strings"
 	"testing"
 )
 
@@ -130,6 +131,67 @@ func TestGitHubTransport(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestGitHubTransportPreservesExistingAuth(t *testing.T) {
+	// Create a test server that echoes back the Authorization header
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		auth := r.Header.Get("Authorization")
+		if auth != "" {
+			w.Write([]byte(auth))
+		} else {
+			w.Write([]byte("no auth"))
+		}
+	}))
+	defer server.Close()
+
+	// Mock GitHub URL by replacing server URL with github.com for transport to recognize
+	githubURL := "https://github.com/test/test"
+	
+	// Set up environment token
+	os.Setenv("GITHUB_TOKEN", "env_token")
+	defer os.Unsetenv("GITHUB_TOKEN")
+
+	// Create a request with pre-existing Authorization header
+	req, err := http.NewRequest("GET", githubURL, nil)
+	if err != nil {
+		t.Fatalf("Failed to create request: %v", err)
+	}
+	req.Header.Set("Authorization", "Bearer existing_token")
+
+	// Mock the transport to use our test server
+	transport := &gitHubTransport{
+		Base: &mockTransport{server.URL},
+	}
+
+	resp, err := transport.RoundTrip(req)
+	if err != nil {
+		t.Fatalf("RoundTrip error: %v", err)
+	}
+	defer resp.Body.Close()
+
+	body := make([]byte, 1024)
+	n, _ := resp.Body.Read(body)
+	response := string(body[:n])
+
+	// Should preserve the existing Authorization header, not use the environment token
+	expected := "Bearer existing_token"
+	if response != expected {
+		t.Errorf("Response = %v, want %v", response, expected)
+	}
+}
+
+// mockTransport is a helper for testing that redirects requests to a test server
+type mockTransport struct {
+	testServerURL string
+}
+
+func (t *mockTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	// Redirect the request to our test server
+	newReq := req.Clone(req.Context())
+	newReq.URL.Host = strings.TrimPrefix(t.testServerURL, "http://")
+	newReq.URL.Scheme = "http"
+	return http.DefaultTransport.RoundTrip(newReq)
 }
 
 func TestIsGitHubURL(t *testing.T) {
