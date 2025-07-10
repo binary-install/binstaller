@@ -35,7 +35,6 @@ AQUA_ROOT_DIR ?= $(HOME)/.local/share/aquaproj-aqua
 # Check if aqua is installed
 AQUA_BIN := $(shell which aqua 2>/dev/null || echo "$(AQUA_ROOT_DIR)/bin/aqua")
 export PATH := $(AQUA_ROOT_DIR)/bin:./bin:$(PATH)
-export AQUA_DISABLE_LAZY_INSTALL := 1
 export GO111MODULE := on
 # Use Go module proxy
 export GOPROXY = https://proxy.golang.org
@@ -56,7 +55,7 @@ $(AQUA_BIN):
 	fi
 
 aqua-install: $(AQUA_BIN) ## Install tools via aqua
-	$(AQUA_BIN) install
+	$(AQUA_BIN) install --only-link
 
 setup: aqua-install ## Install all the build and lint dependencies
 	go mod download
@@ -68,19 +67,16 @@ install: ## build and install
 binst-init: binst ## generate .config/binstaller.yml from .config/goreleaser.yml
 	./binst init --source goreleaser --file .config/goreleaser.yml --repo binary-install/binstaller
 
-test: test-unit ## Run unit tests (fast)
+test: test-unit ## Run unit tests
 
 test-unit: ## Run unit tests without race detection or coverage
-	go test $(TEST_OPTIONS) -failfast -short ./... -run $(TEST_PATTERN) -timeout=30s
+	go test $(TEST_OPTIONS) -failfast ./... -run $(TEST_PATTERN) -timeout=30s
 
 test-race: ## Run unit tests with race detection
-	go test $(TEST_OPTIONS) -failfast -short -race ./... -run $(TEST_PATTERN) -timeout=1m
+	go test $(TEST_OPTIONS) -failfast -race ./... -run $(TEST_PATTERN) -timeout=1m
 
 test-cover: ## Run unit tests with coverage
-	go test $(TEST_OPTIONS) -failfast -short -race -coverpkg=./... -covermode=atomic -coverprofile=coverage.txt ./... -run $(TEST_PATTERN) -timeout=2m
-
-test-all: ## Run all tests including E2E
-	go test $(TEST_OPTIONS) -failfast -race ./... -run $(TEST_PATTERN) -timeout=5m
+	go test $(TEST_OPTIONS) -failfast -race -coverpkg=./... -covermode=atomic -coverprofile=coverage.txt ./... -run $(TEST_PATTERN) -timeout=2m
 
 cover: test-cover ## Run all the tests with coverage and opens the coverage report
 	go tool cover -html=coverage.txt
@@ -91,7 +87,7 @@ fmt: ## gofmt and goimports all go files
 lint: aqua-install schema-lint ## Run all the linters
 	golangci-lint run ./... --disable errcheck
 
-ci: build test-all lint gen fmt ## Run CI checks (no external API calls)
+ci: build test lint gen fmt ## Run CI checks (no external API calls)
 	@echo "Checking for uncommitted changes..."
 	@if [ -n "$$(git status -s)" ]; then \
 		echo "Warning: Uncommitted changes detected (possibly generated files):"; \
@@ -101,7 +97,7 @@ ci: build test-all lint gen fmt ## Run CI checks (no external API calls)
 		echo "No uncommitted changes - all good!"; \
 	fi
 
-build: ## Build binst binary
+build: setup ## Build binst binary
 	go build $(LDFLAGS) ./cmd/binst
 
 # Binary with dependency tracking (includes embedded shell templates and generated types)
@@ -116,7 +112,6 @@ $(TESTDATA_DIR)/%.install.sh: $(TESTDATA_DIR)/%.binstaller.yml binst
 
 # Test targets
 test-gen-configs: binst ## Generate test configuration files
-	@echo "Generating test configurations..."
 	@./test/gen_config.sh
 
 test-gen-installers: $(INSTALL_SCRIPTS) ## Generate installer scripts (incremental)
@@ -173,7 +168,11 @@ test-check: binst ## Test check command with various configurations
 	@echo
 	@echo "Check command tests completed"
 
-test-integration: test-gen-configs test-gen-installers test-run-installers test-check ## Run full integration test suite (accesses GitHub API)
+test-target-version: binst ## Test target version functionality
+	@echo "Testing target version functionality..."
+	@./test/target_version.sh
+
+test-integration: test-gen-configs test-gen-installers test-run-installers test-check test-target-version ## Run full integration test suite (accesses GitHub API)
 	@echo "Integration tests completed"
 	@echo "Note: These tests access GitHub API. Set GITHUB_TOKEN to avoid rate limits."
 
@@ -219,7 +218,7 @@ test-clean: ## Clean up test artifacts
 
 .DEFAULT_GOAL := build
 
-.PHONY: ci test test-unit test-race test-cover test-all help clean binst-init test-gen-configs test-gen-installers test-run-installers test-run-installers-incremental test-aqua-source test-all-platforms test-integration test-incremental test-clean gen-schema gen-yaml-schema gen-go gen gen-platforms aqua-install
+.PHONY: ci test test-unit test-race test-cover help clean binst-init test-gen-configs test-gen-installers test-run-installers test-run-installers-incremental test-aqua-source test-all-platforms test-integration test-incremental test-clean test-target-version gen-schema gen-yaml-schema gen-go gen gen-platforms aqua-install
 
 clean: ## clean up everything
 	go clean ./...

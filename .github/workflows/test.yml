@@ -8,11 +8,10 @@ permissions:
   contents: read
 
 jobs:
-  build:
-    name: Build
+  ci:
+    name: CI Checks
     runs-on: ubuntu-latest
     steps:
-
     - name: Harden the runner (Audit all outbound calls)
       uses: step-security/harden-runner@6c439dc8bdf85cadbbce9ed30d1c7b959517bc49 # v2.12.2
       with:
@@ -20,54 +19,94 @@ jobs:
 
     - uses: actions/checkout@v4
 
-    - uses: actions/setup-go@v5
-      with:
-        go-version-file: 'go.mod'
-      id: go
+    - uses: ./.github/actions/setup
 
     - uses: actions/setup-node@v4
       with:
         node-version: '20'
 
-    - uses: denoland/setup-deno@v2
-      with:
-        deno-version: vx.x.x
-
-    - uses: aquaproj/aqua-installer@d1fe50798dbadd4eb5b98957290ca175f6b4870f # v4.0.2
-      with:
-        aqua_version: v2.50.0
-
     - run: make setup
 
     - run: make ci
 
-    - name: Run integration tests
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: make test-integration
-
-    - name: Test all supported platforms (reviewdog)
-      run: make test-all-platforms
-
-    - name: Fail if any diff exists
+    - name: Check for formatting changes
       run: |
         if [ -n "$(git status -s)" ]; then
-          echo "::error::Uncommitted changes detected - please commit the generated changes."
+          echo "::error::Code formatting issues detected - please run 'make fmt' and commit the changes."
           git status -s
-          echo "::group::Diff of changes"
+          echo "::group::Diff of formatting changes"
           git add -N .
           git diff
           echo "::endgroup::"
           exit 1
         fi
 
-    - name: Test aqua source
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    steps:
+    - name: Harden the runner (Audit all outbound calls)
+      uses: step-security/harden-runner@6c439dc8bdf85cadbbce9ed30d1c7b959517bc49 # v2.12.2
+      with:
+        egress-policy: audit
+
+    - uses: actions/checkout@v4
+
+    - uses: ./.github/actions/setup
+
+    - name: Run integration tests
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: make test-aqua-source
+      run: make test-integration
 
     - name: Test help output
       run: |
         echo "::group::Comprehensive help"
         ./binst helpful
         echo "::endgroup::"
+
+    - name: Check for generated file changes
+      run: |
+        if [ -n "$(git status -s)" ]; then
+          echo "::error::Generated files have changed - please run 'make test-integration' locally and commit any changes."
+          git status -s
+          echo "::group::Diff of generated files"
+          git add -N .
+          git diff
+          echo "::endgroup::"
+          exit 1
+        fi
+
+  platform-tests:
+    name: Platform Tests
+    runs-on: ubuntu-latest
+    steps:
+    - name: Harden the runner (Audit all outbound calls)
+      uses: step-security/harden-runner@6c439dc8bdf85cadbbce9ed30d1c7b959517bc49 # v2.12.2
+      with:
+        egress-policy: audit
+
+    - uses: actions/checkout@v4
+
+    - uses: ./.github/actions/setup
+
+    - name: Test all supported platforms (reviewdog)
+      run: make test-all-platforms
+
+  aqua-source-tests:
+    name: Aqua Source Tests
+    runs-on: ubuntu-latest
+    steps:
+    - name: Harden the runner (Audit all outbound calls)
+      uses: step-security/harden-runner@6c439dc8bdf85cadbbce9ed30d1c7b959517bc49 # v2.12.2
+      with:
+        egress-policy: audit
+
+    - uses: actions/checkout@v4
+
+    - uses: ./.github/actions/setup
+
+    - name: Test aqua source
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: make test-aqua-source

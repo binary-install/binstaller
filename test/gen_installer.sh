@@ -2,7 +2,7 @@
 gen_and_run() {
   BINSTALLER_CONFIG=$1
   TOOL=$(basename "${BINSTALLER_CONFIG%.binstaller.yml}")
-  ./binst gen --config "testdata/${TOOL}.binstaller.yml" -o "testdata/${TOOL}.install.sh"
+  ./binst gen --quiet --config "testdata/${TOOL}.binstaller.yml" -o "testdata/${TOOL}.install.sh"
 }
 
 for f in testdata/*.binstaller.yml; do

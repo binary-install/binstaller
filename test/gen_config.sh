@@ -1,47 +1,35 @@
 #!/bin/bash
 set -e
-# Test goreleaser source
-./binst init --force --source goreleaser --repo reviewdog/reviewdog -o=testdata/reviewdog.binstaller.yml --sha='7e05fa3e78ba7f2be4999ca2d35b00a3fd92a783'
-./binst init --force --source goreleaser --repo actionutils/sigspy -o=testdata/sigspy.binstaller.yml --sha='3e1c6f32072cd4b8309d00bd31f498903f71c422'
-./binst init --force --source goreleaser --repo junegunn/fzf -o=testdata/fzf.binstaller.yml --sha='ce95adc66c27d97b8f1bb56f139b7efd3f53e5c4'
-./binst init --force --source goreleaser --repo k1LoW/gh-setup -o=testdata/gh-setup.binstaller.yml --sha='f59adf10c4c7ed2b673a9f0a96fc1f8a37a735bd'
-# Test aqua source
-./binst init --force --source aqua --repo zyedidia/micro --output=testdata/micro.binstaller.yml --sha='1436b9b02096f39ace945d9c56adb7a5b11df186'
-./binst init --force --source aqua --repo houseabsolute/ubi --output=testdata/ubi.binstaller.yml --sha='1436b9b02096f39ace945d9c56adb7a5b11df186'
-# Test rosetta2
-./binst init --force --source aqua --repo ducaale/xh --output=testdata/xh.binstaller.yml --sha='1436b9b02096f39ace945d9c56adb7a5b11df186'
-# Test rosetta2 in version overrides
-./binst init --force --source aqua --repo babarot/git-bump --output=testdata/git-bump.binstaller.yml --sha='1436b9b02096f39ace945d9c56adb7a5b11df186'
-# Test empty extension (extension hard coded in template)
-./binst init --force --source aqua --repo Lallassu/gorss --output=testdata/gorss.binstaller.yml --sha='1436b9b02096f39ace945d9c56adb7a5b11df186'
-# Checksum file only contains hash (it does not file name).
-./binst init --force --source aqua --repo EmbarkStudios/cargo-deny --output=testdata/cargo-deny.binstaller.yml --sha='1436b9b02096f39ace945d9c56adb7a5b11df186'
-# Checksum file contains `*<file name>` (binary mode. e.g. sha256sum -b)
-./binst init --force --source aqua --repo int128/kauthproxy --output=testdata/kauthproxy.binstaller.yml --sha='1436b9b02096f39ace945d9c56adb7a5b11df186'
-# Test .tar.bz2
-./binst init --force --source aqua --repo xo/xo --output=testdata/xo.binstaller.yml --sha='1436b9b02096f39ace945d9c56adb7a5b11df186'
-# Test .gz
-./binst init --force --source aqua --repo tree-sitter/tree-sitter --output=testdata/treesitter.binstaller.yml --sha='1436b9b02096f39ace945d9c56adb7a5b11df186'
-# Test AssetWithoutExt
-./binst init --force --source aqua --repo Byron/dua-cli --output=testdata/dua-cli.binstaller.yml --sha='1436b9b02096f39ace945d9c56adb7a5b11df186'
-# Test replacement in override (should not merge rule)
-./binst init --force --source aqua --repo SuperCuber/dotter --output=testdata/dotter.binstaller.yml --sha='1436b9b02096f39ace945d9c56adb7a5b11df186'
-# Test github source
-./binst init --force --source github --repo haya14busa/bump --output=testdata/bump.binstaller.yml
-# Test default bin dir with yq modification
-./binst init --force --source github --repo charmbracelet/gum --output=testdata/gum.binstaller.yml
-echo '# --- manually added ---' >> testdata/gum.binstaller.yml
-yq -i '.unpack.strip_components = 1' testdata/gum.binstaller.yml
-yq -i '.default_bindir = "./bin"' testdata/gum.binstaller.yml
-yq -i '.default_version = "v0.16.0"' testdata/gum.binstaller.yml
-# Add rule for 386 -> i386 mapping
-yq -i '.asset.rules += [{"when": {"arch": "386"}, "arch": "i386"}]' testdata/gum.binstaller.yml
-# Add rules for BSD OS mappings
-yq -i '.asset.rules += [{"when": {"os": "freebsd"}, "os": "Freebsd"}]' testdata/gum.binstaller.yml
-yq -i '.asset.rules += [{"when": {"os": "netbsd"}, "os": "Netbsd"}]' testdata/gum.binstaller.yml
-yq -i '.asset.rules += [{"when": {"os": "openbsd"}, "os": "Openbsd"}]' testdata/gum.binstaller.yml
-./binst embed-checksums -c ./testdata/gum.binstaller.yml -m download --version v0.15.0
-./binst embed-checksums -c ./testdata/gum.binstaller.yml -m download --version v0.16.0
-# Test GitHub release digest
-./binst init --force --source aqua --repo Songmu/tagpr --output=testdata/tagpr.binstaller.yml --sha='1436b9b02096f39ace945d9c56adb7a5b11df186'
-./binst embed-checksums -c ./testdata/tagpr.binstaller.yml  --mode calculate --version v1.7.0
+
+CONFIG_FILE="test/gen_config_list.yml"
+
+echo "Generating test configurations..."
+
+# Create temporary directory for task scripts
+TEMP_DIR=$(mktemp -d)
+trap 'rm -rf "$TEMP_DIR"' EXIT
+
+# Extract tasks and create script files
+echo "Preparing tasks..."
+task_count=$(yq eval '.tasks | length' "$CONFIG_FILE")
+
+for i in $(seq 0 $((task_count - 1))); do
+    name=$(yq eval ".tasks[$i].name" "$CONFIG_FILE")
+    script_file="$TEMP_DIR/task_$(printf "%03d" $i)_${name}.sh"
+    
+    # Write the run command to a script file
+    {
+        echo "#!/bin/bash"
+        echo "set -e"
+        echo "echo \"Running task: $name\""
+        yq eval ".tasks[$i].run" "$CONFIG_FILE"
+    } > "$script_file"
+    
+    chmod +x "$script_file"
+done
+
+# Run all tasks in parallel using rush
+echo "Running $task_count tasks in parallel..."
+find "$TEMP_DIR" -name "*.sh" -type f | sort | rush -j5 -k
+
+echo "Test configurations generated successfully!"
