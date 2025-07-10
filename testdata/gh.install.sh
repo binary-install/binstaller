@@ -469,11 +469,7 @@ execute() {
   INSTALL_PATH="${BINDIR}/${BINARY_NAME}"
   
   if [ "$DRY_RUN" = "1" ]; then
-    if [ -f "${INSTALL_PATH}" ]; then
-      log_info "[DRY RUN] Binary already exists at: ${INSTALL_PATH}"
-    else
-      log_info "[DRY RUN] Would install to: ${INSTALL_PATH}"
-    fi
+    log_info "[DRY RUN] Would install to: ${INSTALL_PATH}"
   else
     log_info "Installing binary to ${INSTALL_PATH}"
     test ! -d "${BINDIR}" && install -d "${BINDIR}"

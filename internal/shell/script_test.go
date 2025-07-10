@@ -357,7 +357,7 @@ func TestDryRunOutputFormat(t *testing.T) {
 		wantSubstrings []string
 	}{
 		{
-			name: "dry run output format for existing binary check",
+			name: "dry run output format for installation path",
 			installSpec: &spec.InstallSpec{
 				Name: spec.StringPtr("test-tool"),
 				Repo: spec.StringPtr("owner/test-tool"),
@@ -367,7 +367,6 @@ func TestDryRunOutputFormat(t *testing.T) {
 				},
 			},
 			wantSubstrings: []string{
-				`log_info "[DRY RUN] Binary already exists at: ${INSTALL_PATH}"`,
 				`log_info "[DRY RUN] Would install to: ${INSTALL_PATH}"`,
 			},
 		},
@@ -445,7 +444,6 @@ func TestDryRunBehavior(t *testing.T) {
 			},
 			wantSubstrings: []string{
 				`if [ "$DRY_RUN" = "1" ]; then`,
-				`log_info "[DRY RUN] Binary already exists at: ${INSTALL_PATH}"`,
 				`log_info "[DRY RUN] Would install to: ${INSTALL_PATH}"`,
 			},
 			wantNotContain: []string{
