@@ -1,0 +1,92 @@
+# List of commands to generate test configurations
+# These are auto-generated configs. Manual configs are maintained separately in testdata/
+
+tasks:
+  # GoReleaser source
+  - name: reviewdog
+    description: Generate config for reviewdog using GoReleaser source
+    run: ./binst init --force --source goreleaser --repo reviewdog/reviewdog -o=testdata/reviewdog.binstaller.yml --sha='7e05fa3e78ba7f2be4999ca2d35b00a3fd92a783'
+  
+  - name: sigspy
+    description: Generate config for sigspy using GoReleaser source
+    run: ./binst init --force --source goreleaser --repo actionutils/sigspy -o=testdata/sigspy.binstaller.yml --sha='3e1c6f32072cd4b8309d00bd31f498903f71c422'
+  
+  - name: fzf
+    description: Generate config for fzf using GoReleaser source
+    run: ./binst init --force --source goreleaser --repo junegunn/fzf -o=testdata/fzf.binstaller.yml --sha='ce95adc66c27d97b8f1bb56f139b7efd3f53e5c4'
+  
+  - name: gh-setup
+    description: Generate config for gh-setup using GoReleaser source
+    run: ./binst init --force --source goreleaser --repo k1LoW/gh-setup -o=testdata/gh-setup.binstaller.yml --sha='f59adf10c4c7ed2b673a9f0a96fc1f8a37a735bd'
+  
+  # Aqua source
+  - name: micro
+    description: Generate config for micro using Aqua source
+    run: ./binst init --force --source aqua --repo zyedidia/micro --output=testdata/micro.binstaller.yml --sha='1436b9b02096f39ace945d9c56adb7a5b11df186'
+  
+  - name: ubi
+    description: Generate config for ubi using Aqua source
+    run: ./binst init --force --source aqua --repo houseabsolute/ubi --output=testdata/ubi.binstaller.yml --sha='1436b9b02096f39ace945d9c56adb7a5b11df186'
+  
+  - name: xh
+    description: Generate config for xh using Aqua source (test rosetta2)
+    run: ./binst init --force --source aqua --repo ducaale/xh --output=testdata/xh.binstaller.yml --sha='1436b9b02096f39ace945d9c56adb7a5b11df186'
+  
+  - name: git-bump
+    description: Generate config for git-bump using Aqua source (test rosetta2 in version overrides)
+    run: ./binst init --force --source aqua --repo babarot/git-bump --output=testdata/git-bump.binstaller.yml --sha='1436b9b02096f39ace945d9c56adb7a5b11df186'
+  
+  - name: gorss
+    description: Generate config for gorss using Aqua source (test empty extension)
+    run: ./binst init --force --source aqua --repo Lallassu/gorss --output=testdata/gorss.binstaller.yml --sha='1436b9b02096f39ace945d9c56adb7a5b11df186'
+  
+  - name: cargo-deny
+    description: Generate config for cargo-deny (checksum file only contains hash)
+    run: ./binst init --force --source aqua --repo EmbarkStudios/cargo-deny --output=testdata/cargo-deny.binstaller.yml --sha='1436b9b02096f39ace945d9c56adb7a5b11df186'
+  
+  - name: kauthproxy
+    description: Generate config for kauthproxy (checksum file contains *filename)
+    run: ./binst init --force --source aqua --repo int128/kauthproxy --output=testdata/kauthproxy.binstaller.yml --sha='1436b9b02096f39ace945d9c56adb7a5b11df186'
+  
+  - name: xo
+    description: Generate config for xo (test .tar.bz2)
+    run: ./binst init --force --source aqua --repo xo/xo --output=testdata/xo.binstaller.yml --sha='1436b9b02096f39ace945d9c56adb7a5b11df186'
+  
+  - name: treesitter
+    description: Generate config for tree-sitter (test .gz)
+    run: ./binst init --force --source aqua --repo tree-sitter/tree-sitter --output=testdata/treesitter.binstaller.yml --sha='1436b9b02096f39ace945d9c56adb7a5b11df186'
+  
+  - name: dua-cli
+    description: Generate config for dua-cli (test AssetWithoutExt)
+    run: ./binst init --force --source aqua --repo Byron/dua-cli --output=testdata/dua-cli.binstaller.yml --sha='1436b9b02096f39ace945d9c56adb7a5b11df186'
+  
+  - name: dotter
+    description: Generate config for dotter (test replacement in override)
+    run: ./binst init --force --source aqua --repo SuperCuber/dotter --output=testdata/dotter.binstaller.yml --sha='1436b9b02096f39ace945d9c56adb7a5b11df186'
+  
+  - name: tagpr
+    description: Generate config for tagpr using Aqua source and embed checksums
+    run: |
+      ./binst init --force --source aqua --repo Songmu/tagpr --output=testdata/tagpr.binstaller.yml --sha='1436b9b02096f39ace945d9c56adb7a5b11df186'
+      ./binst embed-checksums -c ./testdata/tagpr.binstaller.yml --mode calculate --version v1.7.0
+  
+  # GitHub source
+  - name: bump
+    description: Generate config for bump using GitHub source
+    run: ./binst init --force --source github --repo haya14busa/bump --output=testdata/bump.binstaller.yml
+
+  # Special case: gum requires multiple commands
+  - name: gum
+    description: Generate and modify gum config
+    run: |
+      ./binst init --force --source github --repo charmbracelet/gum --output=testdata/gum.binstaller.yml
+      echo '# --- manually added ---' >> testdata/gum.binstaller.yml
+      yq -i '.unpack.strip_components = 1' testdata/gum.binstaller.yml
+      yq -i '.default_bindir = "./bin"' testdata/gum.binstaller.yml
+      yq -i '.default_version = "v0.16.0"' testdata/gum.binstaller.yml
+      yq -i '.asset.rules += [{"when": {"arch": "386"}, "arch": "i386"}]' testdata/gum.binstaller.yml
+      yq -i '.asset.rules += [{"when": {"os": "freebsd"}, "os": "Freebsd"}]' testdata/gum.binstaller.yml
+      yq -i '.asset.rules += [{"when": {"os": "netbsd"}, "os": "Netbsd"}]' testdata/gum.binstaller.yml
+      yq -i '.asset.rules += [{"when": {"os": "openbsd"}, "os": "Openbsd"}]' testdata/gum.binstaller.yml
+      ./binst embed-checksums -c ./testdata/gum.binstaller.yml -m download --version v0.15.0
+      ./binst embed-checksums -c ./testdata/gum.binstaller.yml -m download --version v0.16.0

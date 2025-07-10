@@ -112,7 +112,6 @@ $(TESTDATA_DIR)/%.install.sh: $(TESTDATA_DIR)/%.binstaller.yml binst
 
 # Test targets
 test-gen-configs: binst ## Generate test configuration files
-	@echo "Generating test configurations..."
 	@./test/gen_config.sh
 
 test-gen-installers: $(INSTALL_SCRIPTS) ## Generate installer scripts (incremental)
