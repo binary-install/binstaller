@@ -163,6 +163,13 @@ func (e *Embedder) resolveVersion(version string) (string, error) {
 	// Use GitHub API to get the latest release
 	url := fmt.Sprintf("https://api.github.com/repos/%s/releases/latest", spec.StringValue(e.Spec.Repo))
 
+	// Log authentication status for debugging
+	if token := os.Getenv("GITHUB_TOKEN"); token != "" {
+		log.Debugf("Using GitHub token for latest release API call (length: %d)", len(token))
+	} else {
+		log.Warnf("No GITHUB_TOKEN found for latest release API call (may hit rate limits)")
+	}
+
 	// Set up the request with Accept header for JSON response
 	req, err := httpclient.NewRequestWithGitHubAuth("GET", url)
 	if err != nil {
@@ -180,6 +187,11 @@ func (e *Embedder) resolveVersion(version string) (string, error) {
 
 	// Check for successful response
 	if resp.StatusCode != http.StatusOK {
+		bodyBytes, _ := io.ReadAll(resp.Body)
+		bodyText := string(bodyBytes)
+		if bodyText != "" {
+			return "", fmt.Errorf("failed to get latest release, status code: %d, response: %s", resp.StatusCode, bodyText)
+		}
 		return "", fmt.Errorf("failed to get latest release, status code: %d", resp.StatusCode)
 	}
 
@@ -211,6 +223,13 @@ func (e *Embedder) downloadAndParseChecksumFile() (map[string]string, error) {
 
 	log.Infof("Downloading checksums from %s", checksumURL)
 
+	// Log authentication status for debugging
+	if token := os.Getenv("GITHUB_TOKEN"); token != "" {
+		log.Debugf("Using GitHub token for authentication (length: %d)", len(token))
+	} else {
+		log.Warnf("No GITHUB_TOKEN found, making unauthenticated request (may hit rate limits)")
+	}
+
 	// Create a temporary file to store the checksum file
 	tempDir, err := os.MkdirTemp("", "binstaller-checksums")
 	if err != nil {
@@ -233,7 +252,13 @@ func (e *Embedder) downloadAndParseChecksumFile() (map[string]string, error) {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("failed to download checksum file, status code: %d", resp.StatusCode)
+		bodyBytes, _ := io.ReadAll(resp.Body)
+		bodyText := string(bodyBytes)
+		if bodyText != "" {
+			// Include URL and response details for better debugging
+			return nil, fmt.Errorf("failed to download checksum file from %s, status code: %d, response: %s", checksumURL, resp.StatusCode, bodyText)
+		}
+		return nil, fmt.Errorf("failed to download checksum file from %s, status code: %d", checksumURL, resp.StatusCode)
 	}
 
 	// Save the checksum file to a temporary file
