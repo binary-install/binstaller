@@ -1,3 +1,12 @@
+# Makefile for binstaller
+#
+# Key targets:
+#   make ci              - Run all CI checks without external API calls (safe for offline use)
+#   make test-integration - Run full integration tests (accesses GitHub API, generates test configs/installers)
+#
+# Note: For test-integration, optionally set GITHUB_TOKEN environment variable to avoid GitHub API rate limits:
+#   GITHUB_TOKEN=your_token make test-integration
+
 SOURCE_FILES?=./...
 TEST_PATTERN?=.
 TEST_OPTIONS?=
@@ -82,8 +91,15 @@ fmt: ## gofmt and goimports all go files
 lint: aqua-install schema-lint ## Run all the linters
 	golangci-lint run ./... --disable errcheck
 
-ci: build test-all lint ## Run CI checks
-	git diff .
+ci: build test-all lint gen fmt ## Run CI checks (no external API calls)
+	@echo "Checking for uncommitted changes..."
+	@if [ -n "$$(git status -s)" ]; then \
+		echo "Warning: Uncommitted changes detected (possibly generated files):"; \
+		git status -s; \
+		echo "Please check and commit if necessary."; \
+	else \
+		echo "No uncommitted changes - all good!"; \
+	fi
 
 build: ## Build binst binary
 	go build $(LDFLAGS) ./cmd/binst
@@ -147,13 +163,19 @@ test-check: binst ## Test check command with various configurations
 	@echo "=== Testing without asset verification ==="
 	@./binst check --check-assets=false
 	@echo
-	@echo "=== Testing with ignore patterns ==="
-	@./binst check -c testdata/bat.binstaller.yml --ignore ".*-musl.*" --ignore "\.deb$$" || true
+	@echo "=== Testing with ignore patterns (external repo) ==="
+	@./binst check -c testdata/bat.binstaller.yml --version v0.24.0 \
+		--ignore ".*-musl.*" \
+		--ignore "\.deb$$" \
+		--ignore ".*-arm-.*" \
+		--ignore ".*-i686-.*" \
+		--ignore ".*-windows-.*"
 	@echo
 	@echo "Check command tests completed"
 
-test-integration: test-gen-configs test-gen-installers test-run-installers test-check ## Run full integration test suite
+test-integration: test-gen-configs test-gen-installers test-run-installers test-check ## Run full integration test suite (accesses GitHub API)
 	@echo "Integration tests completed"
+	@echo "Note: These tests access GitHub API. Set GITHUB_TOKEN to avoid rate limits."
 
 test-incremental: test-gen-installers test-run-installers-incremental ## Run incremental tests (only changed files)
 	@echo "Incremental tests completed"
