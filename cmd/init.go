@@ -1,10 +1,12 @@
 package cmd
 
 import (
+	"bufio"
 	"context"
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/apex/log"
 	"github.com/binary-install/binstaller/pkg/datasource"
@@ -22,7 +24,20 @@ var (
 	initTag        string
 	initCommitSHA  string
 	initOutputFile string
+	initForce      bool // Skip confirmation when overwriting existing files
 )
+
+// promptForConfirmation prompts the user for confirmation and returns true if they confirm
+func promptForConfirmation(message string) bool {
+	fmt.Printf("%s (y/N): ", message)
+	reader := bufio.NewReader(os.Stdin)
+	response, err := reader.ReadString('\n')
+	if err != nil {
+		return false
+	}
+	response = strings.TrimSpace(strings.ToLower(response))
+	return response == "y" || response == "yes"
+}
 
 // InitCommand represents the init command
 var InitCommand = &cobra.Command{
@@ -52,7 +67,10 @@ settings from a source like a GoReleaser config file or a GitHub repository.`,
   binst init --source=aqua --file=path/to/registry.yaml
 
   # Initialize from Aqua registry via stdin
-  cat registry.yaml | binst init --source=aqua --file=-`,
+  cat registry.yaml | binst init --source=aqua --file=-
+
+  # Initialize and overwrite existing config without confirmation
+  binst init --source=github --repo=junegunn/fzf --force`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		log.Infof("Running init command...")
 
@@ -131,6 +149,19 @@ settings from a source like a GoReleaser config file or a GitHub repository.`,
 			// Write to file
 			log.Infof("Writing InstallSpec YAML to file: %s", initOutputFile)
 
+			// Check if file exists and prompt for confirmation (unless --force is used)
+			if _, err := os.Stat(initOutputFile); err == nil {
+				// File exists
+				if !initForce {
+					message := fmt.Sprintf("File %s already exists. Overwrite?", initOutputFile)
+					if !promptForConfirmation(message) {
+						log.Info("Operation cancelled by user")
+						return fmt.Errorf("operation cancelled: file %s already exists", initOutputFile)
+					}
+				}
+				log.Infof("Overwriting existing file: %s", initOutputFile)
+			}
+
 			// Ensure the output directory exists
 			outputDir := filepath.Dir(initOutputFile)
 			if err := os.MkdirAll(outputDir, 0755); err != nil {
@@ -162,6 +193,7 @@ func init() {
 	InitCommand.Flags().StringVar(&initTag, "tag", "", "Release tag/ref to inspect (for source 'github')")
 	InitCommand.Flags().StringVar(&initCommitSHA, "sha", "", "Commit SHA for source 'goreleaser'")
 	InitCommand.Flags().StringVarP(&initOutputFile, "output", "o", DefaultConfigPathYML, "Write spec to file instead of stdout (use '-' for stdout)")
+	InitCommand.Flags().BoolVar(&initForce, "force", false, "Skip confirmation when overwriting existing files")
 
 	// TODO: Add dependencies between flags (e.g., --file required if --source goreleaser and no --repo)
 }
