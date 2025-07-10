@@ -96,3 +96,35 @@ func TestRunSchema_TypeSpecFormatOutput(t *testing.T) {
 		t.Error("Expected TypeSpec format, but found JSON syntax")
 	}
 }
+
+// TDD RED Phase: Write failing test for --type option
+func TestRunSchema_TypeFilterOutput(t *testing.T) {
+	var output bytes.Buffer
+	
+	// Test the schema command with specific type filtering
+	err := RunSchema("yaml", "AssetConfig", false, &output)
+	
+	if err != nil {
+		t.Errorf("RunSchema() returned error: %v", err)
+	}
+	
+	result := output.String()
+	if result == "" {
+		t.Error("RunSchema() returned empty output")
+	}
+	
+	// Check that output contains the specific type description
+	if !strings.Contains(result, "Configuration for constructing download URLs") {
+		t.Errorf("Expected output to contain AssetConfig description, got: %s", result)
+	}
+	
+	// Check that it doesn't contain the full schema root
+	if strings.Contains(result, "$schema") {
+		t.Error("Expected filtered output, but found full schema")
+	}
+	
+	// Check that it contains template field specific to AssetConfig
+	if !strings.Contains(result, "template") {
+		t.Error("Expected AssetConfig to contain 'template' field")
+	}
+}

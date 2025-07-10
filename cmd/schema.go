@@ -40,16 +40,14 @@ func RunSchema(format, typeFilter string, list bool, output interface{}) error {
 		return fmt.Errorf("format %s not implemented", format)
 	}
 
-	if typeFilter != "" {
-		return fmt.Errorf("type filtering not implemented")
-	}
+	// typeFilter will be handled in convertSchemaToFormat
 
 	if list {
 		return fmt.Errorf("list option not implemented")
 	}
 
 	// Convert to requested format
-	outputBytes, err := convertSchemaToFormat(nil, format)
+	outputBytes, err := convertSchemaToFormat(nil, format, typeFilter)
 	if err != nil {
 		return fmt.Errorf("failed to convert to %s: %w", format, err)
 	}
@@ -103,29 +101,78 @@ func convertToTypeSpec() ([]byte, error) {
 	return typeSpecBytes, nil
 }
 
+// filterSchemaByType extracts a specific type from the schema's $defs section
+func filterSchemaByType(schema interface{}, typeName string) (interface{}, error) {
+	schemaMap, ok := schema.(map[string]interface{})
+	if !ok {
+		return nil, fmt.Errorf("schema is not a map")
+	}
+	
+	// Check if the type is the root InstallSpec
+	if typeName == "InstallSpec" {
+		// Return the root schema without $defs
+		rootSchema := make(map[string]interface{})
+		for k, v := range schemaMap {
+			if k != "$defs" {
+				rootSchema[k] = v
+			}
+		}
+		return rootSchema, nil
+	}
+	
+	// Look for the type in $defs
+	defs, ok := schemaMap["$defs"]
+	if !ok {
+		return nil, fmt.Errorf("schema does not contain $defs section")
+	}
+	
+	defsMap, ok := defs.(map[string]interface{})
+	if !ok {
+		return nil, fmt.Errorf("$defs is not a map")
+	}
+	
+	typeDef, ok := defsMap[typeName]
+	if !ok {
+		return nil, fmt.Errorf("type %s not found in $defs", typeName)
+	}
+	
+	return typeDef, nil
+}
+
 // convertSchemaToFormat converts schema to the specified format
-func convertSchemaToFormat(schema interface{}, format string) ([]byte, error) {
+func convertSchemaToFormat(schema interface{}, format string, typeFilter string) ([]byte, error) {
+	// TypeSpec format doesn't support type filtering
+	if format == "typespec" {
+		if typeFilter != "" {
+			return nil, fmt.Errorf("type filtering not supported for TypeSpec format")
+		}
+		return convertToTypeSpec()
+	}
+	
+	// Load schema if not provided
+	if schema == nil {
+		var err error
+		schema, err = loadInstallSpecSchema()
+		if err != nil {
+			return nil, fmt.Errorf("failed to load schema: %w", err)
+		}
+	}
+	
+	// Apply type filtering if specified
+	if typeFilter != "" {
+		filteredSchema, err := filterSchemaByType(schema, typeFilter)
+		if err != nil {
+			return nil, fmt.Errorf("failed to filter schema by type: %w", err)
+		}
+		schema = filteredSchema
+	}
+	
+	// Convert to requested format
 	switch format {
 	case "yaml":
-		if schema == nil {
-			var err error
-			schema, err = loadInstallSpecSchema()
-			if err != nil {
-				return nil, fmt.Errorf("failed to load schema: %w", err)
-			}
-		}
 		return convertToYAML(schema)
 	case "json":
-		if schema == nil {
-			var err error
-			schema, err = loadInstallSpecSchema()
-			if err != nil {
-				return nil, fmt.Errorf("failed to load schema: %w", err)
-			}
-		}
 		return convertToJSON(schema)
-	case "typespec":
-		return convertToTypeSpec()
 	default:
 		return nil, fmt.Errorf("unsupported format: %s", format)
 	}
