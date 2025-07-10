@@ -7,9 +7,10 @@ usage() {
   cat <<EOF
 $this: download ${NAME} from ${REPO}
 
-Usage: $this [-b bindir] [-d] [tag]
+Usage: $this [-b bindir] [-d] [-n] [tag]
   -b sets bindir or installation directory, Defaults to ${BINSTALLER_BIN:-${HOME}/.local/bin}
   -d turns on debug logging
+  -n turns on dry run mode
    [tag] is a tag from
    https://github.com/houseabsolute/ubi/releases
    If tag is missing, then the latest will be used.
@@ -336,13 +337,15 @@ find_embedded_checksum() {
 
 parse_args() {
   BINDIR="${BINSTALLER_BIN:-${HOME}/.local/bin}"
-  while getopts "b:dqh?x" arg; do
+  DRY_RUN=0
+  while getopts "b:dqh?xn" arg; do
     case "$arg" in
     b) BINDIR="$OPTARG" ;;
     d) log_set_priority 10 ;;
     q) log_set_priority 3 ;;
     h | \?) usage "$0" ;;
     x) set -x ;;
+    n) DRY_RUN=1 ;;
     esac
   done
   shift $((OPTIND - 1))
@@ -480,10 +483,15 @@ execute() {
 
   # Install the binary
   INSTALL_PATH="${BINDIR}/${BINARY_NAME}"
-  log_info "Installing binary to ${INSTALL_PATH}"
-  test ! -d "${BINDIR}" && install -d "${BINDIR}"
-  install "${BINARY_PATH}" "${INSTALL_PATH}"
-  log_info "${BINARY_NAME} installation complete!"
+  
+  if [ "$DRY_RUN" = "1" ]; then
+    log_info "[DRY RUN] ${BINARY_NAME} dry-run installation succeeded! (Would install to: ${INSTALL_PATH})"
+  else
+    log_info "Installing binary to ${INSTALL_PATH}"
+    test ! -d "${BINDIR}" && install -d "${BINDIR}"
+    install "${BINARY_PATH}" "${INSTALL_PATH}"
+    log_info "${BINARY_NAME} installation complete!"
+  fi
 }
 
 # --- Configuration  ---

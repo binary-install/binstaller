@@ -7,9 +7,10 @@ usage() {
   cat <<EOF
 $this: download ${NAME} from ${REPO}
 
-Usage: $this [-b bindir] [-d]{{- if not .TargetVersion }} [tag]{{- end }}
+Usage: $this [-b bindir] [-d] [-n]{{- if not .TargetVersion }} [tag]{{- end }}
   -b sets bindir or installation directory, Defaults to {{ deref .DefaultBinDir }}
   -d turns on debug logging
+  -n turns on dry run mode
   {{- if .TargetVersion }}
    This installer is configured for {{ .TargetVersion }} only.
   {{- else }}
@@ -49,13 +50,15 @@ find_embedded_checksum() {
 
 parse_args() {
   BINDIR="{{ deref .DefaultBinDir }}"
-  while getopts "b:dqh?x" arg; do
+  DRY_RUN=0
+  while getopts "b:dqh?xn" arg; do
     case "$arg" in
     b) BINDIR="$OPTARG" ;;
     d) log_set_priority 10 ;;
     q) log_set_priority 3 ;;
     h | \?) usage "$0" ;;
     x) set -x ;;
+    n) DRY_RUN=1 ;;
     esac
   done
   shift $((OPTIND - 1))
@@ -225,10 +228,15 @@ execute() {
 
   # Install the binary
   INSTALL_PATH="${BINDIR}/${BINARY_NAME}"
-  log_info "Installing binary to ${INSTALL_PATH}"
-  test ! -d "${BINDIR}" && install -d "${BINDIR}"
-  install "${BINARY_PATH}" "${INSTALL_PATH}"
-  log_info "${BINARY_NAME} installation complete!"
+  
+  if [ "$DRY_RUN" = "1" ]; then
+    log_info "[DRY RUN] ${BINARY_NAME} dry-run installation succeeded! (Would install to: ${INSTALL_PATH})"
+  else
+    log_info "Installing binary to ${INSTALL_PATH}"
+    test ! -d "${BINDIR}" && install -d "${BINDIR}"
+    install "${BINARY_PATH}" "${INSTALL_PATH}"
+    log_info "${BINARY_NAME} installation complete!"
+  fi
   {{- end }}
 }
 

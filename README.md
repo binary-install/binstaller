@@ -112,6 +112,7 @@ curl -sL https://github.com/binary-install/binstaller/releases/latest/download/i
      sh "$tmpfile" -b "$INSTALL_DIR"; rm -f "$tmpfile")
 ```
 
+
 **Note**: By default, binaries are installed to:
 - `$BINSTALLER_BIN` if set, otherwise
 - `$HOME/.local/bin` (following XDG Base Directory Specification)
@@ -288,6 +289,21 @@ Understanding the status indicators:
 export GITHUB_TOKEN=$(gh auth token)
 binst check
 ```
+
+#### Dry Run Mode for Generated Installers
+
+Generated installer scripts support a dry run mode (`-n` flag) for validation and debugging purposes when preparing configurations and installers. This is useful for verifying that your binstaller configuration will work correctly before actual installation.
+
+```bash
+# Test a generated installer with dry run mode
+./install.sh -n
+```
+
+The dry run mode will:
+- Download and verify checksums (if configured) - downloaded assets are removed after verification
+- Show detected OS/architecture information
+- Display the installation path that would be used
+- Skip the actual installation step
 
 ## ⚙️ Configuration Format
 

@@ -27,8 +27,9 @@ func (t *gitHubTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	req2 := req.Clone(req.Context())
 
 	// Add GitHub token if available and the request is to GitHub
+	// Only set Authorization header if it's not already present
 	if isGitHubURL(req2.URL.String()) {
-		if token := os.Getenv("GITHUB_TOKEN"); token != "" {
+		if token := os.Getenv("GITHUB_TOKEN"); token != "" && req2.Header.Get("Authorization") == "" {
 			req2.Header.Set("Authorization", "Bearer "+token)
 		}
 	}
