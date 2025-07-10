@@ -29,12 +29,12 @@ jobs:
 
     - run: make ci
 
-    - name: Fail if any diff exists
+    - name: Check for formatting changes
       run: |
         if [ -n "$(git status -s)" ]; then
-          echo "::error::Uncommitted changes detected - please commit the generated changes."
+          echo "::error::Code formatting issues detected - please run 'make fmt' and commit the changes."
           git status -s
-          echo "::group::Diff of changes"
+          echo "::group::Diff of formatting changes"
           git add -N .
           git diff
           echo "::endgroup::"
@@ -65,6 +65,18 @@ jobs:
         echo "::group::Comprehensive help"
         ./binst helpful
         echo "::endgroup::"
+
+    - name: Check for generated file changes
+      run: |
+        if [ -n "$(git status -s)" ]; then
+          echo "::error::Generated files have changed - please run 'make test-integration' locally and commit any changes."
+          git status -s
+          echo "::group::Diff of generated files"
+          git add -N .
+          git diff
+          echo "::endgroup::"
+          exit 1
+        fi
 
   platform-tests:
     name: Platform Tests
