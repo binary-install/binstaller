@@ -136,7 +136,6 @@ func TestRunSchema_CanBeParsedCorrectly(t *testing.T) {
 	}
 }
 
-
 // TestRunSchema_ErrorCases tests error handling
 func TestRunSchema_ErrorCases(t *testing.T) {
 	tests := []struct {

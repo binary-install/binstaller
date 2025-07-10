@@ -72,7 +72,6 @@ func RunSchema(format string, output interface{}) error {
 	return err
 }
 
-
 func init() {
 	SchemaCommand.Flags().StringP("format", "f", "yaml", "Output format (yaml, json, typespec)")
 }

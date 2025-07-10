@@ -82,7 +82,7 @@ fmt: ## gofmt and goimports all go files
 lint: aqua-install schema-lint ## Run all the linters
 	golangci-lint run ./... --disable errcheck
 
-ci: build test-all lint ## Run CI checks
+ci: build test-all lint fmt ## Run CI checks
 	git diff .
 
 build: ## Build binst binary
