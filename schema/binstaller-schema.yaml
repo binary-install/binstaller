@@ -170,6 +170,13 @@ $defs:
       arch_emulation:
         $ref: '#/$defs/ArchEmulation'
         description: Architecture emulation configuration
+    quicktypePropertyOrder:
+      - template
+      - default_extension
+      - binaries
+      - rules
+      - naming_convention
+      - arch_emulation
     required:
       - template
     description: |-
@@ -220,6 +227,10 @@ $defs:
 
           This allows offline installation and protects against
           compromised checksum files.
+    quicktypePropertyOrder:
+      - algorithm
+      - template
+      - embedded_checksums
     description: |-
       Checksum verification configuration.
 
@@ -257,6 +268,8 @@ $defs:
           - 0 (default): Extract as-is
           - 1: Remove first directory level (e.g., "mytool-v1.0.0/bin/mytool" → "bin/mytool")
           - 2: Remove first two directory levels
+    quicktypePropertyOrder:
+      - strip_components
     description: |-
       Archive extraction configuration.
 
@@ -382,6 +395,9 @@ $defs:
           - "loong64" - LoongArch 64-bit
           - "wasm" - WebAssembly
           - "amd64p32" - AMD64 with 32-bit pointers
+    quicktypePropertyOrder:
+      - os
+      - arch
     required:
       - os
       - arch
@@ -423,6 +439,9 @@ $defs:
           Examples:
           - "mytool" - Binary at archive root
           - "bin/mytool" - Binary in bin subdirectory
+    quicktypePropertyOrder:
+      - name
+      - path
     required:
       - name
       - path
@@ -477,6 +496,13 @@ $defs:
           Override binary configuration for matching platforms.
           This replaces the default binary configuration when the rule matches.
           Useful when different platforms have different binary names or paths.
+    quicktypePropertyOrder:
+      - when
+      - template
+      - os
+      - arch
+      - ext
+      - binaries
     required:
       - when
     description: "Platform-specific asset configuration override.\n\nRules are evaluated in order, and ALL matching rules are applied sequentially.\nEach matching rule's overrides are applied cumulatively, with later rules\noverriding values set by earlier rules.\n\nA rule matches when all specified conditions in 'when' are met.\n\nExample:\n```yaml\nrules:\n  # Rule 1: Windows gets .zip extension\n  - when:\n      os: windows\n    ext: .zip\n  \n  # Rule 2: Darwin is renamed to macOS\n  - when:\n      os: darwin\n    os: macOS\n  \n  # Rule 3: Darwin also gets .zip (cumulative with rule 2)\n  - when:\n      os: darwin\n    ext: .zip\n  \n  # Rule 4: Darwin arm64 gets special template (cumulative with rules 2 & 3)\n  - when:\n      os: darwin\n      arch: arm64\n    template: \"${NAME}_${VERSION}_${OS}_${ARCH}_signed${EXT}\"\n```\n\nIn this example, for darwin/arm64:\n- Rule 2 changes OS to \"macOS\"\n- Rule 3 changes extension to \".zip\"\n- Rule 4 changes the entire template\n- Final result uses all these changes"
@@ -504,6 +530,9 @@ $defs:
 
           Currently only supports lowercase.
           Values like "amd64", "arm64", "386".
+    quicktypePropertyOrder:
+      - os
+      - arch
     description: |-
       Controls the casing of template placeholders.
 
@@ -533,6 +562,8 @@ $defs:
 
           The installer will detect Rosetta 2 and download amd64 binaries
           on Apple Silicon Macs when this is enabled.
+    quicktypePropertyOrder:
+      - rosetta2
     description: |-
       Architecture emulation configuration.
 
@@ -574,6 +605,9 @@ $defs:
 
           Can be any string value to support custom architecture identifiers.
           See Platform.arch for common values.
+    quicktypePropertyOrder:
+      - os
+      - arch
     description: |-
       Condition for matching specific platforms in rules.
 
@@ -602,6 +636,9 @@ $defs:
           Checksum hash value in hexadecimal format.
           The format depends on the algorithm specified in ChecksumConfig.
           For sha256: 64 hex characters, for sha512: 128 hex characters, etc.
+    quicktypePropertyOrder:
+      - filename
+      - hash
     required:
       - filename
       - hash
@@ -616,3 +653,13 @@ $defs:
       filename: "mytool_1.0.0_linux_amd64.tar.gz"
       hash: "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
       ```
+quicktypePropertyOrder:
+  - schema
+  - name
+  - repo
+  - default_version
+  - default_bin_dir
+  - asset
+  - checksums
+  - unpack
+  - supported_platforms
