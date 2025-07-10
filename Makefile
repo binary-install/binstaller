@@ -187,7 +187,7 @@ $(JSON_SCHEMA): $(TYPESPEC_SOURCES)
 
 $(GENERATED_GO): $(JSON_SCHEMA)
 	@echo "Generating Go structs from JSON Schema..."
-	@cd $(SCHEMA_DIR) && npm run gen:go
+	@cd $(SCHEMA_DIR) && npm install --silent && npm run gen:go
 
 $(YAML_SCHEMA): $(JSON_SCHEMA) aqua-install
 	@echo "Generating YAML Schema from JSON Schema..."
