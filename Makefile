@@ -155,7 +155,12 @@ test-check: binst ## Test check command with various configurations
 	@./binst check --check-assets=false
 	@echo
 	@echo "=== Testing with ignore patterns (external repo) ==="
-	@./binst check -c testdata/bat.binstaller.yml --version v0.24.0 --ignore ".*-musl.*" --ignore "\.deb$$" || true
+	@./binst check -c testdata/bat.binstaller.yml --version v0.24.0 \
+		--ignore ".*-musl.*" \
+		--ignore "\.deb$$" \
+		--ignore ".*-arm-.*" \
+		--ignore ".*-i686-.*" \
+		--ignore ".*-windows-.*"
 	@echo
 	@echo "Check command tests completed"
 
