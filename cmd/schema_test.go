@@ -128,3 +128,43 @@ func TestRunSchema_TypeFilterOutput(t *testing.T) {
 		t.Error("Expected AssetConfig to contain 'template' field")
 	}
 }
+
+// TDD RED Phase: Write failing test for --list option
+func TestRunSchema_ListOutput(t *testing.T) {
+	var output bytes.Buffer
+	
+	// Test the schema command with list option
+	err := RunSchema("yaml", "", true, &output)
+	
+	if err != nil {
+		t.Errorf("RunSchema() returned error: %v", err)
+	}
+	
+	result := output.String()
+	if result == "" {
+		t.Error("RunSchema() returned empty output")
+	}
+	
+	// Check that output contains the root type
+	if !strings.Contains(result, "InstallSpec") {
+		t.Error("Expected list output to contain 'InstallSpec' type")
+	}
+	
+	// Check that output contains types from $defs
+	if !strings.Contains(result, "AssetConfig") {
+		t.Error("Expected list output to contain 'AssetConfig' type")
+	}
+	
+	if !strings.Contains(result, "Binary") {
+		t.Error("Expected list output to contain 'Binary' type")
+	}
+	
+	if !strings.Contains(result, "Platform") {
+		t.Error("Expected list output to contain 'Platform' type")
+	}
+	
+	// Check that it doesn't contain the full schema content
+	if strings.Contains(result, "template") {
+		t.Error("Expected list output to not contain full schema content")
+	}
+}

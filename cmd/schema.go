@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"sort"
 
 	"github.com/goccy/go-yaml"
 	"github.com/spf13/cobra"
@@ -42,8 +43,9 @@ func RunSchema(format, typeFilter string, list bool, output interface{}) error {
 
 	// typeFilter will be handled in convertSchemaToFormat
 
+	// Handle list option
 	if list {
-		return fmt.Errorf("list option not implemented")
+		return listSchemaTypes(writer)
 	}
 
 	// Convert to requested format
@@ -137,6 +139,49 @@ func filterSchemaByType(schema interface{}, typeName string) (interface{}, error
 	}
 	
 	return typeDef, nil
+}
+
+// listSchemaTypes lists all available schema types
+func listSchemaTypes(writer io.Writer) error {
+	schema, err := loadInstallSpecSchema()
+	if err != nil {
+		return fmt.Errorf("failed to load schema: %w", err)
+	}
+	
+	schemaMap, ok := schema.(map[string]interface{})
+	if !ok {
+		return fmt.Errorf("schema is not a map")
+	}
+	
+	// Get types from $defs
+	defs, ok := schemaMap["$defs"]
+	if !ok {
+		return fmt.Errorf("schema does not contain $defs section")
+	}
+	
+	defsMap, ok := defs.(map[string]interface{})
+	if !ok {
+		return fmt.Errorf("$defs is not a map")
+	}
+	
+	// Collect all type names
+	typeNames := []string{"InstallSpec"}
+	for typeName := range defsMap {
+		typeNames = append(typeNames, typeName)
+	}
+	
+	// Sort alphabetically
+	sort.Strings(typeNames)
+	
+	// Output sorted list
+	for _, typeName := range typeNames {
+		_, err = fmt.Fprintln(writer, typeName)
+		if err != nil {
+			return err
+		}
+	}
+	
+	return nil
 }
 
 // convertSchemaToFormat converts schema to the specified format
