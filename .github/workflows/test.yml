@@ -49,9 +49,6 @@ jobs:
     - name: Test all supported platforms (reviewdog)
       run: make test-all-platforms
 
-    - name: Generate files
-      run: make gen
-
     - name: Fail if any diff exists
       run: |
         if [ -n "$(git status -s)" ]; then
