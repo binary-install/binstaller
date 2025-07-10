@@ -56,7 +56,12 @@ jobs:
       run: make gen
 
     - name: Fail if any diff exists
-      run: test -z "$(git status -s)"
+      run: |
+        if [ -n "$(git status -s)" ]; then
+          echo "::error::Uncommitted changes detected - please commit the generated changes."
+          git status -s
+          exit 1
+        fi
 
     - name: Test running generated installers
       run: make test-run-installers
