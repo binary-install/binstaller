@@ -303,7 +303,7 @@ func TestIsIgnoredAsset(t *testing.T) {
 		{"default patterns: LICENSE.md", "LICENSE.md", nil, true},
 		{"default patterns: CHANGELOG.md", "CHANGELOG.md", nil, true},
 		{"default patterns: NOTICE", "NOTICE", nil, true},
-		
+
 		// Signatures and checksums
 		{"default patterns: checksums.txt", "checksums.txt", nil, true},
 		{"default patterns: SHA256SUMS", "app_1.0.0_SHA256SUMS", nil, true},
@@ -313,17 +313,17 @@ func TestIsIgnoredAsset(t *testing.T) {
 		{"default patterns: .sig", "app.sig", nil, true},
 		{"default patterns: .asc", "app.asc", nil, true},
 		{"default patterns: .pem", "app.pem", nil, true},
-		
+
 		// SBOM and metadata
 		{"default patterns: .sbom.json", "app.sbom.json", nil, true},
 		{"default patterns: .yml", "config.yml", nil, true},
 		{"default patterns: .yaml", "config.yaml", nil, true},
-		
+
 		// Scripts
 		{"default patterns: .sh", "install.sh", nil, true},
 		{"default patterns: .ps1", "install.ps1", nil, true},
 		{"default patterns: .bat", "setup.bat", nil, true},
-		
+
 		// Package formats
 		{"default patterns: .deb", "app_amd64.deb", nil, true},
 		{"default patterns: .rpm", "app-1.0.0.rpm", nil, true},
@@ -333,11 +333,11 @@ func TestIsIgnoredAsset(t *testing.T) {
 		{"default patterns: .apk", "app.apk", nil, true},
 		{"default patterns: .snap", "app.snap", nil, true},
 		{"default patterns: .flatpak", "app.flatpak", nil, true},
-		
+
 		// Development files
 		{"default patterns: .pdb", "app.pdb", nil, true},
 		{"default patterns: .debug", "app.debug", nil, true},
-		
+
 		// Source archives
 		{"default patterns: source archive", "binst-0.2.5.tar.gz", nil, true},
 		{"default patterns: source archive with v", "binst-v0.2.5.zip", nil, true},
@@ -348,14 +348,14 @@ func TestIsIgnoredAsset(t *testing.T) {
 		{"default patterns: windows binary", "app_windows_amd64.zip", nil, false},
 		{"default patterns: binary without ext", "app-linux-amd64", nil, false},
 		{"default patterns: exe", "app.exe", nil, false},
-		
+
 		// Custom patterns
 		{"custom pattern: AppImage", "app.AppImage", []string{`\.AppImage$`}, true},
 		{"custom pattern: musl variants", "bat-musl_0.25.0_arm64.deb", []string{`.*-musl.*`}, true},
 		{"custom pattern: test prefix", "test-app-linux.tar.gz", []string{`^test-`}, true},
 		{"custom pattern: multiple patterns", "debug-app.tar.gz", []string{`^debug-`, `\.AppImage$`}, true},
 		{"custom pattern: no match", "app_linux_amd64.tar.gz", []string{`\.AppImage$`}, false},
-		
+
 		// Invalid regex (should be ignored and return false)
 		{"invalid regex", "app.tar.gz", []string{`[`}, false},
 	}

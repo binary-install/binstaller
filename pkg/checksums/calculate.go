@@ -18,7 +18,7 @@ import (
 
 // GitHubReleaseResponse represents a GitHub release API response
 type GitHubReleaseResponse struct {
-	TagName string             `json:"tag_name"`
+	TagName string               `json:"tag_name"`
 	Assets  []GitHubReleaseAsset `json:"assets"`
 }
 
@@ -41,7 +41,7 @@ type assetWithDigest struct {
 // calculateChecksums downloads assets and calculates checksums
 func (e *Embedder) calculateChecksums() (map[string]string, error) {
 	checksums := make(map[string]string)
-	
+
 	// First, fetch actual release assets from GitHub API
 	log.Infof("Fetching release assets for version %s...", e.Version)
 	releaseAssets, err := e.fetchReleaseAssets()
@@ -64,7 +64,7 @@ func (e *Embedder) calculateChecksums() (map[string]string, error) {
 	// Separate assets with and without digests
 	var assetsWithDigests []assetWithDigest
 	var assetsToDownload []assetWithDigest
-	
+
 	for _, asset := range matchedAssets {
 		log.Infof("- %s (%s)", asset.Name, func() string {
 			if asset.SHA256 != "" {
@@ -72,7 +72,7 @@ func (e *Embedder) calculateChecksums() (map[string]string, error) {
 			}
 			return "no digest, will download"
 		}())
-		
+
 		if asset.SHA256 != "" {
 			assetsWithDigests = append(assetsWithDigests, asset)
 		} else {
@@ -155,7 +155,7 @@ func (e *Embedder) fetchReleaseAssets() ([]GitHubReleaseAsset, error) {
 
 	// Construct GitHub API URL
 	apiURL := fmt.Sprintf("https://api.github.com/repos/%s/releases/tags/%s", repo, e.Version)
-	
+
 	// Create authenticated request
 	req, err := httpclient.NewRequestWithGitHubAuth("GET", apiURL)
 	if err != nil {
@@ -197,7 +197,7 @@ func (e *Embedder) matchAssetsToTemplate(assets []GitHubReleaseAsset) ([]assetWi
 	}
 
 	var matchedAssets []assetWithDigest
-	
+
 	// For each platform, check if there's a matching asset
 	for _, platform := range platforms {
 		filename, err := generator.GenerateFilename(spec.PlatformOSString(platform.OS), spec.PlatformArchString(platform.Arch))
@@ -240,7 +240,7 @@ func (e *Embedder) matchAssetsToTemplate(assets []GitHubReleaseAsset) ([]assetWi
 // downloadAndCalculateChecksums downloads assets and calculates their checksums
 func (e *Embedder) downloadAndCalculateChecksums(assets []assetWithDigest) (map[string]string, error) {
 	checksums := make(map[string]string)
-	
+
 	// Create a temporary directory for downloads
 	tempDir, err := os.MkdirTemp("", "binstaller-checksums")
 	if err != nil {
@@ -261,7 +261,7 @@ func (e *Embedder) downloadAndCalculateChecksums(assets []assetWithDigest) (map[
 
 			// Download the asset
 			assetPath := filepath.Join(tempDir, a.Name)
-			
+
 			log.Infof("Downloading %s", a.URL)
 			if err := downloadFile(a.URL, assetPath); err != nil {
 				errorCh <- fmt.Errorf("failed to download asset %s: %w", a.Name, err)
