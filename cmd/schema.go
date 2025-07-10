@@ -6,7 +6,6 @@ import (
 	"io"
 	"os"
 	"sort"
-	"strings"
 
 	"github.com/binary-install/binstaller/schema"
 	"github.com/goccy/go-yaml"
@@ -65,45 +64,18 @@ func loadInstallSpecSchema() (interface{}, error) {
 	return schema.GetInstallSpecSchema()
 }
 
-// processSchemaStrings recursively processes the schema to convert literal \n characters to actual newlines
-func processSchemaStrings(data interface{}) interface{} {
-	switch v := data.(type) {
-	case string:
-		// Convert literal \n to actual newlines for better YAML formatting
-		if strings.Contains(v, "\\n") {
-			return strings.ReplaceAll(v, "\\n", "\n")
-		}
-		return v
-	case map[string]interface{}:
-		processed := make(map[string]interface{})
-		for k, val := range v {
-			processed[k] = processSchemaStrings(val)
-		}
-		return processed
-	case []interface{}:
-		processed := make([]interface{}, len(v))
-		for i, val := range v {
-			processed[i] = processSchemaStrings(val)
-		}
-		return processed
-	default:
-		return v
-	}
-}
 
-// convertToYAML converts a JSON schema to YAML format with improved formatting
+// convertToYAML converts a JSON schema to YAML format using go-yaml library
 func convertToYAML(schema interface{}) ([]byte, error) {
-	// Process strings to convert literal \n to actual newlines
-	processedSchema := processSchemaStrings(schema)
-	
-	// Use MarshalWithOptions for better formatting
-	yamlBytes, err := yaml.MarshalWithOptions(processedSchema,
-		yaml.UseLiteralStyleIfMultiline(true), // Use literal style for multiline strings
-		yaml.Indent(2),                        // Consistent indentation
+	// Use go-yaml to convert the schema directly to YAML with proper formatting
+	yamlBytes, err := yaml.MarshalWithOptions(schema, 
+		yaml.Indent(2),                         // 2-space indentation
+		yaml.UseLiteralStyleIfMultiline(true),  // Better formatting for multiline strings
 	)
 	if err != nil {
-		return nil, fmt.Errorf("failed to convert to YAML: %w", err)
+		return nil, fmt.Errorf("failed to marshal to YAML: %w", err)
 	}
+
 	return yamlBytes, nil
 }
 
