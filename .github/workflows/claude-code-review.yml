@@ -2,7 +2,7 @@ name: Claude Code Review
 
 on:
   pull_request:
-    types: [opened, synchronize]
+    types: [opened]
     # Optional: Only run on specific file changes
     # paths:
     #   - "src/**/*.ts"
@@ -33,8 +33,8 @@ jobs:
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
 
-          # Optional: Specify model (defaults to Claude Sonnet 4, uncomment for Claude Opus 4)
-          # model: "claude-opus-4-20250514"
+          # Use Claude Opus 4 for more thorough initial review
+          model: "claude-opus-4-20250514"
           
           # Direct prompt for automated review (no @claude mention needed)
           direct_prompt: |
@@ -44,6 +44,13 @@ jobs:
             - Performance considerations
             - Security concerns
             - Test coverage
+            - Maintainability aspects:
+              - Code readability and clarity
+              - Appropriate abstractions and modularity
+              - Documentation quality (comments, function docs)
+              - Error handling patterns
+              - Naming conventions consistency
+              - Future extensibility considerations
             
             Be constructive and helpful in your feedback.
 
