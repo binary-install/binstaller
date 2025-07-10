@@ -55,7 +55,10 @@ generates a POSIX-compatible shell installer script.`,
   binst gen | sh -s -- -b /usr/local/bin
 
   # Install specific version
-  binst gen | sh -s -- v1.2.3`,
+  binst gen | sh -s -- v1.2.3
+
+  # Test installer with dry run mode
+  binst gen | sh -s -- -n`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		log.Info("Running gen command...")
 

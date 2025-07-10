@@ -112,6 +112,24 @@ curl -sL https://github.com/binary-install/binstaller/releases/latest/download/i
      sh "$tmpfile" -b "$INSTALL_DIR"; rm -f "$tmpfile")
 ```
 
+#### Test Installation (Dry Run)
+
+Test the installer without actually downloading or installing anything:
+
+```bash
+# Test the installer with dry run mode
+curl -sL https://github.com/binary-install/binstaller/releases/latest/download/install.sh | \
+    (tmpfile=$(mktemp); cat > "$tmpfile"; \
+     gh attestation verify --repo=binary-install/binstaller --signer-workflow='actionutils/trusted-go-releaser/.github/workflows/trusted-release-workflow.yml' "$tmpfile" && \
+     sh "$tmpfile" -n; rm -f "$tmpfile")
+```
+
+The dry run mode (`-n` flag) will:
+- Download and verify checksums (if configured)
+- Show detected OS/architecture information
+- Display the installation path that would be used
+- Skip the actual installation step
+
 **Note**: By default, binaries are installed to:
 - `$BINSTALLER_BIN` if set, otherwise
 - `$HOME/.local/bin` (following XDG Base Directory Specification)

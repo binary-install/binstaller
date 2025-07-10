@@ -367,7 +367,7 @@ func TestDryRunOutputFormat(t *testing.T) {
 				},
 			},
 			wantSubstrings: []string{
-				`log_info "[DRY RUN] Would install to: ${INSTALL_PATH}"`,
+				`log_info "[DRY RUN] ${BINARY_NAME} dry-run installation succeeded! (Would install to: ${INSTALL_PATH})"`,
 			},
 		},
 		{
@@ -444,7 +444,7 @@ func TestDryRunBehavior(t *testing.T) {
 			},
 			wantSubstrings: []string{
 				`if [ "$DRY_RUN" = "1" ]; then`,
-				`log_info "[DRY RUN] Would install to: ${INSTALL_PATH}"`,
+				`log_info "[DRY RUN] ${BINARY_NAME} dry-run installation succeeded! (Would install to: ${INSTALL_PATH})"`,
 			},
 			wantNotContain: []string{
 				`log_info "[DRY RUN] Installation would complete successfully"`,
