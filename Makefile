@@ -24,7 +24,7 @@ INSTALL_SCRIPTS := $(BINSTALLER_CONFIGS:.binstaller.yml=.install.sh)
 SCHEMA_DIR := schema
 TYPESPEC_SOURCES := $(SCHEMA_DIR)/main.tsp $(SCHEMA_DIR)/tspconfig.yaml
 JSON_SCHEMA := $(SCHEMA_DIR)/output/@typespec/json-schema/InstallSpec.json
-YAML_SCHEMA := $(SCHEMA_DIR)/binstaller-schema.yaml
+YAML_SCHEMA := $(SCHEMA_DIR)/InstallSpec.yml
 GENERATED_GO := pkg/spec/generated.go
 
 # Aqua tool management - https://aquaproj.github.io/
