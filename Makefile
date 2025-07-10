@@ -15,6 +15,7 @@ INSTALL_SCRIPTS := $(BINSTALLER_CONFIGS:.binstaller.yml=.install.sh)
 SCHEMA_DIR := schema
 TYPESPEC_SOURCES := $(SCHEMA_DIR)/main.tsp $(SCHEMA_DIR)/tspconfig.yaml
 JSON_SCHEMA := $(SCHEMA_DIR)/output/@typespec/json-schema/InstallSpec.json
+YAML_SCHEMA := $(SCHEMA_DIR)/binstaller-schema.yaml
 GENERATED_GO := pkg/spec/generated.go
 
 # Aqua tool management - https://aquaproj.github.io/
@@ -166,11 +167,17 @@ $(GENERATED_GO): $(JSON_SCHEMA)
 	@echo "Generating Go structs from JSON Schema..."
 	@cd $(SCHEMA_DIR) && npm run gen:go
 
+$(YAML_SCHEMA): $(JSON_SCHEMA) aqua-install
+	@echo "Generating YAML Schema from JSON Schema..."
+	@yq eval --input-format=json --output-format=yaml $(JSON_SCHEMA) > $(YAML_SCHEMA)
+
 gen-schema: $(JSON_SCHEMA) ## Generate JSON Schema from TypeSpec definitions
+
+gen-yaml-schema: $(YAML_SCHEMA) ## Generate YAML Schema from JSON Schema
 
 gen-go: $(GENERATED_GO) ## Generate Go structs from JSON Schema
 
-gen: gen-schema gen-go gen-platforms ## Generate JSON Schema, Go structs, and platform constants
+gen: gen-schema gen-yaml-schema gen-go gen-platforms ## Generate JSON Schema, YAML Schema, Go structs, and platform constants
 
 gen-platforms: ## Generate platform constants from TypeSpec
 	@echo "Generating platform constants from TypeSpec..."
@@ -190,7 +197,7 @@ test-clean: ## Clean up test artifacts
 
 .DEFAULT_GOAL := build
 
-.PHONY: ci test test-unit test-race test-cover test-all help clean binst-init test-gen-configs test-gen-installers test-run-installers test-run-installers-incremental test-aqua-source test-all-platforms test-integration test-incremental test-clean gen-schema gen-go gen gen-platforms aqua-install
+.PHONY: ci test test-unit test-race test-cover test-all help clean binst-init test-gen-configs test-gen-installers test-run-installers test-run-installers-incremental test-aqua-source test-all-platforms test-integration test-incremental test-clean gen-schema gen-yaml-schema gen-go gen gen-platforms aqua-install
 
 clean: ## clean up everything
 	go clean ./...

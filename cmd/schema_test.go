@@ -6,12 +6,12 @@ import (
 	"testing"
 )
 
-// TDD RED Phase: Write failing test for basic schema command
+// TestRunSchema_BasicYAMLOutput tests basic YAML output
 func TestRunSchema_BasicYAMLOutput(t *testing.T) {
 	var output bytes.Buffer
 
 	// Test the basic schema command with default YAML output
-	err := RunSchema("yaml", "", false, &output)
+	err := RunSchema("yaml", &output)
 
 	if err != nil {
 		t.Errorf("RunSchema() returned error: %v", err)
@@ -27,18 +27,23 @@ func TestRunSchema_BasicYAMLOutput(t *testing.T) {
 		t.Error("Expected YAML output to contain 'InstallSpec' schema")
 	}
 
-	// Check that it's in YAML format (should not contain JSON brackets)
+	// Check that it's in YAML format (should not contain JSON quotes)
 	if strings.Contains(result, `"$schema"`) {
 		t.Error("Expected YAML format, but found JSON syntax")
 	}
+
+	// Check that it's valid YAML (contains YAML-style $schema)
+	if !strings.Contains(result, "$schema: https://json-schema.org") {
+		t.Error("Expected YAML output to contain YAML-style $schema")
+	}
 }
 
-// TDD RED Phase: Write failing test for JSON format option
+// TestRunSchema_JSONFormatOutput tests JSON format output
 func TestRunSchema_JSONFormatOutput(t *testing.T) {
 	var output bytes.Buffer
 
 	// Test the schema command with JSON format
-	err := RunSchema("json", "", false, &output)
+	err := RunSchema("json", &output)
 
 	if err != nil {
 		t.Errorf("RunSchema() returned error: %v", err)
@@ -65,12 +70,12 @@ func TestRunSchema_JSONFormatOutput(t *testing.T) {
 	}
 }
 
-// TDD RED Phase: Write failing test for TypeSpec format option
+// TestRunSchema_TypeSpecFormatOutput tests TypeSpec format output
 func TestRunSchema_TypeSpecFormatOutput(t *testing.T) {
 	var output bytes.Buffer
 
 	// Test the schema command with TypeSpec format
-	err := RunSchema("typespec", "", false, &output)
+	err := RunSchema("typespec", &output)
 
 	if err != nil {
 		t.Errorf("RunSchema() returned error: %v", err)
@@ -97,13 +102,12 @@ func TestRunSchema_TypeSpecFormatOutput(t *testing.T) {
 	}
 }
 
-// TDD RED Phase: Write failing test for --type option
-func TestRunSchema_TypeFilterOutput(t *testing.T) {
+// TestRunSchema_CanBeeParsedCorrectly tests that embedded schema can be parsed
+func TestRunSchema_CanBeParsedCorrectly(t *testing.T) {
 	var output bytes.Buffer
 
-	// Test the schema command with specific type filtering
-	err := RunSchema("yaml", "AssetConfig", false, &output)
-
+	// Test that YAML output can be parsed correctly
+	err := RunSchema("yaml", &output)
 	if err != nil {
 		t.Errorf("RunSchema() returned error: %v", err)
 	}
@@ -113,102 +117,64 @@ func TestRunSchema_TypeFilterOutput(t *testing.T) {
 		t.Error("RunSchema() returned empty output")
 	}
 
-	// Check that output contains the specific type description
-	if !strings.Contains(result, "Configuration for constructing download URLs") {
-		t.Errorf("Expected output to contain AssetConfig description, got: %s", result)
+	// Check that output contains expected schema structure
+	if !strings.Contains(result, "$defs:") {
+		t.Error("Expected YAML output to contain '$defs' section")
 	}
 
-	// Check that it doesn't contain the full schema root
-	if strings.Contains(result, "$schema") {
-		t.Error("Expected filtered output, but found full schema")
+	if !strings.Contains(result, "AssetConfig:") {
+		t.Error("Expected YAML output to contain 'AssetConfig' type")
 	}
 
-	// Check that it contains template field specific to AssetConfig
-	if !strings.Contains(result, "template") {
-		t.Error("Expected AssetConfig to contain 'template' field")
-	}
-}
-
-// TDD RED Phase: Write failing test for --list option
-func TestRunSchema_ListOutput(t *testing.T) {
-	var output bytes.Buffer
-
-	// Test the schema command with list option
-	err := RunSchema("yaml", "", true, &output)
-
-	if err != nil {
-		t.Errorf("RunSchema() returned error: %v", err)
+	if !strings.Contains(result, "properties:") {
+		t.Error("Expected YAML output to contain 'properties' section")
 	}
 
-	result := output.String()
-	if result == "" {
-		t.Error("RunSchema() returned empty output")
-	}
-
-	// Check that output contains the root type
-	if !strings.Contains(result, "InstallSpec") {
-		t.Error("Expected list output to contain 'InstallSpec' type")
-	}
-
-	// Check that output contains types from $defs
-	if !strings.Contains(result, "AssetConfig") {
-		t.Error("Expected list output to contain 'AssetConfig' type")
-	}
-
-	if !strings.Contains(result, "Binary") {
-		t.Error("Expected list output to contain 'Binary' type")
-	}
-
-	if !strings.Contains(result, "Platform") {
-		t.Error("Expected list output to contain 'Platform' type")
-	}
-
-	// Check that it doesn't contain the full schema content
-	if strings.Contains(result, "template") {
-		t.Error("Expected list output to not contain full schema content")
+	// Check that the schema contains the template field description
+	if !strings.Contains(result, "template:") {
+		t.Error("Expected schema to contain 'template' field")
 	}
 }
 
-// TDD RED Phase: Write failing tests for error cases
+
+// TestRunSchema_ErrorCases tests error handling
 func TestRunSchema_ErrorCases(t *testing.T) {
 	tests := []struct {
 		name        string
 		format      string
-		typeFilter  string
-		list        bool
 		expectError bool
 		errorMsg    string
 	}{
 		{
 			name:        "invalid format",
 			format:      "xml",
-			typeFilter:  "",
-			list:        false,
 			expectError: true,
-			errorMsg:    "format xml not implemented",
+			errorMsg:    "unsupported format: xml",
 		},
 		{
-			name:        "invalid type name",
+			name:        "valid yaml format",
 			format:      "yaml",
-			typeFilter:  "NonExistentType",
-			list:        false,
-			expectError: true,
-			errorMsg:    "type NonExistentType not found",
+			expectError: false,
+			errorMsg:    "",
 		},
 		{
-			name:        "type filter with typespec format",
+			name:        "valid json format",
+			format:      "json",
+			expectError: false,
+			errorMsg:    "",
+		},
+		{
+			name:        "valid typespec format",
 			format:      "typespec",
-			typeFilter:  "AssetConfig",
-			list:        false,
-			expectError: true,
-			errorMsg:    "type filtering not supported for TypeSpec format",
+			expectError: false,
+			errorMsg:    "",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var output bytes.Buffer
-			err := RunSchema(tt.format, tt.typeFilter, tt.list, &output)
+			err := RunSchema(tt.format, &output)
 
 			if tt.expectError {
 				if err == nil {
