@@ -35,6 +35,105 @@ asset:
 checksums:
   algorithm: sha256
   template: checksums.txt
+  embedded_checksums:
+    v0.15.0:
+    - filename: gum_0.15.0_Darwin_arm64.tar.gz
+      hash: 82c5d460e5ba1366be26a890bb9275f5336c7fba403376ccc246aab5c19ed7ea
+    - filename: gum_0.15.0_Darwin_x86_64.tar.gz
+      hash: cfb0817c7ef97adb703ecc946a150a2db8a3aa847c5896c2a3237014396c5f69
+    - filename: gum_0.15.0_Freebsd_arm64.tar.gz
+      hash: d42c5c813d216feba9e19af3cbedc057b2c21ac7c469f779fc3e38983276500b
+    - filename: gum_0.15.0_Freebsd_armv6.tar.gz
+      hash: 90ea02b7e80e589c10233fdd444c04f62cae00c0366fbdc005fbcbf7641699fd
+    - filename: gum_0.15.0_Freebsd_armv7.tar.gz
+      hash: b86bb294622078e1c47c688fdcb6c9cb2f43c939ad9172def16102e5166d2b69
+    - filename: gum_0.15.0_Freebsd_i386.tar.gz
+      hash: d2c3755c1719c9bc26ef5b9ab30f4259c7dc7c38042d5db45e63739f8f963722
+    - filename: gum_0.15.0_Freebsd_x86_64.tar.gz
+      hash: f7c1aad623d9dbcdad78ea17bf04785c09f6aaa1e013588ec0451a4c84aba3bd
+    - filename: gum_0.15.0_Linux_arm64.tar.gz
+      hash: 307bd78ee12e7265fa2971db6ebf9caf56cfec2f07cad66e044d400d7bcdc905
+    - filename: gum_0.15.0_Linux_armv6.tar.gz
+      hash: 68d2549a348349e83bebde8af93322824d22e986650a9c1128af595ccb6c92e3
+    - filename: gum_0.15.0_Linux_armv7.tar.gz
+      hash: 101e5c5ceafd04ee250720be29c4173cbc9f54390eecb1a6ceda2a39591c351e
+    - filename: gum_0.15.0_Linux_i386.tar.gz
+      hash: 64569a0938ba2a7bd2d98509ebcfb6374decabaa04b31ca9a81f90e2233e8ca5
+    - filename: gum_0.15.0_Linux_x86_64.tar.gz
+      hash: 97ead0ccab4320ac310bf6a3b6497dd48e583cba7d73fc723e7d0b4e94da6799
+    - filename: gum_0.15.0_Netbsd_arm64.tar.gz
+      hash: 4d103c68088289db2c94c4da427c6e20fb1a17201f4631b1084503c350e6a425
+    - filename: gum_0.15.0_Netbsd_armv6.tar.gz
+      hash: 34b46a8c58848d17f6aa72cd7a5c7f153ba9478355d7ebff1e0e46a4fe4529af
+    - filename: gum_0.15.0_Netbsd_armv7.tar.gz
+      hash: 39291e791e44a42cdcab85cde57c6433a8f0bbfd5a204f1b14daa354f3ba4a93
+    - filename: gum_0.15.0_Netbsd_i386.tar.gz
+      hash: 29268b7d1be30e5f1473da5b6d7414feb2b35517221576d962d43fe6df85ede6
+    - filename: gum_0.15.0_Netbsd_x86_64.tar.gz
+      hash: 5e29ac4a6d47fcae3773359282a954e01ab9db582cae9dd4ab0172003a256a99
+    - filename: gum_0.15.0_Openbsd_arm64.tar.gz
+      hash: ffe134c3680f37c7200714b989342d217197c286458032981d7b32c544c8230c
+    - filename: gum_0.15.0_Openbsd_armv6.tar.gz
+      hash: 33b4bd736239caec9538feb7c1d2d9966b314af66a36d09ce27b36d6e34f9ac9
+    - filename: gum_0.15.0_Openbsd_armv7.tar.gz
+      hash: 3b068204c5b32dbc0e61c0a8b85c801b654d158c70f604b87de2ebe0316d9339
+    - filename: gum_0.15.0_Openbsd_i386.tar.gz
+      hash: f1f91c3db8593d02d273026722bb5c97096a332ebb970295f8a6ee2790d2b7d3
+    - filename: gum_0.15.0_Openbsd_x86_64.tar.gz
+      hash: e92ad1c0def6820d37050e6238c18d0107634a216749d523156b075b46d02d26
+    - filename: gum_0.15.0_Windows_i386.zip
+      hash: ee330cd87e72297317c798bbb72bd6a619e02976526c40a6f19051250639a03d
+    - filename: gum_0.15.0_Windows_x86_64.zip
+      hash: f7f62cb40823272269e693494a12082275d6adffe8ef30d92277da5895396c85
+    v0.16.0:
+    - filename: gum_0.16.0_Darwin_arm64.tar.gz
+      hash: cc2b557f6b8a0966f15acf7e5bd5c2e1b76f049fa461d205b17927a74f11b283
+    - filename: gum_0.16.0_Darwin_x86_64.tar.gz
+      hash: 8009022b373768ff81d80f800cb051b461837bd9ccf7ddd4d42ea159732794d8
+    - filename: gum_0.16.0_Freebsd_arm64.tar.gz
+      hash: a5d9f9443c18a1bb8bb7fa01389b0cef8e968962b600863f830eb702516f53da
+    - filename: gum_0.16.0_Freebsd_armv6.tar.gz
+      hash: 84aad8e0b346d3b94520f20a4fa763bb048f9ae8ee147d214587285a6aa27786
+    - filename: gum_0.16.0_Freebsd_armv7.tar.gz
+      hash: 3bb510506b6e12b28ed86657d935b371fe9f422898c220eceb51b6ed199b47c7
+    - filename: gum_0.16.0_Freebsd_i386.tar.gz
+      hash: d63ad3705a66a98a2ea8ea822a4e2e76e3c970295e899299b6b7aaf115530f4c
+    - filename: gum_0.16.0_Freebsd_x86_64.tar.gz
+      hash: 63eb0ebd97acf4a734d5e550a1f474512e76b950724fab48fb3f6c8ca5b3919e
+    - filename: gum_0.16.0_Linux_arm64.tar.gz
+      hash: c28e0a29b5da25df44b95e3f39c773bbb00b9583916431d5e7a762faf011bd0e
+    - filename: gum_0.16.0_Linux_armv6.tar.gz
+      hash: a0208a129845457c77b0ad755546a94b16dd38f8f7181309e14ec91da59271f9
+    - filename: gum_0.16.0_Linux_armv7.tar.gz
+      hash: 2ab5da34ae54d459c2e119a4c4de7e3f5e47471d4ad4957e52b54d4289518da5
+    - filename: gum_0.16.0_Linux_i386.tar.gz
+      hash: c2ad09fb568ce05f521a5f59a75c4c8c02bf4ea23f24a9482319b1a327f66561
+    - filename: gum_0.16.0_Linux_x86_64.tar.gz
+      hash: 7a403e5671bb0e00f93f7b6aa89ec46f7adbda6f7df5c7bad99a01826903b124
+    - filename: gum_0.16.0_Netbsd_arm64.tar.gz
+      hash: 52db6a1c3880032fbf680c307799ec96c6e5bc3c5d5c4215821ebe1e256eaece
+    - filename: gum_0.16.0_Netbsd_armv6.tar.gz
+      hash: 6a9f903e80196624b041315d98435643883e632a306d251365e3d3341e7f0781
+    - filename: gum_0.16.0_Netbsd_armv7.tar.gz
+      hash: 30680b9d44ec531a40a4f8da94178937a4a877612782d32f76f76d4d45da3dbe
+    - filename: gum_0.16.0_Netbsd_i386.tar.gz
+      hash: b1da30530a2292a2d17ae4900ca06777e9c64a3004dd3cf315d45897acecaae3
+    - filename: gum_0.16.0_Netbsd_x86_64.tar.gz
+      hash: 0f8459d4fa2560b588cd7e2af0ecb843bfdb58fb8385e7af1975832b01efdbe5
+    - filename: gum_0.16.0_Openbsd_arm64.tar.gz
+      hash: 1ded43b72966b6dc2a80596811253d6f743ed35555cf69c1b0524c91f813e270
+    - filename: gum_0.16.0_Openbsd_armv6.tar.gz
+      hash: bceb696aabaf91be3b5e24a9cd8e65ad9949b52c38a047e34552743b0e421d09
+    - filename: gum_0.16.0_Openbsd_armv7.tar.gz
+      hash: 21b14534965e097d140c327e920d3193a1e83c59ca487deae9993b900715d833
+    - filename: gum_0.16.0_Openbsd_i386.tar.gz
+      hash: 1e7a9fce7adbb996dc4e1c3ceaac8a778bf713c55256af25bed61ef0ed2a5ced
+    - filename: gum_0.16.0_Openbsd_x86_64.tar.gz
+      hash: 0bbc03148b90dee93f393863d986aa60474a83ba59a768c9ec9b74896ab86db1
+    - filename: gum_0.16.0_Windows_i386.zip
+      hash: 3730bae084056d5f985b30173a19c43e5878819d782baad1c65e0da216c461e1
+    - filename: gum_0.16.0_Windows_x86_64.zip
+      hash: b9b4b38ba35ff47c572c4b55ddd0463e2ef3d574cb8701c29253ec64f5c370ed
 # --- manually added ---
 
 unpack:

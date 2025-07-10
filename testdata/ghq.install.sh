@@ -461,7 +461,7 @@ execute() {
   INSTALL_PATH="${BINDIR}/${BINARY_NAME}"
   
   if [ "$DRY_RUN" = "1" ]; then
-    log_info "[DRY RUN] Would install to: ${INSTALL_PATH}"
+    log_info "[DRY RUN] ${BINARY_NAME} dry-run installation succeeded! (Would install to: ${INSTALL_PATH})"
   else
     log_info "Installing binary to ${INSTALL_PATH}"
     test ! -d "${BINDIR}" && install -d "${BINDIR}"
