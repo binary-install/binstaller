@@ -82,8 +82,15 @@ fmt: ## gofmt and goimports all go files
 lint: aqua-install schema-lint ## Run all the linters
 	golangci-lint run ./... --disable errcheck
 
-ci: build test-all lint fmt ## Run CI checks
-	git diff .
+ci: build test-all lint gen fmt ## Run CI checks
+	@echo "Checking for uncommitted changes..."
+	@if [ -n "$$(git status -s)" ]; then \
+		echo "Error: Uncommitted changes detected - please commit the generated changes."; \
+		git status -s; \
+		exit 1; \
+	else \
+		echo "No uncommitted changes - all good!"; \
+	fi
 
 build: ## Build binst binary
 	go build $(LDFLAGS) ./cmd/binst
