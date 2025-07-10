@@ -357,7 +357,7 @@ func TestDryRunOutputFormat(t *testing.T) {
 		wantSubstrings []string
 	}{
 		{
-			name: "dry run output format for platform detection",
+			name: "dry run output format for existing binary check",
 			installSpec: &spec.InstallSpec{
 				Name: spec.StringPtr("test-tool"),
 				Repo: spec.StringPtr("owner/test-tool"),
@@ -367,27 +367,27 @@ func TestDryRunOutputFormat(t *testing.T) {
 				},
 			},
 			wantSubstrings: []string{
-				`log_info "[DRY RUN] Detected OS: ${OS}"`,
-				`log_info "[DRY RUN] Detected Architecture: ${ARCH}"`,
-			},
-		},
-		{
-			name: "dry run output format for URLs",
-			installSpec: &spec.InstallSpec{
-				Name: spec.StringPtr("test-tool"),
-				Repo: spec.StringPtr("owner/test-tool"),
-				Asset: &spec.AssetConfig{
-					Template:         spec.StringPtr("${NAME}-${VERSION}-${OS}_${ARCH}${EXT}"),
-					DefaultExtension: spec.StringPtr(".tar.gz"),
-				},
-			},
-			wantSubstrings: []string{
-				`log_info "[DRY RUN] Would download: ${ASSET_URL}"`,
+				`log_info "[DRY RUN] Binary already exists at: ${INSTALL_PATH}"`,
 				`log_info "[DRY RUN] Would install to: ${INSTALL_PATH}"`,
 			},
 		},
 		{
-			name: "dry run checksum display",
+			name: "dry run actual download behavior",
+			installSpec: &spec.InstallSpec{
+				Name: spec.StringPtr("test-tool"),
+				Repo: spec.StringPtr("owner/test-tool"),
+				Asset: &spec.AssetConfig{
+					Template:         spec.StringPtr("${NAME}-${VERSION}-${OS}_${ARCH}${EXT}"),
+					DefaultExtension: spec.StringPtr(".tar.gz"),
+				},
+			},
+			wantSubstrings: []string{
+				`log_info "Downloading ${ASSET_URL}"`,
+				`if [ "$DRY_RUN" = "1" ]; then`,
+			},
+		},
+		{
+			name: "dry run actual checksum verification",
 			installSpec: &spec.InstallSpec{
 				Name: spec.StringPtr("test-tool"),
 				Repo: spec.StringPtr("owner/test-tool"),
@@ -401,7 +401,8 @@ func TestDryRunOutputFormat(t *testing.T) {
 				},
 			},
 			wantSubstrings: []string{
-				`log_info "[DRY RUN] Would verify checksum from: ${CHECKSUM_URL}"`,
+				`log_info "Downloading checksums from ${CHECKSUM_URL}"`,
+				`log_info "Verifying checksum ..."`,
 			},
 		},
 	}
@@ -433,7 +434,7 @@ func TestDryRunBehavior(t *testing.T) {
 		wantNotContain []string
 	}{
 		{
-			name: "dry run skips actual downloads",
+			name: "dry run skips installation only",
 			installSpec: &spec.InstallSpec{
 				Name: spec.StringPtr("test-tool"),
 				Repo: spec.StringPtr("owner/test-tool"),
@@ -444,13 +445,17 @@ func TestDryRunBehavior(t *testing.T) {
 			},
 			wantSubstrings: []string{
 				`if [ "$DRY_RUN" = "1" ]; then`,
-				`log_info "[DRY RUN] Installation would complete successfully"`,
-				`return 0`,
+				`log_info "[DRY RUN] Binary already exists at: ${INSTALL_PATH}"`,
+				`log_info "[DRY RUN] Would install to: ${INSTALL_PATH}"`,
 			},
-			wantNotContain: []string{},
+			wantNotContain: []string{
+				`log_info "[DRY RUN] Installation would complete successfully"`,
+				`log_info "[DRY RUN] Would download: ${ASSET_URL}"`,
+				`log_info "[DRY RUN] Would verify checksum from: ${CHECKSUM_URL}"`,
+			},
 		},
 		{
-			name: "dry run conditional wrapping of downloads",
+			name: "dry run performs downloads unconditionally",
 			installSpec: &spec.InstallSpec{
 				Name: spec.StringPtr("test-tool"),
 				Repo: spec.StringPtr("owner/test-tool"),
@@ -460,9 +465,10 @@ func TestDryRunBehavior(t *testing.T) {
 				},
 			},
 			wantSubstrings: []string{
-				`if [ "$DRY_RUN" != "1" ]; then`,
 				`github_http_download "${TMPDIR}/${ASSET_FILENAME}" "${ASSET_URL}"`,
-				`fi`,
+			},
+			wantNotContain: []string{
+				`if [ "$DRY_RUN" != "1" ]; then`,
 			},
 		},
 	}

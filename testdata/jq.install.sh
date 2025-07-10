@@ -404,28 +404,12 @@ execute() {
     CHECKSUM_URL="${GITHUB_DOWNLOAD}/${TAG}/${CHECKSUM_FILENAME}"
   fi
 
-  # --- Dry Run Output ---
-  if [ "$DRY_RUN" = "1" ]; then
-    log_info "[DRY RUN] Would download: ${ASSET_URL}"
-    if [ -n "$CHECKSUM_URL" ]; then
-      log_info "[DRY RUN] Would verify checksum from: ${CHECKSUM_URL}"
-    fi
-    INSTALL_PATH="${BINDIR}/jq"
-    if [ "${UNAME_OS}" = "windows" ]; then
-      case "${INSTALL_PATH}" in *.exe) ;; *) INSTALL_PATH="${INSTALL_PATH}.exe" ;; esac
-    fi
-    log_info "[DRY RUN] Would install to: ${INSTALL_PATH}"
-    log_info "[DRY RUN] Installation would complete successfully"
-    return 0
-  fi
-
   # --- Download and Verify ---
-  if [ "$DRY_RUN" != "1" ]; then
-    TMPDIR=$(mktemp -d)
-    trap 'rm -rf -- "$TMPDIR"' EXIT HUP INT TERM
-    log_debug "Downloading files into ${TMPDIR}"
-    log_info "Downloading ${ASSET_URL}"
-    github_http_download "${TMPDIR}/${ASSET_FILENAME}" "${ASSET_URL}"
+  TMPDIR=$(mktemp -d)
+  trap 'rm -rf -- "$TMPDIR"' EXIT HUP INT TERM
+  log_debug "Downloading files into ${TMPDIR}"
+  log_info "Downloading ${ASSET_URL}"
+  github_http_download "${TMPDIR}/${ASSET_FILENAME}" "${ASSET_URL}"
 
   # Try to find embedded checksum first
   EMBEDDED_HASH=$(find_embedded_checksum "$VERSION" "$ASSET_FILENAME")
@@ -483,10 +467,18 @@ execute() {
 
   # Install the binary
   INSTALL_PATH="${BINDIR}/${BINARY_NAME}"
-  log_info "Installing binary to ${INSTALL_PATH}"
-  test ! -d "${BINDIR}" && install -d "${BINDIR}"
-  install "${BINARY_PATH}" "${INSTALL_PATH}"
-  log_info "${BINARY_NAME} installation complete!"
+  
+  if [ "$DRY_RUN" = "1" ]; then
+    if [ -f "${INSTALL_PATH}" ]; then
+      log_info "[DRY RUN] Binary already exists at: ${INSTALL_PATH}"
+    else
+      log_info "[DRY RUN] Would install to: ${INSTALL_PATH}"
+    fi
+  else
+    log_info "Installing binary to ${INSTALL_PATH}"
+    test ! -d "${BINDIR}" && install -d "${BINDIR}"
+    install "${BINARY_PATH}" "${INSTALL_PATH}"
+    log_info "${BINARY_NAME} installation complete!"
   fi
 }
 
@@ -509,11 +501,6 @@ UNAME_OS="${OS}"
 ARCH="${BINSTALLER_ARCH:-$(uname_arch)}"
 UNAME_ARCH="${ARCH}"
 log_info "Detected Platform: ${OS}/${ARCH}"
-
-if [ "$DRY_RUN" = "1" ]; then
-  log_info "[DRY RUN] Detected OS: ${OS}"
-  log_info "[DRY RUN] Detected Architecture: ${ARCH}"
-fi
 
 # --- Validate platform ---
 uname_os_check "$OS"
