@@ -54,10 +54,7 @@ jobs:
 
     - name: Fail if any diff exists
       run: |
-        if ! git diff; then
-          echo "::error ::git diff detected - please commit the generated changes."
-          exit 1
-        fi
+        test -z "$(git status -s)"
 
     - name: Test running generated installers
       run: make test-run-installers
