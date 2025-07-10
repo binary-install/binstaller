@@ -26,17 +26,21 @@ For filtering and processing, use yq or jq tools on the output.`,
   # Display original TypeSpec source
   binst schema --format typespec
 
-  # Filter specific types using yq
-  binst schema | yq '."$defs".AssetConfig'
-
-  # List all available types using yq
+  # List all available schema types
   binst schema | yq '."$defs" | keys'
 
-  # Get only the root schema properties using yq
+  # Filter specific type definitions
+  binst schema | yq '."$defs".AssetConfig'
+
+  # Get only the root schema (without type definitions)
   binst schema | yq 'del(."$defs")'
 
-  # Filter specific types using jq
-  binst schema --format json | jq '."$defs".Platform'`,
+  # Use jq for JSON processing
+  binst schema --format json | jq '."$defs".Platform'
+
+  # Get list of supported platform os/arch combinations
+  binst schema | yq '."$defs".Platform.properties.os.enum'
+  binst schema | yq '."$defs".Platform.properties.arch.enum'`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		format, _ := cmd.Flags().GetString("format")
 		return RunSchema(format, os.Stdout)

@@ -289,58 +289,6 @@ export GITHUB_TOKEN=$(gh auth token)
 binst check
 ```
 
-## 📋 Schema Command
-
-The `binst schema` command displays the binstaller configuration schema directly from the CLI in various formats. This is useful for understanding the configuration structure, IDE integration, and automated tooling.
-
-### Basic Usage
-
-```bash
-# Display schema in YAML format (default)
-binst schema
-
-# Display schema in JSON format  
-binst schema --format json
-
-# Display original TypeSpec source
-binst schema --format typespec
-```
-
-### Filtering with External Tools
-
-The schema command is designed to work seamlessly with external tools like `yq` and `jq` for filtering and processing:
-
-```bash
-# List all available schema types
-binst schema | yq '."$defs" | keys'
-
-# Filter specific type definitions
-binst schema | yq '."$defs".AssetConfig'
-binst schema | yq '."$defs".Platform'
-
-# Get only the root schema (without type definitions)
-binst schema | yq 'del(."$defs")'
-
-# Use jq for JSON processing
-binst schema --format json | jq '."$defs".Binary'
-binst schema --format json | jq '.properties.supported_platforms'
-
-# Save schema to file for reference
-binst schema > binstaller-schema.yaml
-```
-
-### IDE Integration
-
-The schema command generates output that can be used with IDE language servers:
-
-```bash
-# Generate schema file for yaml-language-server
-binst schema > schema/binstaller-schema.yaml
-
-# The schema can then be referenced in your config files:
-# yaml-language-server: $schema=./schema/binstaller-schema.yaml
-```
-
 ## ⚙️ Configuration Format
 
 The `.config/binstaller.yml` configuration file uses a simple, declarative format:
@@ -384,6 +332,58 @@ The configuration schema is defined using [TypeSpec](https://typespec.io/), whic
 - Examples of common usage patterns
 - Explanations of advanced features like platform-specific rules, architecture emulation, and embedded checksums
 - Complete type information and constraints
+
+### 📋 Schema Command
+
+The `binst schema` command displays the binstaller configuration schema directly from the CLI in various formats. This is useful for understanding the configuration structure, IDE integration, and automated tooling.
+
+#### Basic Usage
+
+```bash
+# Display schema in YAML format (default)
+binst schema
+
+# Display schema in JSON format  
+binst schema --format json
+
+# Display original TypeSpec source
+binst schema --format typespec
+```
+
+#### Filtering with External Tools
+
+The schema command is designed to work seamlessly with external tools like `yq` and `jq` for filtering and processing:
+
+```bash
+# List all available schema types
+binst schema | yq '."$defs" | keys'
+
+# Filter specific type definitions
+binst schema | yq '."$defs".AssetConfig'
+
+# Get only the root schema (without type definitions)
+binst schema | yq 'del(."$defs")'
+
+# Use jq for JSON processing
+binst schema --format json | jq '."$defs".Platform'
+
+# Get list of supported platform os/arch combinations
+binst schema | yq '."$defs".Platform.properties.os.enum'
+binst schema | yq '."$defs".Platform.properties.arch.enum'
+
+# Save schema to file for reference
+binst schema > binstaller-schema.yaml
+```
+
+#### IDE Integration
+
+```bash
+# Generate schema file for yaml-language-server
+binst schema > schema/binstaller-schema.yaml
+
+# The schema can then be referenced in your config files:
+# yaml-language-server: $schema=./schema/binstaller-schema.yaml
+```
 
 ## 📄 License
 
