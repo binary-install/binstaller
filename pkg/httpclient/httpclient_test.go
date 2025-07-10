@@ -147,7 +147,7 @@ func TestGitHubTransportPreservesExistingAuth(t *testing.T) {
 
 	// Mock GitHub URL by replacing server URL with github.com for transport to recognize
 	githubURL := "https://github.com/test/test"
-	
+
 	// Set up environment token
 	os.Setenv("GITHUB_TOKEN", "env_token")
 	defer os.Unsetenv("GITHUB_TOKEN")
