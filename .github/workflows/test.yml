@@ -67,6 +67,6 @@ jobs:
 
     - name: Test help output
       run: |
-        echo "::group::Check command help"
-        ./binst check --help
+        echo "::group::Comprehensive help"
+        ./binst helpful
         echo "::endgroup::"
