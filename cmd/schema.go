@@ -36,10 +36,7 @@ For filtering and processing, use yq or jq tools on the output.`,
   binst schema | yq 'del(."$defs")'
 
   # Filter specific types using jq
-  binst schema --format json | jq '."$defs".Platform'
-
-  # Pretty print with yq and save to file
-  binst schema > binstaller-schema.yaml`,
+  binst schema --format json | jq '."$defs".Platform'`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		format, _ := cmd.Flags().GetString("format")
 		return RunSchema(format, os.Stdout)
@@ -53,11 +50,6 @@ func RunSchema(format string, output interface{}) error {
 		return fmt.Errorf("output must be an io.Writer")
 	}
 
-	// Validate format
-	if format != "yaml" && format != "json" && format != "typespec" {
-		return fmt.Errorf("unsupported format: %s (supported: yaml, json, typespec)", format)
-	}
-
 	// Get the schema in the requested format
 	var outputBytes []byte
 	switch format {
@@ -68,7 +60,7 @@ func RunSchema(format string, output interface{}) error {
 	case "typespec":
 		outputBytes = schema.GetTypeSpecSource()
 	default:
-		return fmt.Errorf("unsupported format: %s", format)
+		return fmt.Errorf("unsupported format: %s (supported: yaml, json, typespec)", format)
 	}
 
 	// Write output
