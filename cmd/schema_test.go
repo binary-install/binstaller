@@ -32,3 +32,35 @@ func TestRunSchema_BasicYAMLOutput(t *testing.T) {
 		t.Error("Expected YAML format, but found JSON syntax")
 	}
 }
+
+// TDD RED Phase: Write failing test for JSON format option
+func TestRunSchema_JSONFormatOutput(t *testing.T) {
+	var output bytes.Buffer
+	
+	// Test the schema command with JSON format
+	err := RunSchema("json", "", false, &output)
+	
+	if err != nil {
+		t.Errorf("RunSchema() returned error: %v", err)
+	}
+	
+	result := output.String()
+	if result == "" {
+		t.Error("RunSchema() returned empty output")
+	}
+	
+	// Check that output contains JSON schema content
+	if !strings.Contains(result, "InstallSpec") {
+		t.Error("Expected JSON output to contain 'InstallSpec' schema")
+	}
+	
+	// Check that it's in JSON format (should contain JSON syntax)
+	if !strings.Contains(result, `"$schema"`) {
+		t.Error("Expected JSON format, but found non-JSON syntax")
+	}
+	
+	// Check that it's valid JSON by attempting to parse
+	if !strings.HasPrefix(result, "{") || !strings.HasSuffix(strings.TrimSpace(result), "}") {
+		t.Error("Expected JSON output to be a valid JSON object")
+	}
+}

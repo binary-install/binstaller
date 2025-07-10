@@ -35,8 +35,8 @@ func RunSchema(format, typeFilter string, list bool, output interface{}) error {
 		return fmt.Errorf("output must be an io.Writer")
 	}
 
-	// For now, only implement basic YAML output
-	if format != "yaml" {
+	// Validate format
+	if format != "yaml" && format != "json" {
 		return fmt.Errorf("format %s not implemented", format)
 	}
 
@@ -54,13 +54,13 @@ func RunSchema(format, typeFilter string, list bool, output interface{}) error {
 		return fmt.Errorf("failed to load schema: %w", err)
 	}
 
-	yamlBytes, err := convertToYAML(schema)
+	outputBytes, err := convertSchemaToFormat(schema, format)
 	if err != nil {
-		return fmt.Errorf("failed to convert to YAML: %w", err)
+		return fmt.Errorf("failed to convert to %s: %w", format, err)
 	}
 
 	// Write output
-	_, err = writer.Write(yamlBytes)
+	_, err = writer.Write(outputBytes)
 	return err
 }
 
@@ -87,6 +87,27 @@ func convertToYAML(schema interface{}) ([]byte, error) {
 		return nil, fmt.Errorf("failed to convert to YAML: %w", err)
 	}
 	return yamlBytes, nil
+}
+
+// convertToJSON converts a JSON schema to formatted JSON
+func convertToJSON(schema interface{}) ([]byte, error) {
+	jsonBytes, err := json.MarshalIndent(schema, "", "  ")
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert to JSON: %w", err)
+	}
+	return jsonBytes, nil
+}
+
+// convertSchemaToFormat converts schema to the specified format
+func convertSchemaToFormat(schema interface{}, format string) ([]byte, error) {
+	switch format {
+	case "yaml":
+		return convertToYAML(schema)
+	case "json":
+		return convertToJSON(schema)
+	default:
+		return nil, fmt.Errorf("unsupported format: %s", format)
+	}
 }
 
 func init() {
