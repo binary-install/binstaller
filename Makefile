@@ -97,7 +97,7 @@ ci: build test lint gen fmt ## Run CI checks (no external API calls)
 		echo "No uncommitted changes - all good!"; \
 	fi
 
-build: ## Build binst binary
+build: setup ## Build binst binary
 	go build $(LDFLAGS) ./cmd/binst
 
 # Binary with dependency tracking (includes embedded shell templates and generated types)
