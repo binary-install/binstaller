@@ -41,13 +41,10 @@ jobs:
 
     - run: make ci
 
-    - name: Generate test configs
+    - name: Run integration tests
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: make test-gen-configs
-
-    - name: Generate test installers
-      run: make test-gen-installers
+      run: make test-integration
 
     - name: Test all supported platforms (reviewdog)
       run: make test-all-platforms
@@ -63,23 +60,13 @@ jobs:
           exit 1
         fi
 
-    - name: Test running generated installers
-      run: make test-run-installers
-
     - name: Test aqua source
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: make test-aqua-source
 
-    - name: Test check command
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: Test help output
       run: |
-        echo "::group::Testing check command"
-        make test-check
-        echo "::endgroup::"
-        
-        # Test help output
         echo "::group::Check command help"
         ./binst check --help
         echo "::endgroup::"
