@@ -368,21 +368,11 @@ binst schema | yq 'del(."$defs")'
 binst schema --format json | jq '."$defs".Platform'
 
 # Get list of supported platform os/arch combinations
-binst schema | yq '."$defs".Platform.properties.os.enum'
-binst schema | yq '."$defs".Platform.properties.arch.enum'
+binst schema | yq '."$defs".Platform.properties.os.anyOf[].const'
+binst schema | yq '."$defs".Platform.properties.arch.anyOf[].const'
 
 # Save schema to file for reference
 binst schema > binstaller-schema.yaml
-```
-
-#### IDE Integration
-
-```bash
-# Generate schema file for yaml-language-server
-binst schema > schema/binstaller-schema.yaml
-
-# The schema can then be referenced in your config files:
-# yaml-language-server: $schema=./schema/binstaller-schema.yaml
 ```
 
 ## 📄 License
