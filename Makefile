@@ -1,3 +1,12 @@
+# Makefile for binstaller
+#
+# Key targets:
+#   make ci              - Run all CI checks without external API calls (safe for offline use)
+#   make test-integration - Run full integration tests (requires GitHub API access)
+#
+# Note: For test-integration, set GITHUB_TOKEN environment variable to avoid GitHub API rate limits:
+#   GITHUB_TOKEN=your_token make test-integration
+
 SOURCE_FILES?=./...
 TEST_PATTERN?=.
 TEST_OPTIONS?=
@@ -82,7 +91,7 @@ fmt: ## gofmt and goimports all go files
 lint: aqua-install schema-lint ## Run all the linters
 	golangci-lint run ./... --disable errcheck
 
-ci: build test-all lint gen fmt ## Run CI checks
+ci: build test-all lint gen fmt ## Run CI checks (no external API calls)
 	@echo "Checking for uncommitted changes..."
 	@if [ -n "$$(git status -s)" ]; then \
 		echo "Warning: Uncommitted changes detected (possibly generated files):"; \
@@ -164,8 +173,9 @@ test-check: binst ## Test check command with various configurations
 	@echo
 	@echo "Check command tests completed"
 
-test-integration: test-gen-configs test-gen-installers test-run-installers test-check ## Run full integration test suite
+test-integration: test-gen-configs test-gen-installers test-run-installers test-check ## Run full integration test suite (requires GitHub API access)
 	@echo "Integration tests completed"
+	@echo "Note: These tests access GitHub API. Set GITHUB_TOKEN to avoid rate limits."
 
 test-incremental: test-gen-installers test-run-installers-incremental ## Run incremental tests (only changed files)
 	@echo "Incremental tests completed"
