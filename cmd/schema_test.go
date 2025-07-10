@@ -64,3 +64,35 @@ func TestRunSchema_JSONFormatOutput(t *testing.T) {
 		t.Error("Expected JSON output to be a valid JSON object")
 	}
 }
+
+// TDD RED Phase: Write failing test for TypeSpec format option
+func TestRunSchema_TypeSpecFormatOutput(t *testing.T) {
+	var output bytes.Buffer
+	
+	// Test the schema command with TypeSpec format
+	err := RunSchema("typespec", "", false, &output)
+	
+	if err != nil {
+		t.Errorf("RunSchema() returned error: %v", err)
+	}
+	
+	result := output.String()
+	if result == "" {
+		t.Error("RunSchema() returned empty output")
+	}
+	
+	// Check that output contains TypeSpec content
+	if !strings.Contains(result, "@doc") {
+		t.Error("Expected TypeSpec output to contain '@doc' annotation")
+	}
+	
+	// Check that it contains TypeSpec import
+	if !strings.Contains(result, "import \"@typespec/json-schema\"") {
+		t.Error("Expected TypeSpec output to contain import statement")
+	}
+	
+	// Check that it's TypeSpec syntax, not JSON
+	if strings.Contains(result, `"$schema"`) {
+		t.Error("Expected TypeSpec format, but found JSON syntax")
+	}
+}

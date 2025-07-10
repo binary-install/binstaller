@@ -36,7 +36,7 @@ func RunSchema(format, typeFilter string, list bool, output interface{}) error {
 	}
 
 	// Validate format
-	if format != "yaml" && format != "json" {
+	if format != "yaml" && format != "json" && format != "typespec" {
 		return fmt.Errorf("format %s not implemented", format)
 	}
 
@@ -48,13 +48,8 @@ func RunSchema(format, typeFilter string, list bool, output interface{}) error {
 		return fmt.Errorf("list option not implemented")
 	}
 
-	// Load and convert schema
-	schema, err := loadInstallSpecSchema()
-	if err != nil {
-		return fmt.Errorf("failed to load schema: %w", err)
-	}
-
-	outputBytes, err := convertSchemaToFormat(schema, format)
+	// Convert to requested format
+	outputBytes, err := convertSchemaToFormat(nil, format)
 	if err != nil {
 		return fmt.Errorf("failed to convert to %s: %w", format, err)
 	}
@@ -98,13 +93,39 @@ func convertToJSON(schema interface{}) ([]byte, error) {
 	return jsonBytes, nil
 }
 
+// convertToTypeSpec reads and returns the TypeSpec source file
+func convertToTypeSpec() ([]byte, error) {
+	typeSpecPath := filepath.Join("..", "schema", "main.tsp")
+	typeSpecBytes, err := os.ReadFile(typeSpecPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read TypeSpec file: %w", err)
+	}
+	return typeSpecBytes, nil
+}
+
 // convertSchemaToFormat converts schema to the specified format
 func convertSchemaToFormat(schema interface{}, format string) ([]byte, error) {
 	switch format {
 	case "yaml":
+		if schema == nil {
+			var err error
+			schema, err = loadInstallSpecSchema()
+			if err != nil {
+				return nil, fmt.Errorf("failed to load schema: %w", err)
+			}
+		}
 		return convertToYAML(schema)
 	case "json":
+		if schema == nil {
+			var err error
+			schema, err = loadInstallSpecSchema()
+			if err != nil {
+				return nil, fmt.Errorf("failed to load schema: %w", err)
+			}
+		}
 		return convertToJSON(schema)
+	case "typespec":
+		return convertToTypeSpec()
 	default:
 		return nil, fmt.Errorf("unsupported format: %s", format)
 	}
