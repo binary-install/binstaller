@@ -2,9 +2,9 @@
 #
 # Key targets:
 #   make ci              - Run all CI checks without external API calls (safe for offline use)
-#   make test-integration - Run full integration tests (requires GitHub API access)
+#   make test-integration - Run full integration tests (accesses GitHub API, generates test configs/installers)
 #
-# Note: For test-integration, set GITHUB_TOKEN environment variable to avoid GitHub API rate limits:
+# Note: For test-integration, optionally set GITHUB_TOKEN environment variable to avoid GitHub API rate limits:
 #   GITHUB_TOKEN=your_token make test-integration
 
 SOURCE_FILES?=./...
@@ -173,7 +173,7 @@ test-check: binst ## Test check command with various configurations
 	@echo
 	@echo "Check command tests completed"
 
-test-integration: test-gen-configs test-gen-installers test-run-installers test-check ## Run full integration test suite (requires GitHub API access)
+test-integration: test-gen-configs test-gen-installers test-run-installers test-check ## Run full integration test suite (accesses GitHub API)
 	@echo "Integration tests completed"
 	@echo "Note: These tests access GitHub API. Set GITHUB_TOKEN to avoid rate limits."
 

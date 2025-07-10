@@ -17,8 +17,8 @@ make lint
 # Run CI checks (no external API calls, safe for offline use)
 make ci
 
-# Run full integration tests (requires GitHub API access)
-# Set GITHUB_TOKEN to avoid rate limits:
+# Run full integration tests (accesses GitHub API)
+# Optionally set GITHUB_TOKEN to avoid rate limits:
 GITHUB_TOKEN=your_token make test-integration
 
 # Run before committing (for development)
@@ -31,7 +31,12 @@ make fmt
 ### Testing Notes
 
 - `make ci`: Runs build, tests, linting, generation, and formatting without any external API calls. Safe for offline development.
-- `make test-integration`: Runs the full integration test suite which includes accessing GitHub APIs to verify releases and assets. Requires network access and benefits from GITHUB_TOKEN to avoid rate limits.
+- `make test-integration`: Runs the full integration test suite which includes:
+  - Generating test configurations and installers
+  - Accessing GitHub APIs to verify releases and assets
+  - Running generated installers
+  
+  **Important**: Run `make test-integration` before creating commits or PRs when changes might affect generated output (e.g., modifying templates, asset rules, or configuration handling). The command works without GITHUB_TOKEN but setting it helps avoid rate limits.
 
 ## Project Structure
 
