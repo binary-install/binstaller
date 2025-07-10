@@ -168,3 +168,62 @@ func TestRunSchema_ListOutput(t *testing.T) {
 		t.Error("Expected list output to not contain full schema content")
 	}
 }
+
+// TDD RED Phase: Write failing tests for error cases
+func TestRunSchema_ErrorCases(t *testing.T) {
+	tests := []struct {
+		name        string
+		format      string
+		typeFilter  string
+		list        bool
+		expectError bool
+		errorMsg    string
+	}{
+		{
+			name:        "invalid format",
+			format:      "xml",
+			typeFilter:  "",
+			list:        false,
+			expectError: true,
+			errorMsg:    "format xml not implemented",
+		},
+		{
+			name:        "invalid type name",
+			format:      "yaml",
+			typeFilter:  "NonExistentType",
+			list:        false,
+			expectError: true,
+			errorMsg:    "type NonExistentType not found",
+		},
+		{
+			name:        "type filter with typespec format",
+			format:      "typespec",
+			typeFilter:  "AssetConfig",
+			list:        false,
+			expectError: true,
+			errorMsg:    "type filtering not supported for TypeSpec format",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var output bytes.Buffer
+			err := RunSchema(tt.format, tt.typeFilter, tt.list, &output)
+			
+			if tt.expectError {
+				if err == nil {
+					t.Errorf("Expected error but got none")
+				}
+				if err != nil && tt.errorMsg != "" {
+					if !strings.Contains(err.Error(), tt.errorMsg) {
+						t.Errorf("Expected error to contain '%s', got '%s'", tt.errorMsg, err.Error())
+					}
+				}
+			} else {
+				if err != nil {
+					t.Errorf("Unexpected error: %v", err)
+				}
+			}
+		})
+	}
+}
