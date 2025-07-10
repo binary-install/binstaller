@@ -65,7 +65,7 @@ func TestFetchReleaseAssets(t *testing.T) {
 
 		// Use mock server URL
 		apiURL := fmt.Sprintf("%s/repos/%s/releases/tags/%s", mockServer.URL, repo, embedder.Version)
-		
+
 		resp, err := http.Get(apiURL)
 		if err != nil {
 			return nil, fmt.Errorf("failed to fetch release from GitHub API: %w", err)
@@ -389,7 +389,7 @@ func TestCalculateChecksumsFull(t *testing.T) {
 	// Create a temporary function to test the fetchReleaseAssets logic
 	fetchReleaseAssetsFunc := func() ([]GitHubReleaseAsset, error) {
 		apiURL := fmt.Sprintf("%s/repos/%s/releases/tags/%s", mockServer.URL, "test/repo", "v1.0.0")
-		
+
 		resp, err := http.Get(apiURL)
 		if err != nil {
 			return nil, fmt.Errorf("failed to fetch release from GitHub API: %w", err)
@@ -407,7 +407,7 @@ func TestCalculateChecksumsFull(t *testing.T) {
 
 		return release.Assets, nil
 	}
-	
+
 	// Get the assets from the mock server
 	assets, err := fetchReleaseAssetsFunc()
 	if err != nil {

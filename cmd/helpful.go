@@ -24,7 +24,7 @@ var (
 		if !term.IsTerminal(int(os.Stdout.Fd())) {
 			return 80
 		}
-		
+
 		w, _, err := term.GetSize(int(os.Stdout.Fd()))
 		if err != nil {
 			return 80
@@ -134,7 +134,7 @@ func defaultSkipFunc(cmd *cobra.Command) bool {
 	case "completion", "help":
 		return true
 	}
-	
+
 	return false
 }
 

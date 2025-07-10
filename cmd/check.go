@@ -24,8 +24,8 @@ import (
 
 var (
 	// Flags for check command
-	checkVersion     string
-	checkCheckAssets bool
+	checkVersion        string
+	checkCheckAssets    bool
 	checkIgnorePatterns []string
 )
 
@@ -693,7 +693,7 @@ func isIgnoredAsset(filename string, customPatterns []string) bool {
 			return true
 		}
 	}
-	
+
 	// Check default patterns
 	ignoredPatterns := []string{
 		// Documentation and metadata

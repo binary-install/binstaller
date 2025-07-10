@@ -270,3 +270,225 @@ func TestGenerate(t *testing.T) {
 		t.Error("Generate() should not generate fixed version script")
 	}
 }
+
+func TestDryRunFlagParsing(t *testing.T) {
+	tests := []struct {
+		name           string
+		installSpec    *spec.InstallSpec
+		wantSubstrings []string
+		wantNotContain []string
+	}{
+		{
+			name: "dry run flag support in usage",
+			installSpec: &spec.InstallSpec{
+				Name: spec.StringPtr("test-tool"),
+				Repo: spec.StringPtr("owner/test-tool"),
+				Asset: &spec.AssetConfig{
+					Template:         spec.StringPtr("${NAME}-${VERSION}-${OS}_${ARCH}${EXT}"),
+					DefaultExtension: spec.StringPtr(".tar.gz"),
+				},
+			},
+			wantSubstrings: []string{
+				`Usage: $this [-b bindir] [-d] [-n]`,
+				`-n turns on dry run mode`,
+			},
+		},
+		{
+			name: "dry run flag parsing in getopts",
+			installSpec: &spec.InstallSpec{
+				Name: spec.StringPtr("test-tool"),
+				Repo: spec.StringPtr("owner/test-tool"),
+				Asset: &spec.AssetConfig{
+					Template:         spec.StringPtr("${NAME}-${VERSION}-${OS}_${ARCH}${EXT}"),
+					DefaultExtension: spec.StringPtr(".tar.gz"),
+				},
+			},
+			wantSubstrings: []string{
+				`while getopts "b:dqh?xn" arg`,
+				`n) DRY_RUN=1 ;;`,
+			},
+		},
+		{
+			name: "dry run variable initialization",
+			installSpec: &spec.InstallSpec{
+				Name: spec.StringPtr("test-tool"),
+				Repo: spec.StringPtr("owner/test-tool"),
+				Asset: &spec.AssetConfig{
+					Template:         spec.StringPtr("${NAME}-${VERSION}-${OS}_${ARCH}${EXT}"),
+					DefaultExtension: spec.StringPtr(".tar.gz"),
+				},
+			},
+			wantSubstrings: []string{
+				`DRY_RUN=0`,
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := Generate(tt.installSpec)
+			if err != nil {
+				t.Fatalf("Generate() error = %v", err)
+			}
+
+			gotStr := string(got)
+
+			// Check for expected substrings
+			for _, want := range tt.wantSubstrings {
+				if !strings.Contains(gotStr, want) {
+					t.Errorf("Generate() missing expected substring: %q", want)
+				}
+			}
+
+			// Check for unexpected substrings
+			for _, unwanted := range tt.wantNotContain {
+				if strings.Contains(gotStr, unwanted) {
+					t.Errorf("Generate() contains unexpected substring: %q", unwanted)
+				}
+			}
+		})
+	}
+}
+
+func TestDryRunOutputFormat(t *testing.T) {
+	tests := []struct {
+		name           string
+		installSpec    *spec.InstallSpec
+		wantSubstrings []string
+	}{
+		{
+			name: "dry run output format for platform detection",
+			installSpec: &spec.InstallSpec{
+				Name: spec.StringPtr("test-tool"),
+				Repo: spec.StringPtr("owner/test-tool"),
+				Asset: &spec.AssetConfig{
+					Template:         spec.StringPtr("${NAME}-${VERSION}-${OS}_${ARCH}${EXT}"),
+					DefaultExtension: spec.StringPtr(".tar.gz"),
+				},
+			},
+			wantSubstrings: []string{
+				`log_info "[DRY RUN] Detected OS: ${OS}"`,
+				`log_info "[DRY RUN] Detected Architecture: ${ARCH}"`,
+			},
+		},
+		{
+			name: "dry run output format for URLs",
+			installSpec: &spec.InstallSpec{
+				Name: spec.StringPtr("test-tool"),
+				Repo: spec.StringPtr("owner/test-tool"),
+				Asset: &spec.AssetConfig{
+					Template:         spec.StringPtr("${NAME}-${VERSION}-${OS}_${ARCH}${EXT}"),
+					DefaultExtension: spec.StringPtr(".tar.gz"),
+				},
+			},
+			wantSubstrings: []string{
+				`log_info "[DRY RUN] Would download: ${ASSET_URL}"`,
+				`log_info "[DRY RUN] Would install to: ${INSTALL_PATH}"`,
+			},
+		},
+		{
+			name: "dry run checksum display",
+			installSpec: &spec.InstallSpec{
+				Name: spec.StringPtr("test-tool"),
+				Repo: spec.StringPtr("owner/test-tool"),
+				Asset: &spec.AssetConfig{
+					Template:         spec.StringPtr("${NAME}-${VERSION}-${OS}_${ARCH}${EXT}"),
+					DefaultExtension: spec.StringPtr(".tar.gz"),
+				},
+				Checksums: &spec.ChecksumConfig{
+					Algorithm: spec.AlgorithmPtr("sha256"),
+					Template:  spec.StringPtr("${NAME}_${VERSION}_checksums.txt"),
+				},
+			},
+			wantSubstrings: []string{
+				`log_info "[DRY RUN] Would verify checksum from: ${CHECKSUM_URL}"`,
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := Generate(tt.installSpec)
+			if err != nil {
+				t.Fatalf("Generate() error = %v", err)
+			}
+
+			gotStr := string(got)
+
+			// Check for expected substrings
+			for _, want := range tt.wantSubstrings {
+				if !strings.Contains(gotStr, want) {
+					t.Errorf("Generate() missing expected substring: %q", want)
+				}
+			}
+		})
+	}
+}
+
+func TestDryRunBehavior(t *testing.T) {
+	tests := []struct {
+		name           string
+		installSpec    *spec.InstallSpec
+		wantSubstrings []string
+		wantNotContain []string
+	}{
+		{
+			name: "dry run skips actual downloads",
+			installSpec: &spec.InstallSpec{
+				Name: spec.StringPtr("test-tool"),
+				Repo: spec.StringPtr("owner/test-tool"),
+				Asset: &spec.AssetConfig{
+					Template:         spec.StringPtr("${NAME}-${VERSION}-${OS}_${ARCH}${EXT}"),
+					DefaultExtension: spec.StringPtr(".tar.gz"),
+				},
+			},
+			wantSubstrings: []string{
+				`if [ "$DRY_RUN" = "1" ]; then`,
+				`log_info "[DRY RUN] Installation would complete successfully"`,
+				`return 0`,
+			},
+			wantNotContain: []string{},
+		},
+		{
+			name: "dry run conditional wrapping of downloads",
+			installSpec: &spec.InstallSpec{
+				Name: spec.StringPtr("test-tool"),
+				Repo: spec.StringPtr("owner/test-tool"),
+				Asset: &spec.AssetConfig{
+					Template:         spec.StringPtr("${NAME}-${VERSION}-${OS}_${ARCH}${EXT}"),
+					DefaultExtension: spec.StringPtr(".tar.gz"),
+				},
+			},
+			wantSubstrings: []string{
+				`if [ "$DRY_RUN" != "1" ]; then`,
+				`github_http_download "${TMPDIR}/${ASSET_FILENAME}" "${ASSET_URL}"`,
+				`fi`,
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := Generate(tt.installSpec)
+			if err != nil {
+				t.Fatalf("Generate() error = %v", err)
+			}
+
+			gotStr := string(got)
+
+			// Check for expected substrings
+			for _, want := range tt.wantSubstrings {
+				if !strings.Contains(gotStr, want) {
+					t.Errorf("Generate() missing expected substring: %q", want)
+				}
+			}
+
+			// Check for unexpected substrings
+			for _, unwanted := range tt.wantNotContain {
+				if strings.Contains(gotStr, unwanted) {
+					t.Errorf("Generate() contains unexpected substring: %q", unwanted)
+				}
+			}
+		})
+	}
+}

@@ -216,7 +216,6 @@ func TestFilterChecksumsNoAssetTemplate(t *testing.T) {
 	}
 }
 
-
 func TestEmbedder_EmbedWithMissingChecksumsField(t *testing.T) {
 	// Test that the embed command works when checksums field is missing (GitHub issue #84)
 	tempDir, err := os.MkdirTemp("", "embed-checksums-test")
@@ -490,4 +489,3 @@ ghi789  test-tool-1.0.0-windows-amd64.zip
 		t.Error("Expected embedded checksums comment to be preserved")
 	}
 }
-

@@ -7,9 +7,10 @@ usage() {
   cat <<EOF
 $this: download ${NAME} from ${REPO}
 
-Usage: $this [-b bindir] [-d]{{- if not .TargetVersion }} [tag]{{- end }}
+Usage: $this [-b bindir] [-d] [-n]{{- if not .TargetVersion }} [tag]{{- end }}
   -b sets bindir or installation directory, Defaults to {{ deref .DefaultBinDir }}
   -d turns on debug logging
+  -n turns on dry run mode
   {{- if .TargetVersion }}
    This installer is configured for {{ .TargetVersion }} only.
   {{- else }}
@@ -49,13 +50,15 @@ find_embedded_checksum() {
 
 parse_args() {
   BINDIR="{{ deref .DefaultBinDir }}"
-  while getopts "b:dqh?x" arg; do
+  DRY_RUN=0
+  while getopts "b:dqh?xn" arg; do
     case "$arg" in
     b) BINDIR="$OPTARG" ;;
     d) log_set_priority 10 ;;
     q) log_set_priority 3 ;;
     h | \?) usage "$0" ;;
     x) set -x ;;
+    n) DRY_RUN=1 ;;
     esac
   done
   shift $((OPTIND - 1))
@@ -152,12 +155,30 @@ execute() {
     CHECKSUM_URL="${GITHUB_DOWNLOAD}/${TAG}/${CHECKSUM_FILENAME}"
   fi
 
+  # --- Dry Run Output ---
+  if [ "$DRY_RUN" = "1" ]; then
+    log_info "[DRY RUN] Would download: ${ASSET_URL}"
+    if [ -n "$CHECKSUM_URL" ]; then
+      log_info "[DRY RUN] Would verify checksum from: ${CHECKSUM_URL}"
+    fi
+    {{- range $i, $binary := .Asset.Binaries }}
+    INSTALL_PATH="${BINDIR}/{{ deref $binary.Name }}"
+    if [ "${UNAME_OS}" = "windows" ]; then
+      case "${INSTALL_PATH}" in *.exe) ;; *) INSTALL_PATH="${INSTALL_PATH}.exe" ;; esac
+    fi
+    log_info "[DRY RUN] Would install to: ${INSTALL_PATH}"
+    {{- end }}
+    log_info "[DRY RUN] Installation would complete successfully"
+    return 0
+  fi
+
   # --- Download and Verify ---
-  TMPDIR=$(mktemp -d)
-  trap 'rm -rf -- "$TMPDIR"' EXIT HUP INT TERM
-  log_debug "Downloading files into ${TMPDIR}"
-  log_info "Downloading ${ASSET_URL}"
-  github_http_download "${TMPDIR}/${ASSET_FILENAME}" "${ASSET_URL}"
+  if [ "$DRY_RUN" != "1" ]; then
+    TMPDIR=$(mktemp -d)
+    trap 'rm -rf -- "$TMPDIR"' EXIT HUP INT TERM
+    log_debug "Downloading files into ${TMPDIR}"
+    log_info "Downloading ${ASSET_URL}"
+    github_http_download "${TMPDIR}/${ASSET_FILENAME}" "${ASSET_URL}"
 
   # Try to find embedded checksum first
   EMBEDDED_HASH=$(find_embedded_checksum "$VERSION" "$ASSET_FILENAME")
@@ -230,6 +251,7 @@ execute() {
   install "${BINARY_PATH}" "${INSTALL_PATH}"
   log_info "${BINARY_NAME} installation complete!"
   {{- end }}
+  fi
 }
 
 # --- Configuration  ---
@@ -263,6 +285,11 @@ ARCH="${BINSTALLER_ARCH:-$(uname_arch)}"
 {{- end }}
 {{- end }}
 log_info "Detected Platform: ${OS}/${ARCH}"
+
+if [ "$DRY_RUN" = "1" ]; then
+  log_info "[DRY RUN] Detected OS: ${OS}"
+  log_info "[DRY RUN] Detected Architecture: ${ARCH}"
+fi
 
 # --- Validate platform ---
 uname_os_check "$OS"
