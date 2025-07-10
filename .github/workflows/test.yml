@@ -54,6 +54,10 @@ jobs:
         if [ -n "$(git status -s)" ]; then
           echo "::error::Uncommitted changes detected - please commit the generated changes."
           git status -s
+          echo "::group::Diff of changes"
+          git add -N .
+          git diff
+          echo "::endgroup::"
           exit 1
         fi
 
