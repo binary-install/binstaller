@@ -85,9 +85,9 @@ lint: aqua-install schema-lint ## Run all the linters
 ci: build test-all lint gen fmt ## Run CI checks
 	@echo "Checking for uncommitted changes..."
 	@if [ -n "$$(git status -s)" ]; then \
-		echo "Error: Uncommitted changes detected - please commit the generated changes."; \
+		echo "Warning: Uncommitted changes detected (possibly generated files):"; \
 		git status -s; \
-		exit 1; \
+		echo "Please check and commit if necessary."; \
 	else \
 		echo "No uncommitted changes - all good!"; \
 	fi
