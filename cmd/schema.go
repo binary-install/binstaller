@@ -61,10 +61,28 @@ func RunSchema(format, typeFilter string, list bool, output interface{}) error {
 
 // loadInstallSpecSchema loads and parses the InstallSpec JSON schema
 func loadInstallSpecSchema() (interface{}, error) {
-	schemaPath := filepath.Join("..", "schema", "output", "@typespec", "json-schema", "InstallSpec.json")
-	installSpecJSON, err := os.ReadFile(schemaPath)
+	// Try multiple possible paths for the schema file
+	possiblePaths := []string{
+		// From test directory
+		filepath.Join("..", "schema", "output", "@typespec", "json-schema", "InstallSpec.json"),
+		// From project root
+		filepath.Join("schema", "output", "@typespec", "json-schema", "InstallSpec.json"),
+		// From cmd directory
+		filepath.Join("..", "..", "schema", "output", "@typespec", "json-schema", "InstallSpec.json"),
+	}
+	
+	var installSpecJSON []byte
+	var err error
+	
+	for _, schemaPath := range possiblePaths {
+		installSpecJSON, err = os.ReadFile(schemaPath)
+		if err == nil {
+			break
+		}
+	}
+	
 	if err != nil {
-		return nil, fmt.Errorf("failed to read schema file: %w", err)
+		return nil, fmt.Errorf("failed to read schema file from any of the expected locations: %w", err)
 	}
 
 	var jsonSchema interface{}
@@ -95,11 +113,30 @@ func convertToJSON(schema interface{}) ([]byte, error) {
 
 // convertToTypeSpec reads and returns the TypeSpec source file
 func convertToTypeSpec() ([]byte, error) {
-	typeSpecPath := filepath.Join("..", "schema", "main.tsp")
-	typeSpecBytes, err := os.ReadFile(typeSpecPath)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read TypeSpec file: %w", err)
+	// Try multiple possible paths for the TypeSpec file
+	possiblePaths := []string{
+		// From test directory
+		filepath.Join("..", "schema", "main.tsp"),
+		// From project root
+		filepath.Join("schema", "main.tsp"),
+		// From cmd directory
+		filepath.Join("..", "..", "schema", "main.tsp"),
 	}
+	
+	var typeSpecBytes []byte
+	var err error
+	
+	for _, typeSpecPath := range possiblePaths {
+		typeSpecBytes, err = os.ReadFile(typeSpecPath)
+		if err == nil {
+			break
+		}
+	}
+	
+	if err != nil {
+		return nil, fmt.Errorf("failed to read TypeSpec file from any of the expected locations: %w", err)
+	}
+	
 	return typeSpecBytes, nil
 }
 
