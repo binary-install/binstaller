@@ -35,7 +35,6 @@ AQUA_ROOT_DIR ?= $(HOME)/.local/share/aquaproj-aqua
 # Check if aqua is installed
 AQUA_BIN := $(shell which aqua 2>/dev/null || echo "$(AQUA_ROOT_DIR)/bin/aqua")
 export PATH := $(AQUA_ROOT_DIR)/bin:./bin:$(PATH)
-export AQUA_DISABLE_LAZY_INSTALL := 1
 export GO111MODULE := on
 # Use Go module proxy
 export GOPROXY = https://proxy.golang.org
