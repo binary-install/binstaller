@@ -48,7 +48,7 @@ generates a POSIX-compatible shell installer script.`,
   binst gen --type=runner -o run.sh
 
   # Run binary directly using runner script
-  ./run.sh --help
+  ./run.sh -- --help
 
   # Generate installer from specific config file
   binst gen --config myapp.binstaller.yml -o myapp-install.sh

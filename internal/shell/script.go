@@ -18,6 +18,7 @@ type templateData struct {
 	HashFunctions     string
 	ShellFunctions    string
 	TargetVersion     string // Fixed version when --target-version is specified
+	ScriptType        string // Type of script: "installer" or "runner"
 }
 
 // Generate creates the installer shell script content based on the InstallSpec.
@@ -29,45 +30,7 @@ func Generate(installSpec *spec.InstallSpec) ([]byte, error) {
 // GenerateWithVersion creates the installer shell script content based on the InstallSpec.
 // If targetVersion is specified, the script will be generated for that specific version only.
 func GenerateWithVersion(installSpec *spec.InstallSpec, targetVersion string) ([]byte, error) {
-	if installSpec == nil {
-		return nil, errors.New("install spec cannot be nil")
-	}
-	// Apply spec defaults first
-	installSpec.SetDefaults()
-
-	// Filter embedded checksums if target version is specified
-	if targetVersion != "" {
-		installSpec = filterChecksumsForVersion(installSpec, targetVersion)
-	}
-
-	// --- Prepare Template Data ---
-	// Only pass static data known at generation time, plus the shell functions
-	data := templateData{
-		InstallSpec:    installSpec,
-		Shlib:          shlib,
-		HashFunctions:  hashFunc(installSpec),
-		ShellFunctions: shellFunctions,
-		TargetVersion:  targetVersion,
-	}
-
-	// --- Prepare Template ---
-	// The template now needs to contain the logic for runtime detection and asset resolution
-	funcMap := createFuncMap() // Keep helper funcs like default, tolower etc.
-
-	tmpl, err := template.New("installer").Funcs(funcMap).Parse(mainScriptTemplate) // Parse only the main template
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to parse installer template")
-	}
-
-	// --- Execute Template ---
-	var buf bytes.Buffer
-	// Execute the template with the data struct.
-	err = tmpl.Execute(&buf, data)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to execute installer template")
-	}
-
-	return buf.Bytes(), nil
+	return GenerateWithScriptType(installSpec, targetVersion, "installer")
 }
 
 // GenerateRunner creates a runner shell script that downloads and runs the binary without installing
@@ -91,12 +54,7 @@ func GenerateWithScriptType(installSpec *spec.InstallSpec, targetVersion, script
 		scriptType = "installer"
 	}
 
-	// Use existing installer generation for installer type
-	if scriptType == "installer" {
-		return GenerateWithVersion(installSpec, targetVersion)
-	}
-
-	// Generate runner script
+	// Apply spec defaults
 	installSpec.SetDefaults()
 
 	// Filter embedded checksums if target version is specified
@@ -104,26 +62,27 @@ func GenerateWithScriptType(installSpec *spec.InstallSpec, targetVersion, script
 		installSpec = filterChecksumsForVersion(installSpec, targetVersion)
 	}
 
-	// Prepare template data for runner
+	// Prepare template data
 	data := templateData{
 		InstallSpec:    installSpec,
 		Shlib:          shlib,
 		HashFunctions:  hashFunc(installSpec),
 		ShellFunctions: shellFunctions,
 		TargetVersion:  targetVersion,
+		ScriptType:     scriptType,
 	}
 
-	// Use runner template
+	// Use unified template
 	funcMap := createFuncMap()
-	tmpl, err := template.New("runner").Funcs(funcMap).Parse(runnerScriptTemplate)
+	tmpl, err := template.New("unified").Funcs(funcMap).Parse(unifiedScriptTemplate)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to parse runner template")
+		return nil, errors.Wrap(err, "failed to parse unified template")
 	}
 
 	var buf bytes.Buffer
 	err = tmpl.Execute(&buf, data)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to execute runner template")
+		return nil, errors.Wrap(err, "failed to execute unified template")
 	}
 
 	return buf.Bytes(), nil
