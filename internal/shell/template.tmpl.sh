@@ -256,7 +256,7 @@ resolve_asset_filename() {
 
 {{- template "resolve_asset_filename" . }}
 
-{{- define "cleanup_installer" }}
+{{- define "cleanup" }}
 # Cleanup function to remove temporary files
 cleanup() {
   if [ -n "$TMPDIR" ] && [ -d "$TMPDIR" ]; then
@@ -266,21 +266,7 @@ cleanup() {
 }
 {{- end }}
 
-{{- define "cleanup_runner" }}
-# Cleanup function to remove temporary files
-cleanup() {
-  if [ -n "$TMPDIR" ] && [ -d "$TMPDIR" ]; then
-    log_debug "Cleaning up temporary directory: $TMPDIR"
-    rm -rf "$TMPDIR"
-  fi
-}
-{{- end }}
-
-{{- if eq .ScriptType "installer" }}
-{{- template "cleanup_installer" . }}
-{{- else }}
-{{- template "cleanup_runner" . }}
-{{- end }}
+{{- template "cleanup" . }}
 
 {{- define "execute_download_verify" }}
   STRIP_COMPONENTS={{ if .Unpack }}{{ deref .Unpack.StripComponents | default 0 }}{{ else }}0{{ end }}

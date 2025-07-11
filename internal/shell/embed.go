@@ -5,7 +5,7 @@ import _ "embed"
 // unifiedScriptTemplate is the unified template for both installer and runner scripts.
 // It uses sub-templates to handle differences between installer and runner modes.
 //
-//go:embed unified.tmpl.sh
+//go:embed template.tmpl.sh
 var unifiedScriptTemplate string
 
 // shlib contains the library of POSIX shell functions.
