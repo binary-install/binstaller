@@ -2,11 +2,11 @@ package shell
 
 import _ "embed"
 
-// mainScriptTemplate is the main body of the installer script.
-// It performs runtime detection and resolution.
+// unifiedScriptTemplate is the unified template for both installer and runner scripts.
+// It uses sub-templates to handle differences between installer and runner modes.
 //
 //go:embed template.tmpl.sh
-var mainScriptTemplate string
+var unifiedScriptTemplate string
 
 // shlib contains the library of POSIX shell functions.
 // Adapted from https://github.com/client9/shlib

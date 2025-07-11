@@ -172,7 +172,11 @@ test-target-version: binst ## Test target version functionality
 	@echo "Testing target version functionality..."
 	@./test/target_version.sh
 
-test-integration: test-gen-configs test-gen-installers test-run-installers test-check test-target-version ## Run full integration test suite (accesses GitHub API)
+test-runner-mode: binst ## Test runner mode functionality
+	@echo "Testing runner mode functionality..."
+	@./test/runner_mode.sh
+
+test-integration: test-gen-configs test-gen-installers test-run-installers test-check test-target-version test-runner-mode ## Run full integration test suite (accesses GitHub API)
 	@echo "Integration tests completed"
 	@echo "Note: These tests access GitHub API. Set GITHUB_TOKEN to avoid rate limits."
 
@@ -218,7 +222,7 @@ test-clean: ## Clean up test artifacts
 
 .DEFAULT_GOAL := build
 
-.PHONY: ci test test-unit test-race test-cover help clean binst-init test-gen-configs test-gen-installers test-run-installers test-run-installers-incremental test-aqua-source test-all-platforms test-integration test-incremental test-clean test-target-version gen-schema gen-yaml-schema gen-go gen gen-platforms aqua-install
+.PHONY: ci test test-unit test-race test-cover help clean binst-init test-gen-configs test-gen-installers test-run-installers test-run-installers-incremental test-aqua-source test-all-platforms test-integration test-incremental test-clean test-target-version test-runner-mode gen-schema gen-yaml-schema gen-go gen gen-platforms aqua-install
 
 clean: ## clean up everything
 	go clean ./...
