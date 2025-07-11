@@ -29,8 +29,8 @@ fi
 echo "✓ Runner script 'help' command executed successfully"
 
 # Test runner script with check command
-if ! "$TEST_DIR/run-binst.sh" -d -- check --help > /dev/null 2>&1; then
-    echo "ERROR: Runner script failed to execute 'binst check --help'"
+if ! "$TEST_DIR/run-binst.sh" -d -- check --help | grep '✓ EXISTS'; then
+    echo "ERROR: Runner script failed to execute 'binst check --help' or output missing expected content"
     exit 1
 fi
 

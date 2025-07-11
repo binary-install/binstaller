@@ -341,7 +341,7 @@ cleanup() {
 {{- define "execute_run" }}
   # Run the binary directly with provided arguments
   log_info "Running ${BINARY_NAME}${TOOL_ARGS:+ with arguments:$TOOL_ARGS}"
-  exec "${BINARY_PATH}" "$@"
+  exec "${BINARY_PATH}" "${TOOL_ARGS}"
 {{- end }}
 
 execute() {
