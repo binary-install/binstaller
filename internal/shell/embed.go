@@ -8,6 +8,11 @@ import _ "embed"
 //go:embed template.tmpl.sh
 var mainScriptTemplate string
 
+// runnerScriptTemplate is the template for runner scripts that run binaries without installing
+//
+//go:embed runner.tmpl.sh
+var runnerScriptTemplate string
+
 // shlib contains the library of POSIX shell functions.
 // Adapted from https://github.com/client9/shlib
 //

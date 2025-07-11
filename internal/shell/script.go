@@ -70,6 +70,65 @@ func GenerateWithVersion(installSpec *spec.InstallSpec, targetVersion string) ([
 	return buf.Bytes(), nil
 }
 
+// GenerateRunner creates a runner shell script that downloads and runs the binary without installing
+func GenerateRunner(installSpec *spec.InstallSpec, targetVersion string) ([]byte, error) {
+	return GenerateWithScriptType(installSpec, targetVersion, "runner")
+}
+
+// GenerateWithScriptType creates a shell script based on the specified script type
+func GenerateWithScriptType(installSpec *spec.InstallSpec, targetVersion, scriptType string) ([]byte, error) {
+	if installSpec == nil {
+		return nil, errors.New("install spec cannot be nil")
+	}
+
+	// Validate script type
+	if scriptType != "" && scriptType != "installer" && scriptType != "runner" {
+		return nil, fmt.Errorf("invalid script type %q: must be 'installer' or 'runner'", scriptType)
+	}
+
+	// Default to installer if empty
+	if scriptType == "" {
+		scriptType = "installer"
+	}
+
+	// Use existing installer generation for installer type
+	if scriptType == "installer" {
+		return GenerateWithVersion(installSpec, targetVersion)
+	}
+
+	// Generate runner script
+	installSpec.SetDefaults()
+
+	// Filter embedded checksums if target version is specified
+	if targetVersion != "" {
+		installSpec = filterChecksumsForVersion(installSpec, targetVersion)
+	}
+
+	// Prepare template data for runner
+	data := templateData{
+		InstallSpec:    installSpec,
+		Shlib:          shlib,
+		HashFunctions:  hashFunc(installSpec),
+		ShellFunctions: shellFunctions,
+		TargetVersion:  targetVersion,
+	}
+
+	// Use runner template
+	funcMap := createFuncMap()
+	tmpl, err := template.New("runner").Funcs(funcMap).Parse(runnerScriptTemplate)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to parse runner template")
+	}
+
+	var buf bytes.Buffer
+	err = tmpl.Execute(&buf, data)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to execute runner template")
+	}
+
+	return buf.Bytes(), nil
+}
+
 // filterChecksumsForVersion filters embedded checksums to only include the specified version
 // This function modifies the original installSpec to filter checksums
 func filterChecksumsForVersion(installSpec *spec.InstallSpec, targetVersion string) *spec.InstallSpec {

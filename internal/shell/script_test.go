@@ -496,3 +496,197 @@ func TestDryRunBehavior(t *testing.T) {
 		})
 	}
 }
+
+func TestGenerateRunner(t *testing.T) {
+	tests := []struct {
+		name           string
+		installSpec    *spec.InstallSpec
+		targetVersion  string
+		wantSubstrings []string
+		wantNotContain []string
+	}{
+		{
+			name: "runner script generation without target version",
+			installSpec: &spec.InstallSpec{
+				Name: spec.StringPtr("test-tool"),
+				Repo: spec.StringPtr("owner/test-tool"),
+				Asset: &spec.AssetConfig{
+					Template:         spec.StringPtr("${NAME}-${VERSION}-${OS}_${ARCH}${EXT}"),
+					DefaultExtension: spec.StringPtr(".tar.gz"),
+				},
+			},
+			targetVersion: "",
+			wantSubstrings: []string{
+				`# This script runs test-tool directly without installing`,
+				`exec "${BINARY_PATH}" "$@"`,
+				`cleanup() {`,
+				`trap cleanup EXIT HUP INT TERM`,
+			},
+			wantNotContain: []string{
+				`install "${BINARY_PATH}" "${INSTALL_PATH}"`,
+				`Installation complete!`,
+				`Installing binary to`,
+			},
+		},
+		{
+			name: "runner script with target version",
+			installSpec: &spec.InstallSpec{
+				Name: spec.StringPtr("test-tool"),
+				Repo: spec.StringPtr("owner/test-tool"),
+				Asset: &spec.AssetConfig{
+					Template:         spec.StringPtr("${NAME}-${VERSION}-${OS}_${ARCH}${EXT}"),
+					DefaultExtension: spec.StringPtr(".tar.gz"),
+				},
+			},
+			targetVersion: "v1.2.3",
+			wantSubstrings: []string{
+				`# This script runs test-tool directly without installing`,
+				`TAG="v1.2.3"`,
+				`exec "${BINARY_PATH}" "$@"`,
+			},
+			wantNotContain: []string{
+				`TAG="${1:-latest}"`,
+				`install "${BINARY_PATH}" "${INSTALL_PATH}"`,
+			},
+		},
+		{
+			name: "runner script usage shows correct parameters",
+			installSpec: &spec.InstallSpec{
+				Name: spec.StringPtr("test-tool"),
+				Repo: spec.StringPtr("owner/test-tool"),
+				Asset: &spec.AssetConfig{
+					Template:         spec.StringPtr("${NAME}-${VERSION}-${OS}_${ARCH}${EXT}"),
+					DefaultExtension: spec.StringPtr(".tar.gz"),
+				},
+			},
+			targetVersion: "",
+			wantSubstrings: []string{
+				`Usage: $this [-d]`,
+				`This script downloads and runs test-tool directly`,
+				`Pass arguments after --:`,
+				`$this -- --help`,
+			},
+			wantNotContain: []string{
+				`[-b bindir]`,
+				`sets bindir or installation directory`,
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := GenerateRunner(tt.installSpec, tt.targetVersion)
+			if err != nil {
+				t.Fatalf("GenerateRunner() error = %v", err)
+			}
+
+			gotStr := string(got)
+
+			// Check for expected substrings
+			for _, want := range tt.wantSubstrings {
+				if !strings.Contains(gotStr, want) {
+					t.Errorf("GenerateRunner() missing expected substring: %q", want)
+				}
+			}
+
+			// Check for unexpected substrings
+			for _, unwanted := range tt.wantNotContain {
+				if strings.Contains(gotStr, unwanted) {
+					t.Errorf("GenerateRunner() contains unexpected substring: %q", unwanted)
+				}
+			}
+		})
+	}
+}
+
+func TestGenerateWithScriptType(t *testing.T) {
+	tests := []struct {
+		name        string
+		installSpec *spec.InstallSpec
+		scriptType  string
+		wantError   bool
+		checkFunc   func(string) bool
+	}{
+		{
+			name: "installer type generates installer script",
+			installSpec: &spec.InstallSpec{
+				Name: spec.StringPtr("test-tool"),
+				Repo: spec.StringPtr("owner/test-tool"),
+				Asset: &spec.AssetConfig{
+					Template:         spec.StringPtr("${NAME}-${VERSION}-${OS}_${ARCH}${EXT}"),
+					DefaultExtension: spec.StringPtr(".tar.gz"),
+				},
+			},
+			scriptType: "installer",
+			wantError:  false,
+			checkFunc: func(script string) bool {
+				return strings.Contains(script, `install "${BINARY_PATH}" "${INSTALL_PATH}"`)
+			},
+		},
+		{
+			name: "runner type generates runner script",
+			installSpec: &spec.InstallSpec{
+				Name: spec.StringPtr("test-tool"),
+				Repo: spec.StringPtr("owner/test-tool"),
+				Asset: &spec.AssetConfig{
+					Template:         spec.StringPtr("${NAME}-${VERSION}-${OS}_${ARCH}${EXT}"),
+					DefaultExtension: spec.StringPtr(".tar.gz"),
+				},
+			},
+			scriptType: "runner",
+			wantError:  false,
+			checkFunc: func(script string) bool {
+				return strings.Contains(script, `exec "${BINARY_PATH}" "$@"`)
+			},
+		},
+		{
+			name: "empty type defaults to installer",
+			installSpec: &spec.InstallSpec{
+				Name: spec.StringPtr("test-tool"),
+				Repo: spec.StringPtr("owner/test-tool"),
+				Asset: &spec.AssetConfig{
+					Template:         spec.StringPtr("${NAME}-${VERSION}-${OS}_${ARCH}${EXT}"),
+					DefaultExtension: spec.StringPtr(".tar.gz"),
+				},
+			},
+			scriptType: "",
+			wantError:  false,
+			checkFunc: func(script string) bool {
+				return strings.Contains(script, `install "${BINARY_PATH}" "${INSTALL_PATH}"`)
+			},
+		},
+		{
+			name: "invalid type returns error",
+			installSpec: &spec.InstallSpec{
+				Name: spec.StringPtr("test-tool"),
+				Repo: spec.StringPtr("owner/test-tool"),
+				Asset: &spec.AssetConfig{
+					Template:         spec.StringPtr("${NAME}-${VERSION}-${OS}_${ARCH}${EXT}"),
+					DefaultExtension: spec.StringPtr(".tar.gz"),
+				},
+			},
+			scriptType: "invalid",
+			wantError:  true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := GenerateWithScriptType(tt.installSpec, "", tt.scriptType)
+			if tt.wantError {
+				if err == nil {
+					t.Errorf("GenerateWithScriptType() expected error, but got none")
+				}
+				return
+			}
+
+			if err != nil {
+				t.Fatalf("GenerateWithScriptType() unexpected error = %v", err)
+			}
+
+			if tt.checkFunc != nil && !tt.checkFunc(string(got)) {
+				t.Errorf("GenerateWithScriptType() script check failed for type %q", tt.scriptType)
+			}
+		})
+	}
+}

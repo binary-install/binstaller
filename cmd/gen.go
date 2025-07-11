@@ -13,10 +13,22 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// validateScriptType validates the script type flag value
+func validateScriptType(scriptType string) error {
+	if scriptType == "" || scriptType == "installer" {
+		return nil
+	}
+	if scriptType == "runner" {
+		return nil
+	}
+	return fmt.Errorf("invalid script type %q: must be 'installer' or 'runner'", scriptType)
+}
+
 var (
 	// Flags for gen command
 	genOutputFile    string
 	genTargetVersion string
+	genScriptType    string
 	// Input config file is handled by the global --config flag
 )
 
@@ -32,6 +44,12 @@ generates a POSIX-compatible shell installer script.`,
   # Generate installer with custom output file
   binst gen -o install.sh
 
+  # Generate runner script (runs binary without installing)
+  binst gen --type=runner -o run.sh
+
+  # Run binary directly using runner script
+  ./run.sh --help
+
   # Generate installer from specific config file
   binst gen --config myapp.binstaller.yml -o myapp-install.sh
 
@@ -40,6 +58,9 @@ generates a POSIX-compatible shell installer script.`,
 
   # Generate installer for a specific version only
   binst gen --target-version v1.2.3 -o install-v1.2.3.sh
+
+  # Generate runner for specific version
+  binst gen --type=runner --target-version v1.2.3 -o run-v1.2.3.sh
 
   # Typical workflow with init and gen
   binst init --source=github --repo=owner/repo
@@ -61,6 +82,17 @@ generates a POSIX-compatible shell installer script.`,
   binst gen | sh -s -- -n`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		log.Info("Running gen command...")
+
+		// Validate script type
+		if err := validateScriptType(genScriptType); err != nil {
+			log.WithError(err).Error("Invalid script type")
+			return err
+		}
+
+		// Default to installer if not specified
+		if genScriptType == "" {
+			genScriptType = "installer"
+		}
 
 		// Determine config file path using common logic
 		cfgFile, err := resolveConfigFile(configFile)
@@ -101,23 +133,23 @@ generates a POSIX-compatible shell installer script.`,
 		}
 
 		// Generate the script using the internal shell generator
-		log.Info("Generating installer script...")
-		scriptBytes, err := shell.GenerateWithVersion(&installSpec, genTargetVersion) // Pass the loaded spec and target version
+		log.Infof("Generating %s script...", genScriptType)
+		scriptBytes, err := shell.GenerateWithScriptType(&installSpec, genTargetVersion, genScriptType)
 		if err != nil {
-			log.WithError(err).Error("Failed to generate installer script")
-			return fmt.Errorf("failed to generate installer script: %w", err)
+			log.WithError(err).Errorf("Failed to generate %s script", genScriptType)
+			return fmt.Errorf("failed to generate %s script: %w", genScriptType, err)
 		}
-		log.Debug("Installer script generated successfully")
+		log.Debugf("%s script generated successfully", genScriptType)
 
 		// Write the output script
 		if genOutputFile == "" || genOutputFile == "-" {
 			// Write to stdout
-			log.Debug("Writing installer script to stdout")
+			log.Debugf("Writing %s script to stdout", genScriptType)
 			fmt.Print(string(scriptBytes))
-			log.Info("Installer script written to stdout")
+			log.Infof("%s script written to stdout", genScriptType)
 		} else {
 			// Write to file
-			log.Infof("Writing installer script to file: %s", genOutputFile)
+			log.Infof("Writing %s script to file: %s", genScriptType, genOutputFile)
 			// Ensure the output directory exists
 			outputDir := filepath.Dir(genOutputFile)
 			if err := os.MkdirAll(outputDir, 0755); err != nil {
@@ -127,10 +159,10 @@ generates a POSIX-compatible shell installer script.`,
 
 			err = os.WriteFile(genOutputFile, scriptBytes, 0755) // Make script executable
 			if err != nil {
-				log.WithError(err).Errorf("Failed to write installer script to file: %s", genOutputFile)
-				return fmt.Errorf("failed to write installer script to file %s: %w", genOutputFile, err)
+				log.WithError(err).Errorf("Failed to write %s script to file: %s", genScriptType, genOutputFile)
+				return fmt.Errorf("failed to write %s script to file %s: %w", genScriptType, genOutputFile, err)
 			}
-			log.Infof("Installer script successfully written to %s", genOutputFile)
+			log.Infof("%s script successfully written to %s", genScriptType, genOutputFile)
 		}
 
 		return nil
@@ -142,4 +174,5 @@ func init() {
 	// Input config file is handled by the global --config flag
 	GenCommand.Flags().StringVarP(&genOutputFile, "output", "o", "-", "Output path for the generated script (use '-' for stdout)")
 	GenCommand.Flags().StringVar(&genTargetVersion, "target-version", "", "Generate script for specific version only (disables runtime version selection)")
+	GenCommand.Flags().StringVar(&genScriptType, "type", "installer", "Type of script to generate (installer, runner)")
 }
