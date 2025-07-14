@@ -382,6 +382,8 @@ execute() {
   {{- if eq $.ScriptType "installer" }}
   {{- template "execute_install" $ }}
   {{- else }}
+  # Make binary executable for runner script
+  chmod +x "${BINARY_PATH}"
   {{- template "execute_run" $ }}
   {{- end }}
   {{- end }}
