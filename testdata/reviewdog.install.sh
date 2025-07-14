@@ -324,7 +324,6 @@ github_release() {
   echo "$version"
 }
 
-
 # --- Embedded Checksums (Format: VERSION:FILENAME:HASH) ---
 EMBEDDED_CHECKSUMS=""
 
@@ -334,7 +333,6 @@ find_embedded_checksum() {
   filename="$2"
   echo "$EMBEDDED_CHECKSUMS" | grep -E "^${version}:${filename}:" | cut -d':' -f3
 }
-
 parse_args() {
   BINDIR="${BINSTALLER_BIN:-${HOME}/.local/bin}"
   DRY_RUN=0
@@ -351,7 +349,6 @@ parse_args() {
   shift $((OPTIND - 1))
   TAG="${1:-latest}"
 }
-
 tag_to_version() {
   if [ "$TAG" = "latest" ]; then
     log_info "checking GitHub for latest tag"
@@ -373,13 +370,13 @@ tag_to_version() {
   log_info "Resolved version: ${VERSION} (tag: ${TAG})"
 }
 
+
 capitalize() {
   input="$1"
   first_char=$(printf "%s" "$input" | cut -c1)
   first_upper=$(printf "%s" "$first_char" | tr '[:lower:]' '[:upper:]')
   printf "%s%s\n" "$first_upper" "$(printf "%s" "$input" | cut -c2-)"
 }
-
 
 resolve_asset_filename() {
   OS="$(capitalize "${OS}")"
@@ -395,6 +392,13 @@ resolve_asset_filename() {
   fi
   if [ -z "${ASSET_FILENAME}" ]; then
     ASSET_FILENAME="${NAME}_${VERSION}_${OS}_${ARCH}${EXT}"
+  fi
+}
+# Cleanup function to remove temporary files
+cleanup() {
+  if [ -n "$TMPDIR" ] && [ -d "$TMPDIR" ]; then
+    log_debug "Cleaning up temporary directory: $TMPDIR"
+    rm -rf -- "$TMPDIR"
   fi
 }
 
@@ -470,7 +474,6 @@ execute() {
     fi
     return 1
   fi
-
   # Install the binary
   INSTALL_PATH="${BINDIR}/${BINARY_NAME}"
   

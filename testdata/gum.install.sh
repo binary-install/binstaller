@@ -324,7 +324,6 @@ github_release() {
   echo "$version"
 }
 
-
 # --- Embedded Checksums (Format: VERSION:FILENAME:HASH) ---
 EMBEDDED_CHECKSUMS="
 0.15.0:gum_0.15.0_Darwin_arm64.tar.gz:82c5d460e5ba1366be26a890bb9275f5336c7fba403376ccc246aab5c19ed7ea
@@ -382,7 +381,6 @@ find_embedded_checksum() {
   filename="$2"
   echo "$EMBEDDED_CHECKSUMS" | grep -E "^${version}:${filename}:" | cut -d':' -f3
 }
-
 parse_args() {
   BINDIR="${BINSTALLER_BIN:-${HOME}/.local/bin}"
   DRY_RUN=0
@@ -399,7 +397,6 @@ parse_args() {
   shift $((OPTIND - 1))
   TAG="${1:-v0.16.0}"
 }
-
 tag_to_version() {
   if [ "$TAG" = "latest" ]; then
     log_info "checking GitHub for latest tag"
@@ -465,6 +462,13 @@ resolve_asset_filename() {
   fi
   if [ -z "${ASSET_FILENAME}" ]; then
     ASSET_FILENAME="gum_${VERSION}_${OS}_${ARCH}${EXT}"
+  fi
+}
+# Cleanup function to remove temporary files
+cleanup() {
+  if [ -n "$TMPDIR" ] && [ -d "$TMPDIR" ]; then
+    log_debug "Cleaning up temporary directory: $TMPDIR"
+    rm -rf -- "$TMPDIR"
   fi
 }
 
@@ -540,7 +544,6 @@ execute() {
     fi
     return 1
   fi
-
   # Install the binary
   INSTALL_PATH="${BINDIR}/${BINARY_NAME}"
   
