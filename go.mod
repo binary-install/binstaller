@@ -1,10 +1,10 @@
 module github.com/binary-install/binstaller
 
-go 1.24.4
+go 1.24.5
 
 require (
 	github.com/apex/log v1.9.0
-	github.com/aquaproj/aqua/v2 v2.53.3
+	github.com/aquaproj/aqua/v2 v2.53.4
 	github.com/buildkite/interpolate v0.1.5
 	github.com/charmbracelet/colorprofile v0.3.1
 	github.com/charmbracelet/fang v0.3.0
@@ -50,7 +50,7 @@ require (
 	github.com/emirpasic/gods v1.18.1 // indirect
 	github.com/expr-lang/expr v1.17.5 // indirect
 	github.com/fatih/color v1.18.0 // indirect
-	github.com/forPelevin/gomoji v1.3.0 // indirect
+	github.com/forPelevin/gomoji v1.3.1 // indirect
 	github.com/gdamore/encoding v1.0.1 // indirect
 	github.com/gdamore/tcell/v2 v2.6.0 // indirect
 	github.com/go-git/gcfg v1.5.1-0.20230307220236-3a3c6141e376 // indirect
@@ -59,7 +59,7 @@ require (
 	github.com/gobwas/glob v0.2.3 // indirect
 	github.com/godbus/dbus/v5 v5.1.0 // indirect
 	github.com/golang/groupcache v0.0.0-20241129210726-2c02b8208cf8 // indirect
-	github.com/google/go-github/v72 v72.0.0 // indirect
+	github.com/google/go-github/v73 v73.0.0 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/google/wire v0.6.0 // indirect
@@ -85,7 +85,8 @@ require (
 	github.com/mattn/go-colorable v0.1.14 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mattn/go-runewidth v0.0.16 // indirect
-	github.com/mholt/archives v0.1.2 // indirect
+	github.com/mholt/archives v0.1.3 // indirect
+	github.com/mikelolasagasti/xz v1.0.1 // indirect
 	github.com/minio/minlz v1.0.0 // indirect
 	github.com/mitchellh/colorstring v0.0.0-20190213212951-d06e56a500db // indirect
 	github.com/mitchellh/copystructure v1.2.0 // indirect
@@ -118,7 +119,6 @@ require (
 	github.com/suzuki-shunsuke/go-retryablehttp-logrus v0.0.1 // indirect
 	github.com/suzuki-shunsuke/logrus-error v0.1.4 // indirect
 	github.com/suzuki-shunsuke/urfave-cli-v3-util v0.0.7 // indirect
-	github.com/therootcompany/xz v1.0.1 // indirect
 	github.com/ulikunitz/xz v0.5.12 // indirect
 	github.com/wk8/go-ordered-map/v2 v2.1.8 // indirect
 	github.com/xanzy/ssh-agent v0.3.3 // indirect
@@ -129,7 +129,7 @@ require (
 	golang.org/x/crypto v0.39.0 // indirect
 	golang.org/x/net v0.41.0 // indirect
 	golang.org/x/oauth2 v0.30.0 // indirect
-	golang.org/x/sync v0.15.0 // indirect
+	golang.org/x/sync v0.16.0 // indirect
 	golang.org/x/sys v0.34.0 // indirect
 	golang.org/x/text v0.26.0 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
