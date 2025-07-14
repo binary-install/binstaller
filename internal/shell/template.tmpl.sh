@@ -339,6 +339,8 @@ cleanup() {
 {{- end }}
 
 {{- define "execute_run" }}
+  # Make binary executable for runner script
+  chmod +x "${BINARY_PATH}"
   # Run the binary directly with provided arguments
   log_info "Running ${BINARY_NAME}${TOOL_ARGS:+ with arguments:$TOOL_ARGS}"
   exec "${BINARY_PATH}" $TOOL_ARGS
@@ -382,8 +384,6 @@ execute() {
   {{- if eq $.ScriptType "installer" }}
   {{- template "execute_install" $ }}
   {{- else }}
-  # Make binary executable for runner script
-  chmod +x "${BINARY_PATH}"
   {{- template "execute_run" $ }}
   {{- end }}
   {{- end }}
