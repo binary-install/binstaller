@@ -283,7 +283,7 @@ Understanding the status indicators:
 - `⚠ NOT SUPPORTED` - Feature not supported (e.g., per-asset checksums)
 - `-` - Ignored file (docs, signatures, package formats like .deb/.dmg)
 
-**Note:** We strongly recommend setting `GITHUB_TOKEN` when using the `check` command to avoid GitHub API rate limits:
+**Note:** Setting `GITHUB_TOKEN` is optional but recommended when using the `check` command to avoid GitHub API rate limits:
 
 ```bash
 export GITHUB_TOKEN=$(gh auth token)
