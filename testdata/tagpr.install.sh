@@ -324,7 +324,6 @@ github_release() {
   echo "$version"
 }
 
-
 # --- Embedded Checksums (Format: VERSION:FILENAME:HASH) ---
 EMBEDDED_CHECKSUMS="
 1.7.0:tagpr_v1.7.0_darwin_amd64.zip:fc270753b67d54aa3a8caa9b27cc9c597aa359482c725782d05b41d468a47e7f
@@ -338,7 +337,6 @@ find_embedded_checksum() {
   filename="$2"
   echo "$EMBEDDED_CHECKSUMS" | grep -E "^${version}:${filename}:" | cut -d':' -f3
 }
-
 parse_args() {
   BINDIR="${BINSTALLER_BIN:-${HOME}/.local/bin}"
   DRY_RUN=0
@@ -355,7 +353,6 @@ parse_args() {
   shift $((OPTIND - 1))
   TAG="${1:-latest}"
 }
-
 tag_to_version() {
   if [ "$TAG" = "latest" ]; then
     log_info "checking GitHub for latest tag"
@@ -389,6 +386,13 @@ resolve_asset_filename() {
   fi
   if [ -z "${ASSET_FILENAME}" ]; then
     ASSET_FILENAME="tagpr_${TAG}_${OS}_${ARCH}${EXT}"
+  fi
+}
+# Cleanup function to remove temporary files
+cleanup() {
+  if [ -n "$TMPDIR" ] && [ -d "$TMPDIR" ]; then
+    log_debug "Cleaning up temporary directory: $TMPDIR"
+    rm -rf -- "$TMPDIR"
   fi
 }
 
@@ -464,7 +468,6 @@ execute() {
     fi
     return 1
   fi
-
   # Install the binary
   INSTALL_PATH="${BINDIR}/${BINARY_NAME}"
   
