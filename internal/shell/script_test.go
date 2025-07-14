@@ -521,6 +521,7 @@ func TestGenerateRunner(t *testing.T) {
 				`exec "${BINARY_PATH}" $TOOL_ARGS`,
 				`cleanup() {`,
 				`trap cleanup EXIT HUP INT TERM`,
+				`chmod +x "${BINARY_PATH}"`,
 			},
 			wantNotContain: []string{
 				`install "${BINARY_PATH}" "${INSTALL_PATH}"`,
@@ -543,6 +544,7 @@ func TestGenerateRunner(t *testing.T) {
 				`# This script runs test-tool directly without installing`,
 				`TAG="v1.2.3"`,
 				`exec "${BINARY_PATH}" $TOOL_ARGS`,
+				`chmod +x "${BINARY_PATH}"`,
 			},
 			wantNotContain: []string{
 				`TAG="${1:-latest}"`,
@@ -620,7 +622,8 @@ func TestGenerateWithScriptType(t *testing.T) {
 			scriptType: "installer",
 			wantError:  false,
 			checkFunc: func(script string) bool {
-				return strings.Contains(script, `install "${BINARY_PATH}" "${INSTALL_PATH}"`)
+				return strings.Contains(script, `install "${BINARY_PATH}" "${INSTALL_PATH}"`) &&
+					!strings.Contains(script, `chmod +x "${BINARY_PATH}"`)
 			},
 		},
 		{
@@ -636,7 +639,8 @@ func TestGenerateWithScriptType(t *testing.T) {
 			scriptType: "runner",
 			wantError:  false,
 			checkFunc: func(script string) bool {
-				return strings.Contains(script, `exec "${BINARY_PATH}" $TOOL_ARGS`)
+				return strings.Contains(script, `exec "${BINARY_PATH}" $TOOL_ARGS`) &&
+					strings.Contains(script, `chmod +x "${BINARY_PATH}"`)
 			},
 		},
 		{
@@ -652,7 +656,8 @@ func TestGenerateWithScriptType(t *testing.T) {
 			scriptType: "",
 			wantError:  false,
 			checkFunc: func(script string) bool {
-				return strings.Contains(script, `install "${BINARY_PATH}" "${INSTALL_PATH}"`)
+				return strings.Contains(script, `install "${BINARY_PATH}" "${INSTALL_PATH}"`) &&
+					!strings.Contains(script, `chmod +x "${BINARY_PATH}"`)
 			},
 		},
 		{
