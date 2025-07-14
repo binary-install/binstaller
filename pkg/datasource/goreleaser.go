@@ -55,7 +55,7 @@ func (a *goreleaserAdapter) GenerateInstallSpec(ctx context.Context) (*spec.Inst
 		return nil, errors.Wrap(err, "failed to load goreleaser config")
 	}
 
-	gorelCtx := gorelcontext.New(*project)
+	gorelCtx := gorelcontext.Wrap(ctx, *project)
 
 	// Apply our minimal defaults instead of using goreleaser's defaults package.
 	// See goreleaser_defaults.go for why we don't use the official defaults package.
