@@ -403,7 +403,7 @@ execute() {
 
   if [ -n "$EMBEDDED_HASH" ]; then
     log_info "Using embedded checksum for verification"
-
+    
     # Verify using embedded hash
     got=$(hash_compute "${TMPDIR}/${ASSET_FILENAME}")
     if [ "$got" != "$EMBEDDED_HASH" ]; then
