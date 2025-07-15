@@ -177,7 +177,7 @@ test-runner-mode: binst ## Test runner mode functionality
 	@echo "Testing runner mode functionality..."
 	@./test/runner_mode.sh
 
-test-integration: test-gen-configs test-gen-installers test-run-installers test-check test-target-version test-runner-mode ## Run full integration test suite (accesses GitHub API)
+test-integration: test-gen-configs test-gen-installers test-run-installers test-check test-target-version test-runner-mode fmt ## Run full integration test suite (accesses GitHub API)
 	@echo "Integration tests completed"
 	@echo "Note: These tests access GitHub API. Set GITHUB_TOKEN to avoid rate limits."
 
