@@ -81,8 +81,9 @@ test-cover: ## Run unit tests with coverage
 cover: test-cover ## Run all the tests with coverage and opens the coverage report
 	go tool cover -html=coverage.txt
 
-fmt: ## gofmt and goimports all go files
+fmt:
 	find . -name '*.go' -type f | while read -r file; do gofmt -w -s "$$file"; goimports -w "$$file"; done
+	nllint -trim-space -trim-trailing-space -fix $(git ls-files)
 
 lint: aqua-install schema-lint ## Run all the linters
 	golangci-lint run ./... --disable errcheck
