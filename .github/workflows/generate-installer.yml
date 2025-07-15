@@ -4,6 +4,8 @@ on:
   push:
     branches: [main]
     paths: ['.config/binstaller.yml']
+  workflow_dispatch:
+    branches: [main]
 
 permissions:
   contents: read
