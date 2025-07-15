@@ -57,7 +57,7 @@ binst embed-checksums [options] [config-file]
   - `checksum-file`: Parse a local checksum file
   - `calculate`: Download assets and calculate checksums directly
 - `--file, -f`: Path to local checksum file (required for `checksum-file` mode)
-- `--all-platforms`: Generate checksums for all platforms in `supported_platforms` 
+- `--all-platforms`: Generate checksums for all platforms in `supported_platforms`
   (only applicable for `calculate` mode)
 
 ### Examples

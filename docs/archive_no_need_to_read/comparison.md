@@ -22,7 +22,7 @@ flowchart LR
         A5[Raw GitHub Releases]
         A6[Tree Walking]
     end
-    
+
     subgraph Fork["GoDownloader Fork"]
         B1[GoReleaser YAML Parsing]
         B2[Shell Script Generation]
@@ -31,9 +31,9 @@ flowchart LR
         B8[Improved Error Handling]
         B9[Enhanced Documentation]
     end
-    
+
     Original --> Fork
-    
+
     style Original fill:#f9f9f9,stroke:#333,stroke-width:1px
     style Fork fill:#e6f7ff,stroke:#333,stroke-width:1px
 ```
@@ -152,13 +152,13 @@ func processRaw(repo string, exe string, nametpl string) ([]byte, error) {
     if nametpl == "" {
         nametpl = "{{ .Binary }}_v{{ .Version }}_{{ .Os }}_{{ .Arch }}"
     }
-    
+
     // translate golang template to shell string
     name, err := makeName("NAME=", nametpl)
     if err != nil {
         return nil, err
     }
-    
+
     project := config.Project{}
     project.Release.GitHub.Owner = path.Dir(repo)
     project.Release.GitHub.Name = path.Base(repo)

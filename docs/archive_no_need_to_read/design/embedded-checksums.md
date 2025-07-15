@@ -86,7 +86,7 @@ find_embedded_checksum() {
   if [ -z "$EMBEDDED_CHECKSUMS" ]; then
     return 1
   fi
-  
+
   echo "$EMBEDDED_CHECKSUMS" | grep -E "^${version}:${filename}:" | cut -d':' -f3
 }
 ```
@@ -101,7 +101,7 @@ EMBEDDED_HASH=$(find_embedded_checksum "$VERSION" "$ASSET_FILENAME")
 
 if [ -n "$EMBEDDED_HASH" ]; then
   log_info "Using embedded checksum for verification"
-  
+
   # Verify using embedded hash
   got=$(hash_sha256 "${TMPDIR}/${ASSET_FILENAME}")
   if [ "$got" != "$EMBEDDED_HASH" ]; then

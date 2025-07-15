@@ -479,7 +479,45 @@ $defs:
           Useful when different platforms have different binary names or paths.
     required:
       - when
-    description: "Platform-specific asset configuration override.\n\nRules are evaluated in order, and ALL matching rules are applied sequentially.\nEach matching rule's overrides are applied cumulatively, with later rules\noverriding values set by earlier rules.\n\nA rule matches when all specified conditions in 'when' are met.\n\nExample:\n```yaml\nrules:\n  # Rule 1: Windows gets .zip extension\n  - when:\n      os: windows\n    ext: .zip\n  \n  # Rule 2: Darwin is renamed to macOS\n  - when:\n      os: darwin\n    os: macOS\n  \n  # Rule 3: Darwin also gets .zip (cumulative with rule 2)\n  - when:\n      os: darwin\n    ext: .zip\n  \n  # Rule 4: Darwin arm64 gets special template (cumulative with rules 2 & 3)\n  - when:\n      os: darwin\n      arch: arm64\n    template: \"${NAME}_${VERSION}_${OS}_${ARCH}_signed${EXT}\"\n```\n\nIn this example, for darwin/arm64:\n- Rule 2 changes OS to \"macOS\"\n- Rule 3 changes extension to \".zip\"\n- Rule 4 changes the entire template\n- Final result uses all these changes"
+    description: |-
+      Platform-specific asset configuration override.
+
+      Rules are evaluated in order, and ALL matching rules are applied sequentially.
+      Each matching rule's overrides are applied cumulatively, with later rules
+      overriding values set by earlier rules.
+
+      A rule matches when all specified conditions in 'when' are met.
+
+      Example:
+      ```yaml
+      rules:
+        # Rule 1: Windows gets .zip extension
+        - when:
+            os: windows
+          ext: .zip
+
+        # Rule 2: Darwin is renamed to macOS
+        - when:
+            os: darwin
+          os: macOS
+
+        # Rule 3: Darwin also gets .zip (cumulative with rule 2)
+        - when:
+            os: darwin
+          ext: .zip
+
+        # Rule 4: Darwin arm64 gets special template (cumulative with rules 2 & 3)
+        - when:
+            os: darwin
+            arch: arm64
+          template: "${NAME}_${VERSION}_${OS}_${ARCH}_signed${EXT}"
+      ```
+
+      In this example, for darwin/arm64:
+      - Rule 2 changes OS to "macOS"
+      - Rule 3 changes extension to ".zip"
+      - Rule 4 changes the entire template
+      - Final result uses all these changes
   NamingConvention:
     type: object
     properties:

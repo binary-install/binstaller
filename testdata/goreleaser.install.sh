@@ -430,7 +430,7 @@ execute() {
 
   if [ -n "$EMBEDDED_HASH" ]; then
     log_info "Using embedded checksum for verification"
-    
+
     # Verify using embedded hash
     got=$(hash_compute "${TMPDIR}/${ASSET_FILENAME}")
     if [ "$got" != "$EMBEDDED_HASH" ]; then
@@ -480,7 +480,7 @@ execute() {
   fi
   # Install the binary
   INSTALL_PATH="${BINDIR}/${BINARY_NAME}"
-  
+
   if [ "$DRY_RUN" = "1" ]; then
     log_info "[DRY RUN] ${BINARY_NAME} dry-run installation succeeded! (Would install to: ${INSTALL_PATH})"
   else

@@ -12,4 +12,3 @@ checksums:
     algorithm: md5
 unpack:
     strip_components: 0
-

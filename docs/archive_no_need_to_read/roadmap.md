@@ -25,7 +25,7 @@ flowchart TD
         A1 --> A3
         A2 --> A4
     end
-    
+
     subgraph Phase2["Phase 2: Core Features"]
         B1[GitHub Attestation Basic Implementation]
         B2[Shell Script Template Updates]
@@ -34,7 +34,7 @@ flowchart TD
         A4 --> B2
         A4 --> B3
     end
-    
+
     subgraph Phase3["Phase 3: Enhancement"]
         C1[Advanced Attestation Features]
         C2[Documentation Updates]
@@ -43,7 +43,7 @@ flowchart TD
         B2 --> C2
         B3 --> C3
     end
-    
+
     subgraph Phase4["Phase 4: Refinement"]
         D1[Performance Optimizations]
         D2[User Experience Improvements]

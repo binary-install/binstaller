@@ -255,18 +255,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      
+
       - name: Set up Go
         uses: actions/setup-go@v4
         with:
           go-version: '1.20'
-          
+
       - name: Install GoDownloader
         run: go install github.com/haya14busa/godownloader@latest
-        
+
       - name: Generate Installation Script
         run: godownloader --file=.goreleaser.yml --require-attestation --deny-self-hosted-runners > install.sh
-        
+
       - name: Commit and Push
         run: |
           git config --local user.email "action@github.com"

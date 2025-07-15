@@ -18,12 +18,12 @@ This document describes the design for a new `SourceAdapter` that converts an [a
 
 The adapter should support the following input modes:
 
-1. **io.Reader (Stream)**  
+1. **io.Reader (Stream)**
    The adapter accepts an `io.Reader` for cases where the YAML is provided as a stream (e.g., from stdin, a file, HTTP response, etc.).
 
-2. **Direct Fetch from GitHub**  
-   The adapter can fetch the registry YAML directly from a GitHub repository, specifically from  
-   `https://github.com/aquaproj/aqua-registry/pkgs/<owner>/<repo_name>/registry.yaml`  
+2. **Direct Fetch from GitHub**
+   The adapter can fetch the registry YAML directly from a GitHub repository, specifically from
+   `https://github.com/aquaproj/aqua-registry/pkgs/<owner>/<repo_name>/registry.yaml`
    This enables use cases where the user specifies only the owner/repo, and the adapter retrieves the YAML automatically.
 
 ## Registry Metadata and File Resolution

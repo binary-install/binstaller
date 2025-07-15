@@ -19,3 +19,4 @@ packages:
 - name: goreleaser/goreleaser@v2.5.1
 - name: denoland/deno@v2.4.1
 - name: golang/tools/goimports@v0.34.0
+- name: suzuki-shunsuke/nllint@v0.1.1

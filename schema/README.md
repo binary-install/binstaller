@@ -30,31 +30,31 @@ default_bin_dir: ${HOME}/.local/bin
 asset:
   template: "${NAME}_${VERSION}_${OS}_${ARCH}${EXT}"
   default_extension: .tar.gz
-  
+
   # Multiple binaries in the archive
   binaries:
     - name: mytool
       path: mytool
     - name: mytool-helper
       path: bin/mytool-helper
-  
+
   # Platform-specific rules (applied cumulatively)
   rules:
     # Windows uses .zip files
     - when:
         os: windows
       ext: .zip
-    
+
     # macOS uses different naming
     - when:
         os: darwin
       os: macOS  # Changes ${OS} to "macOS"
-    
+
     # macOS also uses .zip
     - when:
         os: darwin
       ext: .zip
-    
+
     # M1 Macs need signed binaries
     - when:
         os: darwin
