@@ -83,7 +83,7 @@ cover: test-cover ## Run all the tests with coverage and opens the coverage repo
 
 fmt:
 	find . -name '*.go' -type f | while read -r file; do gofmt -w -s "$$file"; goimports -w "$$file"; done
-	git ls-files -c -o --exclude-standard | xargs nllint -fix
+	git ls-files -c -o --exclude-standard | xargs nllint -trim-space -trim-trailing-space -fix -ignore-notfound
 
 lint: aqua-install schema-lint ## Run all the linters
 	golangci-lint run ./... --disable errcheck
