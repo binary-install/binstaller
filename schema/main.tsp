@@ -4,10 +4,10 @@ using TypeSpec.JsonSchema;
 
 @doc("""
   Configuration specification for binstaller binary installation.
-  
+
   This is the root configuration that defines how to download, verify,
   and install binaries from GitHub releases.
-  
+
   Minimal example:
   ```yaml
   schema: v1
@@ -15,7 +15,7 @@ using TypeSpec.JsonSchema;
   asset:
     template: "\${NAME}_\${VERSION}_\${OS}_\${ARCH}.tar.gz"
   ```
-  
+
   Complete example with all features:
   ```yaml
   schema: v1
@@ -23,7 +23,7 @@ using TypeSpec.JsonSchema;
   repo: myorg/mytool
   default_version: latest
   default_bin_dir: \${HOME}/.local/bin
-  
+
   # Asset configuration with platform-specific rules
   asset:
     template: "\${NAME}_\${VERSION}_\${OS}_\${ARCH}\${EXT}"
@@ -52,7 +52,7 @@ using TypeSpec.JsonSchema;
       os: lowercase
     arch_emulation:
       rosetta2: true
-  
+
   # Security features
   checksums:
     algorithm: sha256
@@ -61,11 +61,11 @@ using TypeSpec.JsonSchema;
       "1.0.0":
         - filename: "mytool_1.0.0_linux_amd64.tar.gz"
           hash: "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
-  
+
   # Archive handling
   unpack:
     strip_components: 1
-  
+
   # Platform restrictions
   supported_platforms:
     - os: linux
@@ -113,10 +113,10 @@ model InstallSpec {
 
 @doc("""
   Supported OS and architecture combination.
-  
+
   Defines a specific platform that the binary supports.
   Used to restrict installation to known-working platforms.
-  
+
   Example:
   ```yaml
   supported_platforms:
@@ -135,17 +135,17 @@ model InstallSpec {
 model Platform {
   @doc("""
     Operating system identifier.
-    
+
     Values are based on Go's GOOS (runtime.GOOS) and compatible with
     shlib's uname_os.sh: https://github.com/client9/shlib/blob/master/uname_os.sh
-    
+
     Common values:
     - "linux" - Linux distributions
     - "darwin" - macOS
     - "windows" - Windows
     - "freebsd", "openbsd", "netbsd" - BSD variants
     - "android" - Android
-    
+
     Full list from go tool dist list:
     """)
   os:
@@ -167,21 +167,21 @@ model Platform {
 
   @doc("""
     CPU architecture identifier.
-    
+
     Values are based on Go's GOARCH (runtime.GOARCH) and compatible with
     shlib's uname_arch.sh: https://github.com/client9/shlib/blob/master/uname_arch_check.sh
-    
+
     Common values:
     - "amd64" (x86_64) - 64-bit x86
     - "arm64" (aarch64) - 64-bit ARM
     - "386" (i386) - 32-bit x86
     - "arm" - 32-bit ARM (base)
-    
+
     ARM variants with version:
     - "armv5" - ARM v5
     - "armv6" - ARM v6 (e.g., Raspberry Pi 1)
     - "armv7" - ARM v7 (e.g., Raspberry Pi 2)
-    
+
     Less common:
     - "ppc64", "ppc64le" - PowerPC 64-bit
     - "mips", "mipsle", "mips64", "mips64le" - MIPS architectures
@@ -214,14 +214,14 @@ model Platform {
 
 @doc("""
   Configuration for constructing download URLs and asset names.
-  
+
   The asset configuration determines how to build the download URL for each platform.
   It uses a template system with placeholders that are replaced with actual values.
   """)
 model AssetConfig {
   @doc("""
     Filename template with placeholders.
-    
+
     Available placeholders:
     - \${NAME}: Binary name (from 'name' field or repository name)
     - \${VERSION}: Version to install (without 'v' prefix, e.g., '1.0.0')
@@ -229,7 +229,7 @@ model AssetConfig {
     - \${OS}: Operating system (e.g., 'linux', 'darwin', 'windows')
     - \${ARCH}: Architecture (e.g., 'amd64', 'arm64', '386')
     - \${EXT}: File extension (from 'default_extension' or rules)
-    
+
     Examples:
     - "\${NAME}_\${VERSION}_\${OS}_\${ARCH}.tar.gz"
     - "\${NAME}-\${VERSION}-\${OS}-\${ARCH}\${EXT}"
@@ -247,9 +247,9 @@ model AssetConfig {
 
   @doc("""
     Binary names and their paths within the asset.
-    
+
     For archives: Specify the path within the extracted directory.
-    
+
     If not specified, defaults to a single binary with:
     - name: The repository name
     - path: The repository name
@@ -273,13 +273,13 @@ model AssetConfig {
 
 @doc("""
   Platform-specific asset configuration override.
-  
+
   Rules are evaluated in order, and ALL matching rules are applied sequentially.
   Each matching rule's overrides are applied cumulatively, with later rules
   overriding values set by earlier rules.
-  
+
   A rule matches when all specified conditions in 'when' are met.
-  
+
   Example:
   ```yaml
   rules:
@@ -287,24 +287,24 @@ model AssetConfig {
     - when:
         os: windows
       ext: .zip
-    
+
     # Rule 2: Darwin is renamed to macOS
     - when:
         os: darwin
       os: macOS
-    
+
     # Rule 3: Darwin also gets .zip (cumulative with rule 2)
     - when:
         os: darwin
       ext: .zip
-    
+
     # Rule 4: Darwin arm64 gets special template (cumulative with rules 2 & 3)
     - when:
         os: darwin
         arch: arm64
       template: "\${NAME}_\${VERSION}_\${OS}_\${ARCH}_signed\${EXT}"
   ```
-  
+
   In this example, for darwin/arm64:
   - Rule 2 changes OS to "macOS"
   - Rule 3 changes extension to ".zip"
@@ -356,11 +356,11 @@ model AssetRule {
 
 @doc("""
   Binary name and path configuration.
-  
+
   Defines which binary files to install from the downloaded asset.
   For single binary releases, this is straightforward.
   For releases with multiple binaries, you can specify which ones to install.
-  
+
   Examples:
   - Single binary in archive: {name: "mytool", path: "mytool"}
   - Binary in subdirectory: {name: "mytool", path: "bin/mytool"}
@@ -375,9 +375,9 @@ model Binary {
 
   @doc("""
     Path to the binary within the extracted archive.
-    
+
     The path relative to the archive root.
-    
+
     Examples:
     - "mytool" - Binary at archive root
     - "bin/mytool" - Binary in bin subdirectory
@@ -387,12 +387,12 @@ model Binary {
 
 @doc("""
   Condition for matching specific platforms in rules.
-  
+
   Used in the 'when' clause of asset rules to specify which
   platforms the rule should apply to. Note that matching uses
   the original OS and architecture values, not any overridden
   values from previous rules.
-  
+
   Example:
   ```yaml
   when:
@@ -403,10 +403,10 @@ model Binary {
 model PlatformCondition {
   @doc("""
     Match specific operating system.
-    
+
     If specified, the rule only applies when the runtime OS matches.
     If omitted, the rule matches any OS.
-    
+
     Can be any string value to support custom OS identifiers.
     See Platform.os for common values.
     """)
@@ -414,10 +414,10 @@ model PlatformCondition {
 
   @doc("""
     Match specific architecture.
-    
+
     If specified, the rule only applies when the runtime architecture matches.
     If omitted, the rule matches any architecture.
-    
+
     Can be any string value to support custom architecture identifiers.
     See Platform.arch for common values.
     """)
@@ -426,11 +426,11 @@ model PlatformCondition {
 
 @doc("""
   Controls the casing of template placeholders.
-  
+
   Some projects use different casing conventions in their release filenames.
   This provides a simpler alternative to using rules for common cases like
   titlecase OS names.
-  
+
   Example:
   ```yaml
   naming_convention:
@@ -441,7 +441,7 @@ model PlatformCondition {
 model NamingConvention {
   @doc("""
     Casing for \${OS} placeholder.
-    
+
     - lowercase (default): "linux", "darwin", "windows"
     - titlecase: "Linux", "Darwin", "Windows"
     """)
@@ -449,7 +449,7 @@ model NamingConvention {
 
   @doc("""
     Casing for \${ARCH} placeholder.
-    
+
     Currently only supports lowercase.
     Values like "amd64", "arm64", "386".
     """)
@@ -458,10 +458,10 @@ model NamingConvention {
 
 @doc("""
   Architecture emulation configuration.
-  
+
   Handles cases where binaries can run on different architectures
   through emulation layers.
-  
+
   Example:
   ```yaml
   arch_emulation:
@@ -471,12 +471,12 @@ model NamingConvention {
 model ArchEmulation {
   @doc("""
     Use amd64 binaries instead of arm64 when Rosetta 2 is available on macOS.
-    
+
     Useful when:
     - arm64 binaries are not available
     - x86_64 binaries are more stable or feature-complete
     - You need compatibility with x86_64-only dependencies
-    
+
     The installer will detect Rosetta 2 and download amd64 binaries
     on Apple Silicon Macs when this is enabled.
     """)
@@ -485,11 +485,11 @@ model ArchEmulation {
 
 @doc("""
   Checksum verification configuration.
-  
+
   Binstaller verifies downloaded files using checksums to ensure integrity.
   It can either download checksum files from the release or use pre-verified
   checksums embedded in the configuration.
-  
+
   Example:
   ```yaml
   checksums:
@@ -513,26 +513,26 @@ model ChecksumConfig {
 
   @doc("""
     Template for checksum filename.
-    
+
     If specified, binstaller will download this file to verify checksums.
     Uses the same placeholders as asset templates.
-    
+
     Common patterns:
     - "\${NAME}_\${VERSION}_checksums.txt"
     - "checksums.txt"
     - "\${NAME}-\${VERSION}-SHA256SUMS"
-    
+
     Leave empty to rely only on embedded checksums.
     """)
   template?: string;
 
   @doc("""
     Pre-verified checksums organized by version.
-    
+
     Use 'binst embed-checksums' command to automatically populate this.
     The key is the version string (includes 'v' prefix if present in tag, e.g., 'v1.0.0').
     The value is an array of filename/hash pairs.
-    
+
     This allows offline installation and protects against
     compromised checksum files.
     """)
@@ -541,10 +541,10 @@ model ChecksumConfig {
 
 @doc("""
   Pre-verified checksum for a specific asset.
-  
+
   Stores the checksum hash for a specific file.
   These are typically populated using 'binst embed-checksums' command.
-  
+
   Example:
   ```yaml
   filename: "mytool_1.0.0_linux_amd64.tar.gz"
@@ -568,10 +568,10 @@ model EmbeddedChecksum {
 
 @doc("""
   Archive extraction configuration.
-  
+
   Controls how archives are extracted during installation.
   Primarily used to handle archives with unnecessary directory nesting.
-  
+
   Example:
   ```yaml
   # Archive structure: mytool-v1.0.0/bin/mytool
@@ -583,10 +583,10 @@ model EmbeddedChecksum {
 model UnpackConfig {
   @doc("""
     Number of leading path components to strip when extracting.
-    
+
     Similar to tar's --strip-components option.
     Useful when archives have an extra top-level directory.
-    
+
     Examples:
     - 0 (default): Extract as-is
     - 1: Remove first directory level (e.g., "mytool-v1.0.0/bin/mytool" → "bin/mytool")

@@ -46,7 +46,7 @@ Usage: $this [-d]{{- if not .TargetVersion }} [tag]{{- end }} -- [binary argumen
    https://github.com/{{ deref .Repo }}/releases
    If tag is missing, then the latest will be used.
   {{- end }}
-   
+
    This script downloads and runs {{ deref .Name }} directly
    Pass arguments after --:
    Example: $this -- --help
@@ -148,7 +148,7 @@ parse_args() {
     esac
     shift
   done
-  
+
   # Collect remaining arguments after --
   while [ $# -gt 0 ]; do
     TOOL_ARGS="$TOOL_ARGS $1"
@@ -296,7 +296,7 @@ cleanup() {
 
   if [ -n "$EMBEDDED_HASH" ]; then
     log_info "Using embedded checksum for verification"
-    
+
     # Verify using embedded hash
     got=$(hash_compute "${TMPDIR}/${ASSET_FILENAME}")
     if [ "$got" != "$EMBEDDED_HASH" ]; then
@@ -327,7 +327,7 @@ cleanup() {
 {{- define "execute_install" }}
   # Install the binary
   INSTALL_PATH="${BINDIR}/${BINARY_NAME}"
-  
+
   if [ "$DRY_RUN" = "1" ]; then
     log_info "[DRY RUN] ${BINARY_NAME} dry-run installation succeeded! (Would install to: ${INSTALL_PATH})"
   else

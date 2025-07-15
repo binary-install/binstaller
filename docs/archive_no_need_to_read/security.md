@@ -324,10 +324,10 @@ jobs:
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
-          
+
       - name: Set up Go
         uses: actions/setup-go@v4
-        
+
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v4
         with:

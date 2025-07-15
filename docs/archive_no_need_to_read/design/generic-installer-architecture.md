@@ -8,7 +8,7 @@ status: "draft"
 
 # Generic Config‑Driven Installer Architecture
 
-> 📄 **Document series overview**  
+> 📄 **Document series overview**
 > This file lays out the *architecture* of a generic, config‑driven installer
 > pipeline.  The concrete specification of the on‑disk schema referred to in
 > this document lives in **[InstallSpec v1](install-spec-v1.md)** which should be

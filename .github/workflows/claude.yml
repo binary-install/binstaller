@@ -39,16 +39,16 @@ jobs:
           # This is an optional setting that allows Claude to read CI results on PRs
           additional_permissions: |
             actions: read
-          
+
           # Use Claude Opus 4 for better code understanding and more autonomous operation
           model: "claude-opus-4-20250514"
-          
+
           # Optional: Customize the trigger phrase (default: @claude)
           # trigger_phrase: "/claude"
-          
+
           # Optional: Trigger when specific user is assigned to an issue
           # assignee_trigger: "claude-bot"
-          
+
           # Allow Claude to run specific commands for binstaller project
           allowed_tools: |
             Bash(./binst)
@@ -93,8 +93,7 @@ jobs:
             Bash(wget:*)
             Bash(which:*)
             Bash(yq:*)
-          
+
           # Optional: Custom environment variables for Claude
           # claude_env: |
           #   NODE_ENV: test
-

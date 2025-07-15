@@ -120,8 +120,8 @@ If you use this project in your own work, we request that you provide attributio
 Example attribution in documentation:
 
 ```markdown
-This project uses [GoDownloader Fork](https://github.com/haya14busa/godownloader), 
-a fork of [GoDownloader](https://github.com/goreleaser/godownloader), 
+This project uses [GoDownloader Fork](https://github.com/haya14busa/godownloader),
+a fork of [GoDownloader](https://github.com/goreleaser/godownloader),
 licensed under the MIT License.
 ```
 

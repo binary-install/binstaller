@@ -87,10 +87,10 @@ verify_attestation() {
   local binary=$1
   local repo=$2
   local extra_flags=$3
-  
+
   if is_command gh; then
     log_info "Using GitHub CLI for attestation verification"
-    
+
     # Basic verification with repository information
     if [ -n "$repo" ]; then
       if gh attestation verify --repo="${repo}" "${binary}" ${extra_flags}; then
@@ -116,13 +116,13 @@ verify_attestation() {
   else
     log_warn "GitHub CLI not available, skipping attestation verification"
     log_warn "For enhanced security, install GitHub CLI: https://cli.github.com/"
-    
+
     # If attestation is required, fail the installation
     if [ "${REQUIRE_ATTESTATION}" = "true" ]; then
       log_err "Attestation verification required but GitHub CLI is not available"
       return 1
     fi
-    
+
     # Otherwise, continue with a warning
     return 0
   fi
@@ -172,16 +172,16 @@ The attestation verification is integrated into the main execution flow of the g
 execute() {
   tmpdir=$(mktemp -d)
   log_debug "downloading files into ${tmpdir}"
-  
+
   # Download binary
   http_download "${tmpdir}/${TARBALL}" "${TARBALL_URL}"
-  
+
   # Download checksum
   http_download "${tmpdir}/${CHECKSUM}" "${CHECKSUM_URL}"
-  
+
   # Verify checksum
   hash_sha256_verify "${tmpdir}/${TARBALL}" "${tmpdir}/${CHECKSUM}"
-  
+
   # Download attestation if available
   if [ "${VERIFY_ATTESTATION}" = "true" ]; then
     if http_download "${tmpdir}/${TARBALL}.attestation" "${TARBALL_URL}.attestation"; then
@@ -199,7 +199,7 @@ execute() {
       log_info "No attestation available, skipping verification"
     fi
   fi
-  
+
   # Continue with installation
   # ...
 }
@@ -276,7 +276,7 @@ godownloader --repo=owner/repo --require-attestation \
 
 **Challenge**: The GitHub CLI may not be installed on all systems.
 
-**Solution**: 
+**Solution**:
 1. Provide clear instructions for installing the GitHub CLI
 2. Make attestation verification optional by default but configurable
 3. Allow strict enforcement with the `--require-attestation` flag
@@ -285,7 +285,7 @@ godownloader --repo=owner/repo --require-attestation \
 
 **Challenge**: The attestation format may change over time.
 
-**Solution**: 
+**Solution**:
 1. Rely on the GitHub CLI which will be updated to support new formats
 2. Document the version of GitHub CLI required for attestation verification
 
@@ -356,15 +356,15 @@ func TestAttestationVerification(t *testing.T) {
             expectedResult:     false,  // Fails when attestation is required
         },
     }
-    
+
     for _, tt := range tests {
         t.Run(tt.name, func(t *testing.T) {
             // Mock GitHub CLI availability
             mockGhInstalled(tt.ghInstalled)
-            
+
             // Set require attestation flag
             os.Setenv("REQUIRE_ATTESTATION", fmt.Sprintf("%t", tt.requireAttestation))
-            
+
             result := VerifyAttestation(tt.binary, tt.repo, tt.flags)
             if result != tt.expectedResult {
                 t.Errorf("VerifyAttestation() = %v, want %v", result, tt.expectedResult)

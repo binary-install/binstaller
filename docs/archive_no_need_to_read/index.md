@@ -50,22 +50,22 @@ graph TD
     A --> D[Security]
     A --> E[Project Information]
     A --> F[Contributing]
-    
+
     B --> B1[README]
     B --> B2[Usage Guide]
-    
+
     C --> C1[Design Overview]
     C --> C2[Attestation Verification]
     C --> C3[Attestation Implementation]
-    
+
     D --> D1[Security Considerations]
-    
+
     E --> E1[Comparison with Original]
     E --> E2[Implementation Roadmap]
     E --> E3[License and Attribution]
-    
+
     F --> F1[Contributing Guidelines]
-    
+
     style A fill:#f9f9f9,stroke:#333,stroke-width:2px
 ```
 

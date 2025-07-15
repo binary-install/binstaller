@@ -27,7 +27,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           echo "🔍 Verifying attestation for install.sh..."
-          
+
           if ! gh attestation verify install.sh --repo ${{ github.repository }} --signer-workflow ${{ github.repository }}/.github/workflows/generate-installer.yml; then
             echo ""
             echo "❌ ATTESTATION VERIFICATION FAILED"
@@ -54,7 +54,7 @@ jobs:
         run: |
           echo "## 🔒 Attestation Verification Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          
+
           if [[ "${{ job.status }}" == "success" ]]; then
             echo "✅ **All security and verification checks passed!**" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
@@ -74,7 +74,7 @@ jobs:
             echo "2. Check attestation is properly created" >> $GITHUB_STEP_SUMMARY
             echo "3. Verify script execution works correctly" >> $GITHUB_STEP_SUMMARY
           fi
-          
+
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### 🔍 Verification Command" >> $GITHUB_STEP_SUMMARY
           echo '```bash' >> $GITHUB_STEP_SUMMARY

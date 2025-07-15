@@ -71,7 +71,7 @@ fetch_attestation() {
   local version=$1
   local binary=$2
   local url="${GITHUB_DOWNLOAD}/${version}/${binary}.attestation"
-  
+
   if http_download "${TMPDIR}/${binary}.attestation" "$url"; then
     log_info "Downloaded attestation for ${binary}"
     return 0
@@ -92,7 +92,7 @@ verify_attestation() {
   local binary=$1
   local repo=$2
   local extra_flags=$3
-  
+
   if is_command gh; then
     log_info "Using GitHub CLI for attestation verification"
     if gh attestation verify --repo="${repo}" "${binary}" ${extra_flags}; then
@@ -105,13 +105,13 @@ verify_attestation() {
   else
     log_warn "GitHub CLI not available, skipping attestation verification"
     log_warn "For enhanced security, install GitHub CLI: https://cli.github.com/"
-    
+
     # If attestation is required, fail the installation
     if [ "${REQUIRE_ATTESTATION}" = "true" ]; then
       log_err "Attestation verification required but GitHub CLI is not available"
       return 1
     fi
-    
+
     # Otherwise, continue with a warning
     return 0
   fi
@@ -155,7 +155,7 @@ sequenceDiagram
     participant User
     participant Script
     participant GitHub
-    
+
     User->>Script: Execute installation script
     Script->>GitHub: Fetch release information
     GitHub-->>Script: Release details

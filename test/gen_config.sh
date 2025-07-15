@@ -16,7 +16,7 @@ task_count=$(yq eval '.tasks | length' "$CONFIG_FILE")
 for i in $(seq 0 $((task_count - 1))); do
     name=$(yq eval ".tasks[$i].name" "$CONFIG_FILE")
     script_file="$TEMP_DIR/task_$(printf "%03d" $i)_${name}.sh"
-    
+
     # Write the run command to a script file
     {
         echo "#!/bin/bash"
@@ -24,7 +24,7 @@ for i in $(seq 0 $((task_count - 1))); do
         echo "echo \"Running task: $name\""
         yq eval ".tasks[$i].run" "$CONFIG_FILE"
     } > "$script_file"
-    
+
     chmod +x "$script_file"
 done
 

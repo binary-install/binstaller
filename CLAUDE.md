@@ -35,7 +35,7 @@ make fmt
   - Generating test configurations and installers
   - Accessing GitHub APIs to verify releases and assets
   - Running generated installers
-  
+
   **Important**: Run `make test-integration` before creating commits or PRs when changes might affect generated output (e.g., modifying templates, asset rules, or configuration handling). The command works without GITHUB_TOKEN but setting it helps avoid rate limits.
 
 ## Project Structure

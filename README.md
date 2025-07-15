@@ -45,7 +45,7 @@ graph LR
 - Auto-generate configs from **GoReleaser**, **Aqua Registry**, or **GitHub Releases**
 - Hand-edit configs to customize installation behavior
 - **Sustainable design** - Uses an intermediate config format that can be maintained independently
-  
+
   > **Why this matters:** [GoDownloader](https://github.com/goreleaser/godownloader) directly generated scripts from GoReleaser configs. As GoReleaser evolved and added new features, maintaining compatibility became increasingly difficult, ultimately leading to the project being archived. By using an intermediate config format, binstaller can adapt to changes in source formats without breaking existing functionality.
 
 ### 🔁 Security Through Reproducible Generation
@@ -359,7 +359,7 @@ The `binst schema` command displays the binstaller configuration schema directly
 # Display schema in YAML format (default)
 binst schema
 
-# Display schema in JSON format  
+# Display schema in JSON format
 binst schema --format json
 
 # Display original TypeSpec source

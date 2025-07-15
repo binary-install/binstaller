@@ -378,7 +378,7 @@ is_rosetta2_available() {
   arch -arch x86_64 true 2>/dev/null
 }
 resolve_asset_filename() {
-  
+
   # --- Apply Rules ---
   ASSET_FILENAME=""
   if [ "${UNAME_OS}" = 'darwin' ] && true
@@ -421,7 +421,7 @@ execute() {
 
   if [ -n "$EMBEDDED_HASH" ]; then
     log_info "Using embedded checksum for verification"
-    
+
     # Verify using embedded hash
     got=$(hash_compute "${TMPDIR}/${ASSET_FILENAME}")
     if [ "$got" != "$EMBEDDED_HASH" ]; then
@@ -471,7 +471,7 @@ execute() {
   fi
   # Install the binary
   INSTALL_PATH="${BINDIR}/${BINARY_NAME}"
-  
+
   if [ "$DRY_RUN" = "1" ]; then
     log_info "[DRY RUN] ${BINARY_NAME} dry-run installation succeeded! (Would install to: ${INSTALL_PATH})"
   else

@@ -45,10 +45,10 @@ func Load(repo, configPath, file string) (project *config.Project, sourceInfo st
     if repo == "" && file == "" {
         return nil, "", fmt.Errorf("repo or file not specified")
     }
-    
+
     // Get the goinstaller version to include in the source info
     version := getVersion()
-    
+
     // Load the project configuration
     if file == "" {
         // GitHub repository
@@ -57,7 +57,7 @@ func Load(repo, configPath, file string) (project *config.Project, sourceInfo st
         // Local file
         project, sourceInfo, err = loadFromFile(file, version)
     }
-    
+
     if err != nil {
         return nil, "", err
     }
@@ -66,7 +66,7 @@ func Load(repo, configPath, file string) (project *config.Project, sourceInfo st
     if project.Release.GitHub.Owner == "" {
         // ... existing code ...
     }
-    
+
     return project, sourceInfo, nil
 }
 
@@ -76,7 +76,7 @@ func loadFromGitHub(repo, configPath, version string) (*config.Project, string, 
     repo = normalizeRepo(repo)
     log.Infof("reading repo %q on github", repo)
     defaultBranch := getDefaultBranch(repo)
-    
+
     // Load the project configuration
     project, err := loadURLs(
         fmt.Sprintf("https://raw.githubusercontent.com/%s/%s", repo, defaultBranch),
@@ -85,7 +85,7 @@ func loadFromGitHub(repo, configPath, version string) (*config.Project, string, 
     if err != nil {
         return nil, "", err
     }
-    
+
     // Try to get the commit hash, but don't fail if we can't
     commitHash, err := getGitHubCommitHash(repo)
     if err != nil {
@@ -94,7 +94,7 @@ func loadFromGitHub(repo, configPath, version string) (*config.Project, string, 
         log.Infof("using fallback source info: %s", sourceInfo)
         return project, sourceInfo, nil
     }
-    
+
     // Use the commit hash in the source info
     sourceInfo := fmt.Sprintf("github.com/%s@%s (goinstaller %s)", repo, commitHash, version)
     log.Infof("using source info with commit hash: %s", sourceInfo)
@@ -105,13 +105,13 @@ func loadFromGitHub(repo, configPath, version string) (*config.Project, string, 
 // and returns the project and source information.
 func loadFromFile(file, version string) (*config.Project, string, error) {
     log.Infof("reading file %q", file)
-    
+
     // Load the project configuration
     project, err := loadFile(file)
     if err != nil {
         return nil, "", err
     }
-    
+
     // Get file information
     fileInfo, err := os.Stat(file)
     if err != nil {
@@ -120,10 +120,10 @@ func loadFromFile(file, version string) (*config.Project, string, error) {
         log.Infof("using fallback source info: %s", sourceInfo)
         return project, sourceInfo, nil
     }
-    
+
     // Get absolute path for better context
     absPath, _ := filepath.Abs(file)
-    
+
     // Check if the file is part of a git repository
     gitCommitHash, err := getGitCommitHashForFile(file)
     if err == nil && gitCommitHash != "" {
@@ -137,7 +137,7 @@ func loadFromFile(file, version string) (*config.Project, string, error) {
         }
         log.Infof("file has uncommitted changes, not using git commit hash")
     }
-    
+
     // Calculate the SHA-256 hash of the file content
     hash, err := calculateFileHash(file)
     if err != nil {
@@ -149,7 +149,7 @@ func loadFromFile(file, version string) (*config.Project, string, error) {
         log.Infof("using fallback source info: %s", sourceInfo)
         return project, sourceInfo, nil
     }
-    
+
     // Use the content hash in the source info
     fileSize := fileInfo.Size()
     modTime := fileInfo.ModTime().UTC().Format(time.RFC3339)
@@ -170,35 +170,35 @@ func getVersion() string {
 // getGitHubCommitHash returns the commit hash of the default branch
 func getGitHubCommitHash(repo string) (string, error) {
     url := fmt.Sprintf("https://api.github.com/repos/%s", repo)
-    
+
     req, err := http.NewRequest("GET", url, nil)
     if err != nil {
         return "", err
     }
-    
+
     // Use GITHUB_TOKEN if available to avoid rate limiting
     if token := os.Getenv("GITHUB_TOKEN"); token != "" {
         req.Header.Set("Authorization", "token "+token)
     }
-    
+
     resp, err := http.DefaultClient.Do(req)
     if err != nil {
         return "", err
     }
     defer resp.Body.Close()
-    
+
     if resp.StatusCode != http.StatusOK {
         return "", fmt.Errorf("failed to get commit hash: %d %s", resp.StatusCode, http.StatusText(resp.StatusCode))
     }
-    
+
     var repoInfo struct {
         DefaultBranch string `json:"default_branch"`
     }
-    
+
     if err := json.NewDecoder(resp.Body).Decode(&repoInfo); err != nil {
         return "", err
     }
-    
+
     // Get the latest commit on the default branch
     return getLatestCommitSHA(repo, repoInfo.DefaultBranch)
 }
@@ -206,34 +206,34 @@ func getGitHubCommitHash(repo string) (string, error) {
 // getLatestCommitSHA gets the SHA of the latest commit on the specified branch
 func getLatestCommitSHA(repo, branch string) (string, error) {
     url := fmt.Sprintf("https://api.github.com/repos/%s/commits/%s", repo, branch)
-    
+
     req, err := http.NewRequest("GET", url, nil)
     if err != nil {
         return "", err
     }
-    
+
     if token := os.Getenv("GITHUB_TOKEN"); token != "" {
         req.Header.Set("Authorization", "token "+token)
     }
-    
+
     resp, err := http.DefaultClient.Do(req)
     if err != nil {
         return "", err
     }
     defer resp.Body.Close()
-    
+
     if resp.StatusCode != http.StatusOK {
         return "", fmt.Errorf("failed to get commit SHA: %d %s", resp.StatusCode, http.StatusText(resp.StatusCode))
     }
-    
+
     var commit struct {
         SHA string `json:"sha"`
     }
-    
+
     if err := json.NewDecoder(resp.Body).Decode(&commit); err != nil {
         return "", err
     }
-    
+
     return commit.SHA, nil
 }
 
@@ -244,14 +244,14 @@ func getGitCommitHashForFile(file string) (string, error) {
     if err != nil {
         return "", err
     }
-    
+
     // Check if the file is in a git repository
     cmd := exec.Command("git", "rev-parse", "--show-toplevel")
     cmd.Dir = filepath.Dir(absPath)
     if err := cmd.Run(); err != nil {
         return "", fmt.Errorf("file is not in a git repository: %v", err)
     }
-    
+
     // Get the commit hash of the last commit that modified the file
     cmd = exec.Command("git", "log", "-n", "1", "--pretty=format:%H", "--", absPath)
     cmd.Dir = filepath.Dir(absPath)
@@ -260,7 +260,7 @@ func getGitCommitHashForFile(file string) (string, error) {
     if err := cmd.Run(); err != nil {
         return "", fmt.Errorf("failed to get git commit hash: %v", err)
     }
-    
+
     return strings.TrimSpace(out.String()), nil
 }
 
@@ -271,12 +271,12 @@ func isFileModifiedInGit(file string) (bool, error) {
     if err != nil {
         return false, err
     }
-    
+
     // Check if the file has uncommitted changes
     cmd := exec.Command("git", "diff", "--quiet", "--", absPath)
     cmd.Dir = filepath.Dir(absPath)
     err = cmd.Run()
-    
+
     // If the command exits with a non-zero status, the file has uncommitted changes
     return err != nil, nil
 }
@@ -288,12 +288,12 @@ func calculateFileHash(file string) (string, error) {
         return "", err
     }
     defer f.Close()
-    
+
     h := sha256.New()
     if _, err := io.Copy(h, f); err != nil {
         return "", err
     }
-    
+
     return fmt.Sprintf("%x", h.Sum(nil)), nil
 }
 ```
@@ -309,7 +309,7 @@ func processGodownloader(repo, path, filename string, attestationOpts Attestatio
     if err != nil {
         return nil, fmt.Errorf("unable to parse: %s", err)
     }
-    
+
     // We only handle the first archive.
     if len(cfg.Archives) == 0 {
         return nil, fmt.Errorf("no archives found in configuration")
