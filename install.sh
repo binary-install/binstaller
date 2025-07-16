@@ -7,9 +7,10 @@ usage() {
   cat <<EOF
 $this: download ${NAME} from ${REPO}
 
-Usage: $this [-b bindir] [-d] [tag]
+Usage: $this [-b bindir] [-d] [-n] [tag]
   -b sets bindir or installation directory, Defaults to ${BINSTALLER_BIN:-${HOME}/.local/bin}
   -d turns on debug logging
+  -n turns on dry run mode
    [tag] is a tag from
    https://github.com/binary-install/binstaller/releases
    If tag is missing, then the latest will be used.
@@ -146,56 +147,6 @@ uname_arch_check() {
   log_crit "uname_arch_check '$(uname -m)' got converted to '$arch' which is not a GOARCH value.  Please file bug report at https://github.com/client9/shlib"
   return 1
 }
-http_download_curl() {
-  local_file=$1
-  source_url=$2
-  header=$3
-  if [ -z "$header" ]; then
-    curl -fsSL -o "$local_file" "$source_url"
-  else
-    curl -fsSL -H "$header" -o "$local_file" "$source_url"
-  fi
-}
-http_download_wget() {
-  local_file=$1
-  source_url=$2
-  header=$3
-  if [ -z "$header" ]; then
-    wget -q -O "$local_file" "$source_url"
-  else
-    wget -q --header "$header" -O "$local_file" "$source_url"
-  fi
-}
-http_download() {
-  log_debug "http_download $2"
-  if is_command curl; then
-    http_download_curl "$@"
-    return
-  elif is_command wget; then
-    http_download_wget "$@"
-    return
-  fi
-  log_crit "http_download unable to find wget or curl"
-  return 1
-}
-http_copy() {
-  tmp=$(mktemp)
-  http_download "${tmp}" "$1" "$2" || return 1
-  body=$(cat "$tmp")
-  rm -f "${tmp}"
-  echo "$body"
-}
-github_release() {
-  owner_repo=$1
-  version=$2
-  test -z "$version" && version="latest"
-  giturl="https://github.com/${owner_repo}/releases/${version}"
-  json=$(http_copy "$giturl" "Accept:application/json")
-  test -z "$json" && return 1
-  version=$(echo "$json" | tr -s '\n' ' ' | sed 's/.*"tag_name":"//' | sed 's/".*//')
-  test -z "$version" && return 1
-  echo "$version"
-}
 cat /dev/null <<EOF
 ------------------------------------------------------------------------
 End of functions from https://github.com/client9/shlib
@@ -303,6 +254,75 @@ hash_verify() {
   fi
 }
 
+# GitHub HTTP download functions with GITHUB_TOKEN support
+github_http_download_curl() {
+  local_file=$1
+  source_url=$2
+  header=$3
+  if [ -n "$GITHUB_TOKEN" ]; then
+    log_debug "Using GITHUB_TOKEN for authentication"
+    if [ -z "$header" ]; then
+      curl -fsSL -H "Authorization: Bearer $GITHUB_TOKEN" -o "$local_file" "$source_url"
+    else
+      curl -fsSL -H "Authorization: Bearer $GITHUB_TOKEN" -H "$header" -o "$local_file" "$source_url"
+    fi
+  else
+    if [ -z "$header" ]; then
+      curl -fsSL -o "$local_file" "$source_url"
+    else
+      curl -fsSL -H "$header" -o "$local_file" "$source_url"
+    fi
+  fi
+}
+github_http_download_wget() {
+  local_file=$1
+  source_url=$2
+  header=$3
+  if [ -n "$GITHUB_TOKEN" ]; then
+    log_debug "Using GITHUB_TOKEN for authentication"
+    if [ -z "$header" ]; then
+      wget -q --header "Authorization: Bearer $GITHUB_TOKEN" -O "$local_file" "$source_url"
+    else
+      wget -q --header "Authorization: Bearer $GITHUB_TOKEN" --header "$header" -O "$local_file" "$source_url"
+    fi
+  else
+    if [ -z "$header" ]; then
+      wget -q -O "$local_file" "$source_url"
+    else
+      wget -q --header "$header" -O "$local_file" "$source_url"
+    fi
+  fi
+}
+github_http_download() {
+  log_debug "github_http_download $2"
+  if is_command curl; then
+    github_http_download_curl "$@"
+    return
+  elif is_command wget; then
+    github_http_download_wget "$@"
+    return
+  fi
+  log_crit "github_http_download unable to find wget or curl"
+  return 1
+}
+github_http_copy() {
+  tmp=$(mktemp)
+  github_http_download "${tmp}" "$@" || return 1
+  body=$(cat "$tmp")
+  rm -f "${tmp}"
+  echo "$body"
+}
+github_release() {
+  owner_repo=$1
+  version=$2
+  test -z "$version" && version="latest"
+  giturl="https://github.com/${owner_repo}/releases/${version}"
+  json=$(github_http_copy "$giturl" "Accept:application/json")
+  test -z "$json" && return 1
+  version=$(echo "$json" | tr -s '\n' ' ' | sed 's/.*"tag_name":"//' | sed 's/".*//')
+  test -z "$version" && return 1
+  echo "$version"
+}
 
 # --- Embedded Checksums (Format: VERSION:FILENAME:HASH) ---
 EMBEDDED_CHECKSUMS=""
@@ -313,22 +333,22 @@ find_embedded_checksum() {
   filename="$2"
   echo "$EMBEDDED_CHECKSUMS" | grep -E "^${version}:${filename}:" | cut -d':' -f3
 }
-
 parse_args() {
   BINDIR="${BINSTALLER_BIN:-${HOME}/.local/bin}"
-  while getopts "b:dqh?x" arg; do
+  DRY_RUN=0
+  while getopts "b:dqh?xn" arg; do
     case "$arg" in
     b) BINDIR="$OPTARG" ;;
     d) log_set_priority 10 ;;
     q) log_set_priority 3 ;;
     h | \?) usage "$0" ;;
     x) set -x ;;
+    n) DRY_RUN=1 ;;
     esac
   done
   shift $((OPTIND - 1))
   TAG="${1:-latest}"
 }
-
 tag_to_version() {
   if [ "$TAG" = "latest" ]; then
     log_info "checking GitHub for latest tag"
@@ -350,13 +370,13 @@ tag_to_version() {
   log_info "Resolved version: ${VERSION} (tag: ${TAG})"
 }
 
+
 capitalize() {
   input="$1"
   first_char=$(printf "%s" "$input" | cut -c1)
   first_upper=$(printf "%s" "$first_char" | tr '[:lower:]' '[:upper:]')
   printf "%s%s\n" "$first_upper" "$(printf "%s" "$input" | cut -c2-)"
 }
-
 
 resolve_asset_filename() {
   OS="$(capitalize "${OS}")"
@@ -378,6 +398,13 @@ resolve_asset_filename() {
     ASSET_FILENAME="${NAME}_${OS}_${ARCH}${EXT}"
   fi
 }
+# Cleanup function to remove temporary files
+cleanup() {
+  if [ -n "$TMPDIR" ] && [ -d "$TMPDIR" ]; then
+    log_debug "Cleaning up temporary directory: $TMPDIR"
+    rm -rf -- "$TMPDIR"
+  fi
+}
 
 execute() {
   STRIP_COMPONENTS=0
@@ -396,14 +423,14 @@ execute() {
   trap 'rm -rf -- "$TMPDIR"' EXIT HUP INT TERM
   log_debug "Downloading files into ${TMPDIR}"
   log_info "Downloading ${ASSET_URL}"
-  http_download "${TMPDIR}/${ASSET_FILENAME}" "${ASSET_URL}"
+  github_http_download "${TMPDIR}/${ASSET_FILENAME}" "${ASSET_URL}"
 
   # Try to find embedded checksum first
   EMBEDDED_HASH=$(find_embedded_checksum "$VERSION" "$ASSET_FILENAME")
 
   if [ -n "$EMBEDDED_HASH" ]; then
     log_info "Using embedded checksum for verification"
-    
+
     # Verify using embedded hash
     got=$(hash_compute "${TMPDIR}/${ASSET_FILENAME}")
     if [ "$got" != "$EMBEDDED_HASH" ]; then
@@ -416,7 +443,7 @@ execute() {
   elif [ -n "$CHECKSUM_URL" ]; then
     # Fall back to downloading checksum file
     log_info "Downloading checksums from ${CHECKSUM_URL}"
-    http_download "${TMPDIR}/${CHECKSUM_FILENAME}" "${CHECKSUM_URL}"
+    github_http_download "${TMPDIR}/${CHECKSUM_FILENAME}" "${CHECKSUM_URL}"
     log_info "Verifying checksum ..."
     hash_verify "${TMPDIR}/${ASSET_FILENAME}" "${TMPDIR}/${CHECKSUM_FILENAME}"
   else
@@ -451,13 +478,17 @@ execute() {
     fi
     return 1
   fi
-
   # Install the binary
   INSTALL_PATH="${BINDIR}/${BINARY_NAME}"
-  log_info "Installing binary to ${INSTALL_PATH}"
-  test ! -d "${BINDIR}" && install -d "${BINDIR}"
-  install "${BINARY_PATH}" "${INSTALL_PATH}"
-  log_info "${BINARY_NAME} installation complete!"
+
+  if [ "$DRY_RUN" = "1" ]; then
+    log_info "[DRY RUN] ${BINARY_NAME} dry-run installation succeeded! (Would install to: ${INSTALL_PATH})"
+  else
+    log_info "Installing binary to ${INSTALL_PATH}"
+    test ! -d "${BINDIR}" && install -d "${BINDIR}"
+    install "${BINARY_PATH}" "${INSTALL_PATH}"
+    log_info "${BINARY_NAME} installation complete!"
+  fi
 }
 
 # --- Configuration  ---
