@@ -20,4 +20,4 @@ yarn-debug.log*
 yarn-error.log*
 
 # TypeSpec output (keep the generated schema)
-# schema/output/
+schema/output/

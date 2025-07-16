@@ -310,7 +310,7 @@ The dry run mode will:
 The `.config/binstaller.yml` configuration file uses a simple, declarative format:
 
 ```yaml
-# yaml-language-server: $schema=https://raw.githubusercontent.com/binary-install/binstaller/main/schema/output/@typespec/json-schema/InstallSpec.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/binary-install/binstaller/main/schema/InstallSpec.json
 schema: v1
 name: fzf
 repo: junegunn/fzf

@@ -23,8 +23,9 @@ INSTALL_SCRIPTS := $(BINSTALLER_CONFIGS:.binstaller.yml=.install.sh)
 # Schema files
 SCHEMA_DIR := schema
 TYPESPEC_SOURCES := $(SCHEMA_DIR)/main.tsp $(SCHEMA_DIR)/tspconfig.yaml
-JSON_SCHEMA := $(SCHEMA_DIR)/output/@typespec/json-schema/InstallSpec.json
-YAML_SCHEMA := $(SCHEMA_DIR)/binstaller-schema.yaml
+TYPESPEC_OUTPUT := $(SCHEMA_DIR)/output/@typespec/json-schema/InstallSpec.json
+JSON_SCHEMA := $(SCHEMA_DIR)/InstallSpec.json
+YAML_SCHEMA := $(SCHEMA_DIR)/InstallSpec.yaml
 GENERATED_GO := pkg/spec/generated.go
 
 # Aqua tool management - https://aquaproj.github.io/
@@ -185,9 +186,13 @@ test-incremental: test-gen-installers test-run-installers-incremental ## Run inc
 	@echo "Incremental tests completed"
 
 # Schema generation targets
-$(JSON_SCHEMA): $(TYPESPEC_SOURCES)
+$(TYPESPEC_OUTPUT): $(TYPESPEC_SOURCES)
 	@echo "Generating JSON Schema from TypeSpec..."
 	@cd $(SCHEMA_DIR) && npm install --silent && npm run gen:schema
+
+$(JSON_SCHEMA): $(TYPESPEC_OUTPUT)
+	@echo "Copying JSON Schema to schema root..."
+	@cp $(TYPESPEC_OUTPUT) $(JSON_SCHEMA)
 
 $(GENERATED_GO): $(JSON_SCHEMA)
 	@echo "Generating Go structs from JSON Schema..."
@@ -229,6 +234,7 @@ clean: ## clean up everything
 	go clean ./...
 	rm -f binstaller binst
 	rm -rf ./bin ./dist
+	rm -f $(JSON_SCHEMA) $(YAML_SCHEMA)
 	git gc --aggressive
 
 # Absolutely awesome: http://marmelab.com/blog/2016/02/29/auto-documented-makefile.html

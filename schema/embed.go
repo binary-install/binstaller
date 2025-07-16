@@ -7,10 +7,10 @@ import (
 //go:embed main.tsp
 var typeSpecSource []byte
 
-//go:embed output/@typespec/json-schema/InstallSpec.json
+//go:embed InstallSpec.json
 var installSpecSchemaJSON []byte
 
-//go:embed binstaller-schema.yaml
+//go:embed InstallSpec.yaml
 var installSpecSchemaYAML []byte
 
 // GetTypeSpecSource returns the embedded TypeSpec source file

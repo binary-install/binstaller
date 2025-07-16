@@ -195,37 +195,130 @@ The generation pipeline:
 
 ## Files
 
-- `main.tsp` - TypeSpec definition of the configuration schema
-- `output/@typespec/json-schema/InstallSpec.json` - Generated JSON Schema with all definitions inline
+- `main.tsp` - TypeSpec definition of the configuration schema (source)
+- `InstallSpec.json` - Generated JSON Schema with all definitions inline
+- `InstallSpec.yaml` - YAML version of the JSON Schema for easier reading
 - `../pkg/spec/generated.go` - Generated Go structs
 - `tspconfig.yaml` - TypeSpec compiler configuration
 - `package.json` - NPM scripts for schema generation
 - `gen-go-with-fork.sh` - Script to use forked quicktype with unevaluatedProperties support
+- `output/` - TypeSpec compiler output directory (gitignored)
 
-## Validation
+## Validation and Testing
 
-You can validate your configuration against the schema:
+### Configuration Validation
+
+Use `binst check` to validate your configuration and verify assets:
+
+```bash
+# Check the default config file
+binst check
+
+# Check with a specific version
+binst check --version v1.2.3
+
+# Check without verifying GitHub assets (faster)
+binst check --check-assets=false
+
+# Ignore specific file patterns
+binst check --ignore "\.deb$" --ignore ".*-musl.*"
+```
+
+### Testing Generated Installers
+
+Test your installer script with dry-run mode:
+
+```bash
+# Generate and test installer without actually installing
+binst gen | sh -s -- -n
+
+# Test with a specific version
+binst gen | sh -s -- -n v1.2.3
+
+# Test installation to a custom directory
+binst gen | sh -s -- -n -b /tmp/test-install
+```
+
+### Schema Validation
+
+For direct schema validation:
 
 ```bash
 # Using any JSON Schema validator
-npx ajv validate -s schema/output/@typespec/json-schema/InstallSpec.json -d .config/binstaller.yml
+npx ajv validate -s schema/InstallSpec.json -d .config/binstaller.yml
 ```
 
 ### IDE Support
 
-Many IDEs support JSON Schema validation for YAML files. Add this to your `.config/binstaller.yml`:
+Many IDEs support JSON Schema validation for YAML files. The `binst init` command automatically adds this directive:
 
 ```yaml
-# yaml-language-server: $schema=https://raw.githubusercontent.com/binary-install/binstaller/main/schema/output/@typespec/json-schema/InstallSpec.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/binary-install/binstaller/main/schema/InstallSpec.json
 schema: v1
 repo: owner/repo
 # ... rest of config
 ```
 
-## Tips
+## Tips and Best Practices
 
-1. **Start simple**: Begin with just `repo` and `asset.template`
-2. **Test incrementally**: Use `binst gen` to test your configuration
-3. **Use rules sparingly**: Only add rules for actual platform differences
-4. **Embed checksums**: Use `binst embed-checksums` for better security
-5. **Document your choices**: Add comments explaining non-obvious configurations
+### Workflow Tips
+
+1. **Start with init**: Use `binst init` to generate a base configuration from existing sources:
+   ```bash
+   # From GitHub releases
+   binst init --source=github --repo=junegunn/fzf
+
+   # From GoReleaser config
+   binst init --source=goreleaser --repo=owner/repo
+
+   # From Aqua registry
+   binst init --source=aqua --repo=junegunn/fzf
+   ```
+
+2. **Validate early and often**: Use `binst check` after each configuration change:
+   ```bash
+   binst check  # Validates config and checks assets exist
+   ```
+
+3. **Test incrementally**: Use dry-run mode to test without installing:
+   ```bash
+   binst gen | sh -s -- -n  # Test the installer script
+   ```
+
+### Configuration Tips
+
+4. **Start simple**: Begin with minimal configuration and add complexity as needed
+5. **Use rules sparingly**: Only add rules for actual platform differences
+6. **Document your choices**: Add comments explaining non-obvious configurations
+
+### Security Tips
+
+7. **Always use checksums**: Configure checksums for security:
+   ```yaml
+   checksums:
+     algorithm: sha256
+     template: "${NAME}_${VERSION}_checksums.txt"
+   ```
+
+8. **Embed checksums for releases**: For published releases, embed checksums:
+   ```bash
+   # Download checksum file from GitHub
+   binst embed-checksums --version v1.0.0 --mode download
+
+   # Or calculate directly (requires GITHUB_TOKEN)
+   export GITHUB_TOKEN=$(gh auth token)
+   binst embed-checksums --version v1.0.0 --mode calculate
+   ```
+
+### Advanced Usage
+
+9. **Generate version-specific installers**: For CI/CD or specific deployments:
+   ```bash
+   binst gen --target-version v1.2.3 -o install-v1.2.3.sh
+   ```
+
+10. **Use runner mode**: For temporary execution without installation:
+    ```bash
+    binst gen --type=runner -o run.sh
+    ./run.sh -- --help  # Run the binary directly
+    ```
