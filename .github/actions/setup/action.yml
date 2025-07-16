@@ -12,3 +12,5 @@ runs:
     - name: Build binst
       shell: bash
       run: make build
+      env:
+        AQUA_GITHUB_TOKEN: ${{ github.token }}
