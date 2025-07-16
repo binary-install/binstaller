@@ -336,18 +336,14 @@ supported_platforms:
 
 ### 📚 Schema Documentation
 
-- **[TypeSpec Definition](schema/main.tsp)** - Human-readable schema definition with comprehensive documentation for all configuration options
-- **[JSON Schema](schema/output/@typespec/json-schema/InstallSpec.json)** - Full JSON Schema definition for validation and IDE support
-- **[Go Structs](pkg/spec/generated.go)** - Generated Go structs used by the implementation
-- **[Schema Browser](https://json-schema.app/view/%23?url=https%3A%2F%2Fraw.githubusercontent.com%2Fbinary-install%2Fbinstaller%2Frefs%2Fheads%2Fmain%2Fschema%2Foutput%2F%2540typespec%2Fjson-schema%2FInstallSpec.json)** - Interactive schema explorer (external tool)
+For detailed configuration documentation, examples, and best practices, see **[schema/README.md](schema/README.md)**.
 
-The configuration schema is defined using [TypeSpec](https://typespec.io/), which generates both the JSON Schema for validation and Go structs for the implementation. This ensures type safety and consistency across the entire toolchain.
+#### Schema Files
 
-**For detailed configuration options and their meanings, refer to the [TypeSpec definition](schema/main.tsp)**, which includes:
-- Comprehensive documentation for each field
-- Examples of common usage patterns
-- Explanations of advanced features like platform-specific rules, architecture emulation, and embedded checksums
-- Complete type information and constraints
+- **[JSON Schema](schema/InstallSpec.json)** - Machine-readable schema for validation and IDE support
+- **[YAML Schema](schema/InstallSpec.yaml)** - Human-readable YAML version of the schema
+- **[TypeSpec Definition](schema/main.tsp)** - Source schema definition with inline documentation
+- **[Schema Browser](https://json-schema.app/view/%23?url=https%3A%2F%2Fraw.githubusercontent.com%2Fbinary-install%2Fbinstaller%2Fmain%2Fschema%2FInstallSpec.json)** - Interactive schema explorer
 
 ### 📋 Schema Command
 
