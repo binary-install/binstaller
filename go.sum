@@ -47,8 +47,8 @@ github.com/apex/log v1.9.0/go.mod h1:m82fZlWIuiWzWP04XCTXmnX0xRkYYbCdYn8jbJeLBEA
 github.com/apex/logs v1.0.0/go.mod h1:XzxuLZ5myVHDy9SAmYpamKKRNApGj54PfYLcFrXqDwo=
 github.com/aphistic/golf v0.0.0-20180712155816-02c07f170c5a/go.mod h1:3NqKYiepwy8kCu4PNA+aP7WUV72eXWJeP9/r3/K9aLE=
 github.com/aphistic/sweet v0.2.0/go.mod h1:fWDlIh/isSE9n6EPsRmC0det+whmX6dJid3stzu0Xys=
-github.com/aquaproj/aqua/v2 v2.53.4 h1:3dtWjb+iFZ28MgVx8MULNdoIOGz5Qrqies+2NcV8mfM=
-github.com/aquaproj/aqua/v2 v2.53.4/go.mod h1:6Ru+TTBJ8kalTOci96ODiPxCvBHC1ptZZh4USAZ6+tA=
+github.com/aquaproj/aqua/v2 v2.53.5 h1:AAvkorXycb/s5g7/TUCEW5f/EXGrdQl1cFRNAoIdPHs=
+github.com/aquaproj/aqua/v2 v2.53.5/go.mod h1:6Ru+TTBJ8kalTOci96ODiPxCvBHC1ptZZh4USAZ6+tA=
 github.com/armon/go-socks5 v0.0.0-20160902184237-e75332964ef5 h1:0CwZNZbxp69SHPdPJAN/hZIm0C4OItdklCFmMRWYpio=
 github.com/armon/go-socks5 v0.0.0-20160902184237-e75332964ef5/go.mod h1:wHh0iHkYZB8zMSxRWpUBQtwG5a7fFgvEO+odwuTv2gs=
 github.com/aws/aws-sdk-go v1.20.6/go.mod h1:KmX6BPdI08NWTb3/sm4ZGu5ShLoqVDhKgpiN924inxo=
