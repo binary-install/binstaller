@@ -56,6 +56,121 @@ func findBinaryByName(binaries []spec.BinaryElement, name string) (*spec.BinaryE
 	return nil, false
 }
 
+// loadInstallSpec loads and parses the InstallSpec from the config file
+func loadInstallSpec(cfgFile string) (*spec.InstallSpec, error) {
+	// Read the InstallSpec YAML file
+	log.Debugf("Reading InstallSpec from: %s", cfgFile)
+	var yamlData []byte
+	var err error
+
+	if cfgFile == "-" {
+		log.Debug("Reading install spec from stdin")
+		yamlData, err = io.ReadAll(os.Stdin)
+		if err != nil {
+			log.WithError(err).Error("Failed to read install spec from stdin")
+			return nil, fmt.Errorf("failed to read install spec from stdin: %w", err)
+		}
+	} else {
+		yamlData, err = os.ReadFile(cfgFile)
+		if err != nil {
+			log.WithError(err).Errorf("Failed to read install spec file: %s", cfgFile)
+			return nil, fmt.Errorf("failed to read install spec file %s: %w", cfgFile, err)
+		}
+	}
+
+	// Unmarshal YAML into InstallSpec struct
+	log.Debug("Unmarshalling InstallSpec YAML")
+	var installSpec spec.InstallSpec
+	err = yaml.Unmarshal(yamlData, &installSpec)
+	if err != nil {
+		log.WithError(err).Errorf("Failed to unmarshal install spec YAML from: %s", cfgFile)
+		return nil, fmt.Errorf("failed to unmarshal install spec YAML from %s: %w", cfgFile, err)
+	}
+
+	return &installSpec, nil
+}
+
+// handleRunnerBinarySelection handles binary selection logic for runner scripts
+func handleRunnerBinarySelection(installSpec *spec.InstallSpec, scriptType, binaryName string) error {
+	// Only apply to runner scripts
+	if scriptType != "runner" {
+		return nil
+	}
+
+	// Check if we need to handle binary selection
+	if installSpec.Asset == nil || len(installSpec.Asset.Binaries) <= 1 {
+		// Single binary or no binaries - check if binary flag was unnecessarily used
+		if binaryName != "" && len(installSpec.Asset.Binaries) <= 1 {
+			log.Warnf("--binary flag specified but configuration has only one binary. Ignoring flag.")
+		}
+		return nil
+	}
+
+	// Multiple binaries case
+	if binaryName == "" {
+		// No binary specified - use first one with warning
+		firstBinary := installSpec.Asset.Binaries[0]
+		binaryName := ""
+		if firstBinary.Name != nil && *firstBinary.Name != "" {
+			binaryName = *firstBinary.Name
+		}
+		log.Warnf("Multiple binaries found. Generating runner for the first binary '%s'.", binaryName)
+		log.Warnf("Use --binary flag to specify a different binary.")
+
+		availableBinaries := getAvailableBinaryNames(installSpec.Asset.Binaries)
+		if len(availableBinaries) > 0 {
+			log.Infof("Available binaries: %s", strings.Join(availableBinaries, ", "))
+		}
+		// Keep only the first binary
+		installSpec.Asset.Binaries = installSpec.Asset.Binaries[:1]
+	} else {
+		// Binary specified - validate and select it
+		selectedBinary, found := findBinaryByName(installSpec.Asset.Binaries, binaryName)
+		if !found {
+			log.Errorf("Binary '%s' not found in configuration", binaryName)
+			availableBinaries := getAvailableBinaryNames(installSpec.Asset.Binaries)
+			if len(availableBinaries) > 0 {
+				log.Errorf("Available binaries: %s", strings.Join(availableBinaries, ", "))
+			}
+			return fmt.Errorf("binary '%s' not found", binaryName)
+		}
+
+		// Filter installSpec to only include the selected binary
+		installSpec.Asset.Binaries = []spec.BinaryElement{*selectedBinary}
+		log.Infof("Generating runner for binary '%s'", binaryName)
+	}
+
+	return nil
+}
+
+// writeScript writes the generated script to the specified output
+func writeScript(scriptBytes []byte, outputFile, scriptType string) error {
+	if outputFile == "" || outputFile == "-" {
+		// Write to stdout
+		log.Debugf("Writing %s script to stdout", scriptType)
+		fmt.Print(string(scriptBytes))
+		log.Infof("%s script written to stdout", scriptType)
+	} else {
+		// Write to file
+		log.Infof("Writing %s script to file: %s", scriptType, outputFile)
+
+		// Ensure the output directory exists
+		outputDir := filepath.Dir(outputFile)
+		if err := os.MkdirAll(outputDir, 0755); err != nil {
+			log.WithError(err).Errorf("Failed to create output directory: %s", outputDir)
+			return fmt.Errorf("failed to create output directory %s: %w", outputDir, err)
+		}
+
+		err := os.WriteFile(outputFile, scriptBytes, 0755) // Make script executable
+		if err != nil {
+			log.WithError(err).Errorf("Failed to write %s script to file: %s", scriptType, outputFile)
+			return fmt.Errorf("failed to write %s script to file %s: %w", scriptType, outputFile, err)
+		}
+		log.Infof("%s script successfully written to %s", scriptType, outputFile)
+	}
+	return nil
+}
+
 // GenCommand represents the gen command
 var GenCommand = &cobra.Command{
 	Use:   "gen",
@@ -110,18 +225,16 @@ generates a POSIX-compatible shell installer script.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		log.Info("Running gen command...")
 
-		// Validate script type
+		// Validate and normalize script type
 		if err := validateScriptType(genScriptType); err != nil {
 			log.WithError(err).Error("Invalid script type")
 			return err
 		}
-
-		// Default to installer if not specified
 		if genScriptType == "" {
 			genScriptType = "installer"
 		}
 
-		// Determine config file path using common logic
+		// Resolve config file path
 		cfgFile, err := resolveConfigFile(configFile)
 		if err != nil {
 			log.WithError(err).Error("Config file detection failed")
@@ -132,108 +245,28 @@ generates a POSIX-compatible shell installer script.`,
 		}
 		log.Debugf("Using config file: %s", cfgFile)
 
-		// Read the InstallSpec YAML file
-		log.Debugf("Reading InstallSpec from: %s", cfgFile)
-		var yamlData []byte
-		if cfgFile == "-" {
-			log.Debug("Reading install spec from stdin")
-			yamlData, err = io.ReadAll(os.Stdin)
-			if err != nil {
-				log.WithError(err).Error("Failed to read install spec from stdin")
-				return fmt.Errorf("failed to read install spec from stdin: %w", err)
-			}
-		} else {
-			yamlData, err = os.ReadFile(cfgFile)
-			if err != nil {
-				log.WithError(err).Errorf("Failed to read install spec file: %s", cfgFile)
-				return fmt.Errorf("failed to read install spec file %s: %w", cfgFile, err)
-			}
-		}
-
-		// Unmarshal YAML into InstallSpec struct
-		log.Debug("Unmarshalling InstallSpec YAML")
-		var installSpec spec.InstallSpec
-		err = yaml.Unmarshal(yamlData, &installSpec)
+		// Load and parse InstallSpec
+		installSpec, err := loadInstallSpec(cfgFile)
 		if err != nil {
-			log.WithError(err).Errorf("Failed to unmarshal install spec YAML from: %s", cfgFile)
-			return fmt.Errorf("failed to unmarshal install spec YAML from %s: %w", cfgFile, err)
+			return err
 		}
 
 		// Handle binary selection for runner scripts
-		if genScriptType == "runner" && installSpec.Asset != nil && len(installSpec.Asset.Binaries) > 1 {
-			if genBinaryName == "" {
-				// Warning: multiple binaries found, using the first one
-				firstBinary := installSpec.Asset.Binaries[0]
-				binaryName := ""
-				if firstBinary.Name != nil && *firstBinary.Name != "" {
-					binaryName = *firstBinary.Name
-				}
-				log.Warnf("Multiple binaries found. Generating runner for the first binary '%s'.", binaryName)
-				log.Warnf("Use --binary flag to specify a different binary.")
-
-				// Available binaries for reference
-				availableBinaries := getAvailableBinaryNames(installSpec.Asset.Binaries)
-				if len(availableBinaries) > 0 {
-					log.Infof("Available binaries: %s", strings.Join(availableBinaries, ", "))
-				}
-			} else {
-				// Validate the specified binary exists
-				selectedBinary, found := findBinaryByName(installSpec.Asset.Binaries, genBinaryName)
-
-				if !found {
-					log.Errorf("Binary '%s' not found in configuration", genBinaryName)
-					availableBinaries := getAvailableBinaryNames(installSpec.Asset.Binaries)
-					if len(availableBinaries) > 0 {
-						log.Errorf("Available binaries: %s", strings.Join(availableBinaries, ", "))
-					}
-					return fmt.Errorf("binary '%s' not found", genBinaryName)
-				}
-
-				// Filter installSpec to only include the selected binary
-				installSpec.Asset.Binaries = []spec.BinaryElement{*selectedBinary}
-				log.Infof("Generating runner for binary '%s'", genBinaryName)
-			}
-		} else if genScriptType == "runner" && genBinaryName != "" {
-			// Warning: --binary flag used but not needed
-			if installSpec.Asset == nil || len(installSpec.Asset.Binaries) <= 1 {
-				log.Warnf("--binary flag specified but configuration has only one binary. Ignoring flag.")
-			}
+		if err := handleRunnerBinarySelection(installSpec, genScriptType, genBinaryName); err != nil {
+			return err
 		}
 
-		// Generate the script using the internal shell generator
+		// Generate the script
 		log.Infof("Generating %s script...", genScriptType)
-		scriptBytes, err := shell.GenerateWithScriptType(&installSpec, genTargetVersion, genScriptType)
+		scriptBytes, err := shell.GenerateWithScriptType(installSpec, genTargetVersion, genScriptType)
 		if err != nil {
 			log.WithError(err).Errorf("Failed to generate %s script", genScriptType)
 			return fmt.Errorf("failed to generate %s script: %w", genScriptType, err)
 		}
 		log.Debugf("%s script generated successfully", genScriptType)
 
-		// Write the output script
-		if genOutputFile == "" || genOutputFile == "-" {
-			// Write to stdout
-			log.Debugf("Writing %s script to stdout", genScriptType)
-			fmt.Print(string(scriptBytes))
-			log.Infof("%s script written to stdout", genScriptType)
-		} else {
-			// Write to file
-			log.Infof("Writing %s script to file: %s", genScriptType, genOutputFile)
-			// Ensure the output directory exists
-			outputDir := filepath.Dir(genOutputFile)
-			if err := os.MkdirAll(outputDir, 0755); err != nil {
-				log.WithError(err).Errorf("Failed to create output directory: %s", outputDir)
-				return fmt.Errorf("failed to create output directory %s: %w", outputDir, err)
-			}
-
-			err = os.WriteFile(genOutputFile, scriptBytes, 0755) // Make script executable
-			if err != nil {
-				log.WithError(err).Errorf("Failed to write %s script to file: %s", genScriptType, genOutputFile)
-				return fmt.Errorf("failed to write %s script to file %s: %w", genScriptType, genOutputFile, err)
-			}
-			log.Infof("%s script successfully written to %s", genScriptType, genOutputFile)
-		}
-
-		return nil
+		// Write the output
+		return writeScript(scriptBytes, genOutputFile, genScriptType)
 	},
 }
 
