@@ -34,6 +34,30 @@ var (
 	// Input config file is handled by the global --config flag
 )
 
+const unnamedBinaryPlaceholder = "<unnamed>"
+
+// getAvailableBinaryNames extracts non-nil, non-empty binary names from the binaries list
+func getAvailableBinaryNames(binaries []spec.BinaryElement) []string {
+	var names []string
+	for _, bin := range binaries {
+		if bin.Name != nil && *bin.Name != "" {
+			names = append(names, *bin.Name)
+		}
+	}
+	return names
+}
+
+// findBinaryByName searches for a binary with the given name in the binaries list
+func findBinaryByName(binaries []spec.BinaryElement, name string) (*spec.BinaryElement, bool) {
+	for _, bin := range binaries {
+		if bin.Name != nil && *bin.Name == name {
+			binCopy := bin // Return a copy to avoid modification issues
+			return &binCopy, true
+		}
+	}
+	return nil, false
+}
+
 // GenCommand represents the gen command
 var GenCommand = &cobra.Command{
 	Use:   "gen",
@@ -142,41 +166,25 @@ generates a POSIX-compatible shell installer script.`,
 			if genBinaryName == "" {
 				// Warning: multiple binaries found, using the first one
 				firstBinary := installSpec.Asset.Binaries[0]
-				binaryName := "<unnamed>"
-				if firstBinary.Name != nil {
+				binaryName := unnamedBinaryPlaceholder
+				if firstBinary.Name != nil && *firstBinary.Name != "" {
 					binaryName = *firstBinary.Name
 				}
 				log.Warnf("Multiple binaries found. Generating runner for the first binary '%s'.", binaryName)
 				log.Warnf("Use --binary flag to specify a different binary.")
 
 				// Available binaries for reference
-				var availableBinaries []string
-				for _, bin := range installSpec.Asset.Binaries {
-					if bin.Name != nil {
-						availableBinaries = append(availableBinaries, *bin.Name)
-					}
-				}
+				availableBinaries := getAvailableBinaryNames(installSpec.Asset.Binaries)
 				if len(availableBinaries) > 0 {
 					log.Infof("Available binaries: %s", strings.Join(availableBinaries, ", "))
 				}
 			} else {
 				// Validate the specified binary exists
-				found := false
-				var selectedBinary spec.BinaryElement
-				var availableBinaries []string
-
-				for _, bin := range installSpec.Asset.Binaries {
-					if bin.Name != nil {
-						availableBinaries = append(availableBinaries, *bin.Name)
-						if *bin.Name == genBinaryName {
-							found = true
-							selectedBinary = bin
-						}
-					}
-				}
+				selectedBinary, found := findBinaryByName(installSpec.Asset.Binaries, genBinaryName)
 
 				if !found {
 					log.Errorf("Binary '%s' not found in configuration", genBinaryName)
+					availableBinaries := getAvailableBinaryNames(installSpec.Asset.Binaries)
 					if len(availableBinaries) > 0 {
 						log.Errorf("Available binaries: %s", strings.Join(availableBinaries, ", "))
 					}
@@ -184,7 +192,7 @@ generates a POSIX-compatible shell installer script.`,
 				}
 
 				// Filter installSpec to only include the selected binary
-				installSpec.Asset.Binaries = []spec.BinaryElement{selectedBinary}
+				installSpec.Asset.Binaries = []spec.BinaryElement{*selectedBinary}
 				log.Infof("Generating runner for binary '%s'", genBinaryName)
 			}
 		} else if genScriptType == "runner" && genBinaryName != "" {
