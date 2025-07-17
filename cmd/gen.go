@@ -5,6 +5,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/apex/log"
 	"github.com/binary-install/binstaller/internal/shell" // Placeholder for script generator
@@ -29,6 +30,7 @@ var (
 	genOutputFile    string
 	genTargetVersion string
 	genScriptType    string
+	genBinaryName    string
 	// Input config file is handled by the global --config flag
 )
 
@@ -46,6 +48,9 @@ generates a POSIX-compatible shell installer script.`,
 
   # Generate runner script (runs binary without installing)
   binst gen --type=runner -o run.sh
+
+  # Generate runner for specific binary (when multiple binaries exist)
+  binst gen --type=runner --binary=mytool-helper -o run-helper.sh
 
   # Run binary directly using runner script
   ./run.sh -- --help
@@ -132,6 +137,63 @@ generates a POSIX-compatible shell installer script.`,
 			return fmt.Errorf("failed to unmarshal install spec YAML from %s: %w", cfgFile, err)
 		}
 
+		// Handle binary selection for runner scripts
+		if genScriptType == "runner" && installSpec.Asset != nil && len(installSpec.Asset.Binaries) > 1 {
+			if genBinaryName == "" {
+				// Warning: multiple binaries found, using the first one
+				firstBinary := installSpec.Asset.Binaries[0]
+				binaryName := "<unnamed>"
+				if firstBinary.Name != nil {
+					binaryName = *firstBinary.Name
+				}
+				log.Warnf("Multiple binaries found. Generating runner for the first binary '%s'.", binaryName)
+				log.Warnf("Use --binary flag to specify a different binary.")
+
+				// Available binaries for reference
+				var availableBinaries []string
+				for _, bin := range installSpec.Asset.Binaries {
+					if bin.Name != nil {
+						availableBinaries = append(availableBinaries, *bin.Name)
+					}
+				}
+				if len(availableBinaries) > 0 {
+					log.Infof("Available binaries: %s", strings.Join(availableBinaries, ", "))
+				}
+			} else {
+				// Validate the specified binary exists
+				found := false
+				var selectedBinary spec.BinaryElement
+				var availableBinaries []string
+
+				for _, bin := range installSpec.Asset.Binaries {
+					if bin.Name != nil {
+						availableBinaries = append(availableBinaries, *bin.Name)
+						if *bin.Name == genBinaryName {
+							found = true
+							selectedBinary = bin
+						}
+					}
+				}
+
+				if !found {
+					log.Errorf("Binary '%s' not found in configuration", genBinaryName)
+					if len(availableBinaries) > 0 {
+						log.Errorf("Available binaries: %s", strings.Join(availableBinaries, ", "))
+					}
+					return fmt.Errorf("binary '%s' not found", genBinaryName)
+				}
+
+				// Filter installSpec to only include the selected binary
+				installSpec.Asset.Binaries = []spec.BinaryElement{selectedBinary}
+				log.Infof("Generating runner for binary '%s'", genBinaryName)
+			}
+		} else if genScriptType == "runner" && genBinaryName != "" {
+			// Warning: --binary flag used but not needed
+			if installSpec.Asset == nil || len(installSpec.Asset.Binaries) <= 1 {
+				log.Warnf("--binary flag specified but configuration has only one binary. Ignoring flag.")
+			}
+		}
+
 		// Generate the script using the internal shell generator
 		log.Infof("Generating %s script...", genScriptType)
 		scriptBytes, err := shell.GenerateWithScriptType(&installSpec, genTargetVersion, genScriptType)
@@ -175,4 +237,5 @@ func init() {
 	GenCommand.Flags().StringVarP(&genOutputFile, "output", "o", "-", "Output path for the generated script (use '-' for stdout)")
 	GenCommand.Flags().StringVar(&genTargetVersion, "target-version", "", "Generate script for specific version only (disables runtime version selection)")
 	GenCommand.Flags().StringVar(&genScriptType, "type", "installer", "Type of script to generate (installer, runner)")
+	GenCommand.Flags().StringVar(&genBinaryName, "binary", "", "For runner scripts with multiple binaries: specify which binary to run")
 }

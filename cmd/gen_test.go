@@ -14,6 +14,7 @@ func TestGenCommandFlags(t *testing.T) {
 		wantType    string
 		wantOutput  string
 		wantVersion string
+		wantBinary  string
 		wantError   bool
 	}{
 		{
@@ -22,6 +23,7 @@ func TestGenCommandFlags(t *testing.T) {
 			wantType:    "installer",
 			wantOutput:  "-",
 			wantVersion: "",
+			wantBinary:  "",
 			wantError:   false,
 		},
 		{
@@ -30,6 +32,7 @@ func TestGenCommandFlags(t *testing.T) {
 			wantType:    "installer",
 			wantOutput:  "-",
 			wantVersion: "",
+			wantBinary:  "",
 			wantError:   false,
 		},
 		{
@@ -38,6 +41,7 @@ func TestGenCommandFlags(t *testing.T) {
 			wantType:    "runner",
 			wantOutput:  "-",
 			wantVersion: "",
+			wantBinary:  "",
 			wantError:   false,
 		},
 		{
@@ -46,6 +50,7 @@ func TestGenCommandFlags(t *testing.T) {
 			wantType:    "runner",
 			wantOutput:  "run.sh",
 			wantVersion: "",
+			wantBinary:  "",
 			wantError:   false,
 		},
 		{
@@ -54,6 +59,34 @@ func TestGenCommandFlags(t *testing.T) {
 			wantType:    "runner",
 			wantOutput:  "-",
 			wantVersion: "v1.2.3",
+			wantBinary:  "",
+			wantError:   false,
+		},
+		{
+			name:        "runner type with binary flag",
+			args:        []string{"--type", "runner", "--binary", "mytool"},
+			wantType:    "runner",
+			wantOutput:  "-",
+			wantVersion: "",
+			wantBinary:  "mytool",
+			wantError:   false,
+		},
+		{
+			name:        "installer type with binary flag (ignored)",
+			args:        []string{"--type", "installer", "--binary", "mytool"},
+			wantType:    "installer",
+			wantOutput:  "-",
+			wantVersion: "",
+			wantBinary:  "mytool",
+			wantError:   false,
+		},
+		{
+			name:        "runner with all flags",
+			args:        []string{"--type", "runner", "--binary", "helper", "-o", "run-helper.sh", "--target-version", "v2.0.0"},
+			wantType:    "runner",
+			wantOutput:  "run-helper.sh",
+			wantVersion: "v2.0.0",
+			wantBinary:  "helper",
 			wantError:   false,
 		},
 		{
@@ -62,6 +95,7 @@ func TestGenCommandFlags(t *testing.T) {
 			wantType:    "invalid",
 			wantOutput:  "-",
 			wantVersion: "",
+			wantBinary:  "",
 			wantError:   false, // Cobra accepts any string, validation happens in RunE
 		},
 	}
@@ -72,11 +106,13 @@ func TestGenCommandFlags(t *testing.T) {
 			genOutputFile = ""
 			genTargetVersion = ""
 			genScriptType = ""
+			genBinaryName = ""
 
 			cmd := &cobra.Command{Use: "gen"}
 			cmd.Flags().StringVarP(&genOutputFile, "output", "o", "-", "Output path for the generated script")
 			cmd.Flags().StringVar(&genTargetVersion, "target-version", "", "Generate script for specific version only")
 			cmd.Flags().StringVar(&genScriptType, "type", "installer", "Type of script to generate (installer, runner)")
+			cmd.Flags().StringVar(&genBinaryName, "binary", "", "For runner scripts with multiple binaries: specify which binary to run")
 
 			err := cmd.ParseFlags(tt.args)
 			if tt.wantError {
@@ -100,6 +136,10 @@ func TestGenCommandFlags(t *testing.T) {
 
 			if genTargetVersion != tt.wantVersion {
 				t.Errorf("genTargetVersion = %v, want %v", genTargetVersion, tt.wantVersion)
+			}
+
+			if genBinaryName != tt.wantBinary {
+				t.Errorf("genBinaryName = %v, want %v", genBinaryName, tt.wantBinary)
 			}
 		})
 	}
@@ -159,6 +199,7 @@ func TestGenCommandUsageExamples(t *testing.T) {
 	expectedExamples := []string{
 		"--type=runner",
 		"run.sh",
+		"--binary=mytool-helper",
 	}
 
 	for _, example := range expectedExamples {
