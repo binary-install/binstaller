@@ -14,11 +14,11 @@ import (
 	"time"
 
 	"github.com/apex/log"
+	"github.com/binary-install/binstaller/internal/cmdutil"
 	"github.com/binary-install/binstaller/pkg/asset"
 	"github.com/binary-install/binstaller/pkg/httpclient"
 	"github.com/binary-install/binstaller/pkg/spec"
 	"github.com/buildkite/interpolate"
-	"github.com/goccy/go-yaml"
 	"github.com/spf13/cobra"
 )
 
@@ -84,28 +84,17 @@ Exit Codes:
 		}
 		log.Debugf("Using config file: %s", cfgFile)
 
-		// Read the InstallSpec YAML file
-		log.Debugf("Reading InstallSpec from: %s", cfgFile)
-		yamlData, err := os.ReadFile(cfgFile)
+		// Load and parse InstallSpec
+		installSpec, err := cmdutil.LoadInstallSpec(cfgFile)
 		if err != nil {
-			log.WithError(err).Errorf("Failed to read install spec file: %s", cfgFile)
-			return fmt.Errorf("failed to read install spec file %s: %w", cfgFile, err)
-		}
-
-		// Unmarshal YAML into InstallSpec struct
-		log.Debug("Unmarshalling InstallSpec YAML")
-		var installSpec spec.InstallSpec
-		err = yaml.Unmarshal(yamlData, &installSpec)
-		if err != nil {
-			log.WithError(err).Errorf("Failed to unmarshal install spec YAML from: %s", cfgFile)
-			return fmt.Errorf("failed to unmarshal install spec YAML from %s: %w", cfgFile, err)
+			return err
 		}
 
 		// Apply defaults
 		installSpec.SetDefaults()
 
 		// Validate the spec
-		if err := validateSpec(&installSpec); err != nil {
+		if err := validateSpec(installSpec); err != nil {
 			log.WithError(err).Error("InstallSpec validation failed")
 			return fmt.Errorf("validation failed: %w", err)
 		}
@@ -139,7 +128,7 @@ Exit Codes:
 			version = "1.0.0" // Use example version for testing when not checking assets
 		}
 
-		assetFilenames, err := generateAllAssetFilenames(&installSpec, version)
+		assetFilenames, err := generateAllAssetFilenames(installSpec, version)
 		if err != nil {
 			log.WithError(err).Error("Failed to generate asset filenames")
 			return fmt.Errorf("failed to generate asset filenames: %w", err)
@@ -151,13 +140,13 @@ Exit Codes:
 			ctx := context.Background()
 			// When check-assets is on and no platforms specified, use asset-based detection
 			if len(installSpec.SupportedPlatforms) == 0 {
-				err := checkAssetsExistWithDetection(ctx, &installSpec, version)
+				err := checkAssetsExistWithDetection(ctx, installSpec, version)
 				if err != nil {
 					log.WithError(err).Error("Asset availability check failed")
 					return fmt.Errorf("asset availability check failed: %w", err)
 				}
 			} else {
-				err := checkAssetsExist(ctx, &installSpec, version, assetFilenames)
+				err := checkAssetsExist(ctx, installSpec, version, assetFilenames)
 				if err != nil {
 					log.WithError(err).Error("Asset availability check failed")
 					return fmt.Errorf("asset availability check failed: %w", err)
