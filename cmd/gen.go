@@ -34,8 +34,6 @@ var (
 	// Input config file is handled by the global --config flag
 )
 
-const unnamedBinaryPlaceholder = "<unnamed>"
-
 // getAvailableBinaryNames extracts non-nil, non-empty binary names from the binaries list
 func getAvailableBinaryNames(binaries []spec.BinaryElement) []string {
 	var names []string
@@ -166,7 +164,7 @@ generates a POSIX-compatible shell installer script.`,
 			if genBinaryName == "" {
 				// Warning: multiple binaries found, using the first one
 				firstBinary := installSpec.Asset.Binaries[0]
-				binaryName := unnamedBinaryPlaceholder
+				binaryName := ""
 				if firstBinary.Name != nil && *firstBinary.Name != "" {
 					binaryName = *firstBinary.Name
 				}
