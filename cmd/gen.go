@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/apex/log"
-	"github.com/binary-install/binstaller/internal/cmdutil"
 	"github.com/binary-install/binstaller/internal/shell" // Placeholder for script generator
 	"github.com/binary-install/binstaller/pkg/spec"
 	"github.com/spf13/cobra"
@@ -211,7 +210,7 @@ generates a POSIX-compatible shell installer script.`,
 		log.Debugf("Using config file: %s", cfgFile)
 
 		// Load and parse InstallSpec
-		installSpec, err := cmdutil.LoadInstallSpec(cfgFile)
+		installSpec, err := loadInstallSpec(cfgFile)
 		if err != nil {
 			return err
 		}

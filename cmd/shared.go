@@ -1,4 +1,4 @@
-package cmdutil
+package cmd
 
 import (
 	"fmt"
@@ -10,8 +10,8 @@ import (
 	"github.com/goccy/go-yaml"
 )
 
-// LoadInstallSpec loads and parses the InstallSpec from the config file
-func LoadInstallSpec(cfgFile string) (*spec.InstallSpec, error) {
+// loadInstallSpec loads and parses the InstallSpec from the config file
+func loadInstallSpec(cfgFile string) (*spec.InstallSpec, error) {
 	// Read the InstallSpec YAML file
 	log.Debugf("Reading InstallSpec from: %s", cfgFile)
 	var yamlData []byte

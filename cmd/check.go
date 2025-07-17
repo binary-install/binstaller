@@ -14,7 +14,6 @@ import (
 	"time"
 
 	"github.com/apex/log"
-	"github.com/binary-install/binstaller/internal/cmdutil"
 	"github.com/binary-install/binstaller/pkg/asset"
 	"github.com/binary-install/binstaller/pkg/httpclient"
 	"github.com/binary-install/binstaller/pkg/spec"
@@ -85,7 +84,7 @@ Exit Codes:
 		log.Debugf("Using config file: %s", cfgFile)
 
 		// Load and parse InstallSpec
-		installSpec, err := cmdutil.LoadInstallSpec(cfgFile)
+		installSpec, err := loadInstallSpec(cfgFile)
 		if err != nil {
 			return err
 		}
