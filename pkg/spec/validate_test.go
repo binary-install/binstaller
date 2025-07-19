@@ -56,37 +56,37 @@ func TestValidateAssetTemplate(t *testing.T) {
 			name:     "reject semicolon",
 			template: "${NAME};rm -rf /",
 			wantErr:  true,
-			errMsg:   "dangerous character",
+			errMsg:   "dangerous",
 		},
 		{
 			name:     "reject pipe",
 			template: "${NAME}|cat /etc/passwd",
 			wantErr:  true,
-			errMsg:   "dangerous character",
+			errMsg:   "dangerous",
 		},
 		{
 			name:     "reject ampersand",
 			template: "${NAME}&& malicious",
 			wantErr:  true,
-			errMsg:   "dangerous character",
+			errMsg:   "dangerous",
 		},
 		{
 			name:     "reject output redirection >",
 			template: "${NAME} > /etc/passwd",
 			wantErr:  true,
-			errMsg:   "dangerous character",
+			errMsg:   "dangerous",
 		},
 		{
 			name:     "reject input redirection <",
 			template: "${NAME} < /etc/passwd",
 			wantErr:  true,
-			errMsg:   "dangerous character",
+			errMsg:   "dangerous",
 		},
 		{
 			name:     "reject append redirection >>",
 			template: "${NAME} >> /etc/passwd",
 			wantErr:  true,
-			errMsg:   "dangerous character",
+			errMsg:   "dangerous",
 		},
 		// Edge cases
 		{

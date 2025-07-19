@@ -4,7 +4,8 @@ import (
 	"testing"
 )
 
-func TestShellSafeString(t *testing.T) {
+// TestValidateShellSafe tests the unified shell-safe validation function
+func TestValidateShellSafe(t *testing.T) {
 	tests := []struct {
 		name      string
 		value     string
@@ -62,7 +63,7 @@ func TestShellSafeString(t *testing.T) {
 			value:     "tool`evil`",
 			fieldName: "name",
 			wantErr:   true,
-			errMsg:    "backtick",
+			errMsg:    "command substitution",
 		},
 		// Shell metacharacters
 		{
@@ -125,7 +126,7 @@ func TestShellSafeString(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := ShellSafeString(tt.value, tt.fieldName)
+			err := validateShellSafe(tt.value, tt.fieldName)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("ShellSafeString() error = %v, wantErr %v", err, tt.wantErr)
 				return
