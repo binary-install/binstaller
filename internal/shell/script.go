@@ -44,6 +44,11 @@ func GenerateWithScriptType(installSpec *spec.InstallSpec, targetVersion, script
 		return nil, errors.New("install spec cannot be nil")
 	}
 
+	// Validate the install spec for security issues
+	if err := installSpec.Validate(); err != nil {
+		return nil, fmt.Errorf("invalid install spec: %w", err)
+	}
+
 	// Validate script type
 	if scriptType != "" && scriptType != "installer" && scriptType != "runner" {
 		return nil, fmt.Errorf("invalid script type %q: must be 'installer' or 'runner'", scriptType)
