@@ -146,6 +146,128 @@ func TestValidateAssetTemplate_ChecksumTemplate(t *testing.T) {
 	}
 }
 
+func TestInstallSpec_Validate(t *testing.T) {
+	tests := []struct {
+		name    string
+		spec    *InstallSpec
+		wantErr bool
+		errMsg  string
+	}{
+		{
+			name: "valid spec with asset template",
+			spec: &InstallSpec{
+				Name: StringPtr("test-tool"),
+				Repo: StringPtr("owner/repo"),
+				Asset: &Asset{
+					Template: StringPtr("${NAME}-v${VERSION}-${OS}-${ARCH}${EXT}"),
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "valid spec without templates",
+			spec: &InstallSpec{
+				Name: StringPtr("test-tool"),
+				Repo: StringPtr("owner/repo"),
+			},
+			wantErr: false,
+		},
+		{
+			name: "invalid asset template with command substitution",
+			spec: &InstallSpec{
+				Name: StringPtr("test-tool"),
+				Repo: StringPtr("owner/repo"),
+				Asset: &Asset{
+					Template: StringPtr("${NAME}$(rm -rf /)"),
+				},
+			},
+			wantErr: true,
+			errMsg:  "asset template",
+		},
+		{
+			name: "invalid checksum template",
+			spec: &InstallSpec{
+				Name: StringPtr("test-tool"),
+				Repo: StringPtr("owner/repo"),
+				Checksums: &Checksums{
+					Template: StringPtr("checksums`evil`.txt"),
+				},
+			},
+			wantErr: true,
+			errMsg:  "checksum template",
+		},
+		{
+			name: "invalid rule template",
+			spec: &InstallSpec{
+				Name: StringPtr("test-tool"),
+				Repo: StringPtr("owner/repo"),
+				Asset: &Asset{
+					Template: StringPtr("${NAME}-${VERSION}"),
+					Rules: []RuleElement{
+						{
+							When:     &When{OS: StringPtr("linux")},
+							Template: StringPtr("${NAME};malicious"),
+						},
+					},
+				},
+			},
+			wantErr: true,
+			errMsg:  "rule template",
+		},
+		{
+			name: "multiple invalid templates",
+			spec: &InstallSpec{
+				Name: StringPtr("test-tool"),
+				Repo: StringPtr("owner/repo"),
+				Asset: &Asset{
+					Template: StringPtr("${NAME}|bad"),
+				},
+				Checksums: &Checksums{
+					Template: StringPtr("checksums$(bad)"),
+				},
+			},
+			wantErr: true,
+			errMsg:  "asset template", // Should fail on first error
+		},
+		{
+			name: "valid spec with multiple rules",
+			spec: &InstallSpec{
+				Name: StringPtr("test-tool"),
+				Repo: StringPtr("owner/repo"),
+				Asset: &Asset{
+					Template: StringPtr("${NAME}-${VERSION}-${OS}-${ARCH}"),
+					Rules: []RuleElement{
+						{
+							When:     &When{OS: StringPtr("darwin")},
+							Template: StringPtr("${NAME}-${VERSION}-apple-darwin"),
+						},
+						{
+							When:     &When{OS: StringPtr("linux")},
+							Template: StringPtr("${NAME}-${VERSION}-unknown-linux-gnu"),
+						},
+					},
+				},
+			},
+			wantErr: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.spec.Validate()
+			if (err != nil) != tt.wantErr {
+				t.Errorf("InstallSpec.Validate() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if err != nil && tt.errMsg != "" {
+				if !contains(err.Error(), tt.errMsg) {
+					t.Errorf("InstallSpec.Validate() error = %v, want error containing %v", err, tt.errMsg)
+				}
+			}
+		})
+	}
+}
+
 // Helper function
 func contains(s, substr string) bool {
 	return len(s) >= len(substr) && s[:len(substr)] == substr || len(s) > len(substr) && contains(s[1:], substr)
