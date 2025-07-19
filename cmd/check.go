@@ -98,6 +98,12 @@ Exit Codes:
 			return fmt.Errorf("validation failed: %w", err)
 		}
 
+		// Validate templates for security issues
+		if err := installSpec.Validate(); err != nil {
+			log.WithError(err).Error("Template validation failed")
+			return fmt.Errorf("template validation failed: %w", err)
+		}
+
 		log.Info("✓ InstallSpec validation passed")
 
 		// Generate asset filenames for all supported platforms
