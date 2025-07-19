@@ -68,3 +68,33 @@ func ValidateAssetTemplate(template string) error {
 
 	return nil
 }
+
+// Validate validates the InstallSpec for security issues.
+// It checks all templates (asset, checksum, and rule templates) for
+// dangerous shell metacharacters that could lead to command injection.
+func (s *InstallSpec) Validate() error {
+	// Validate main asset template
+	if s.Asset != nil && s.Asset.Template != nil {
+		if err := ValidateAssetTemplate(*s.Asset.Template); err != nil {
+			return fmt.Errorf("invalid asset template: %w", err)
+		}
+
+		// Validate rule templates
+		for i, rule := range s.Asset.Rules {
+			if rule.Template != nil {
+				if err := ValidateAssetTemplate(*rule.Template); err != nil {
+					return fmt.Errorf("invalid rule template at index %d: %w", i, err)
+				}
+			}
+		}
+	}
+
+	// Validate checksum template
+	if s.Checksums != nil && s.Checksums.Template != nil {
+		if err := ValidateAssetTemplate(*s.Checksums.Template); err != nil {
+			return fmt.Errorf("invalid checksum template: %w", err)
+		}
+	}
+
+	return nil
+}
