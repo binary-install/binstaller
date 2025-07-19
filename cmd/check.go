@@ -98,10 +98,10 @@ Exit Codes:
 			return fmt.Errorf("validation failed: %w", err)
 		}
 
-		// Validate templates for security issues
-		if err := installSpec.Validate(); err != nil {
-			log.WithError(err).Error("Template validation failed")
-			return fmt.Errorf("template validation failed: %w", err)
+		// Validate all fields for security issues
+		if err := installSpec.ValidateAllFields(); err != nil {
+			log.WithError(err).Error("Security validation failed")
+			return fmt.Errorf("security validation failed: %w", err)
 		}
 
 		log.Info("✓ InstallSpec validation passed")
