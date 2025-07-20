@@ -4,7 +4,7 @@ import (
 	"testing"
 )
 
-func TestValidateAssetTemplate(t *testing.T) {
+func TestValidateShellSafe(t *testing.T) {
 	tests := []struct {
 		name     string
 		template string
@@ -103,21 +103,21 @@ func TestValidateAssetTemplate(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := ValidateAssetTemplate(tt.template)
+			err := ValidateShellSafe(tt.template, "asset template")
 			if (err != nil) != tt.wantErr {
-				t.Errorf("ValidateAssetTemplate() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("ValidateShellSafe() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if err != nil && tt.errMsg != "" {
 				if !contains(err.Error(), tt.errMsg) {
-					t.Errorf("ValidateAssetTemplate() error = %v, want error containing %v", err, tt.errMsg)
+					t.Errorf("ValidateShellSafe() error = %v, want error containing %v", err, tt.errMsg)
 				}
 			}
 		})
 	}
 }
 
-func TestValidateAssetTemplate_ChecksumTemplate(t *testing.T) {
+func TestValidateShellSafe_ChecksumTemplate(t *testing.T) {
 	// Test validation for checksum templates which use the same pattern
 	tests := []struct {
 		name     string
@@ -138,15 +138,15 @@ func TestValidateAssetTemplate_ChecksumTemplate(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := ValidateAssetTemplate(tt.template)
+			err := ValidateShellSafe(tt.template, "asset template")
 			if (err != nil) != tt.wantErr {
-				t.Errorf("ValidateAssetTemplate() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("ValidateShellSafe() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
 	}
 }
 
-func TestInstallSpec_Validate(t *testing.T) {
+func TestValidate(t *testing.T) {
 	tests := []struct {
 		name    string
 		spec    *InstallSpec
@@ -182,7 +182,7 @@ func TestInstallSpec_Validate(t *testing.T) {
 				},
 			},
 			wantErr: true,
-			errMsg:  "asset template",
+			errMsg:  "asset.template",
 		},
 		{
 			name: "invalid checksum template",
@@ -194,7 +194,7 @@ func TestInstallSpec_Validate(t *testing.T) {
 				},
 			},
 			wantErr: true,
-			errMsg:  "checksum template",
+			errMsg:  "checksums.template",
 		},
 		{
 			name: "invalid rule template",
@@ -212,7 +212,7 @@ func TestInstallSpec_Validate(t *testing.T) {
 				},
 			},
 			wantErr: true,
-			errMsg:  "rule template",
+			errMsg:  "asset.rules[0].template",
 		},
 		{
 			name: "multiple invalid templates",
@@ -227,7 +227,7 @@ func TestInstallSpec_Validate(t *testing.T) {
 				},
 			},
 			wantErr: true,
-			errMsg:  "asset template", // Should fail on first error
+			errMsg:  "asset.template", // Should fail on first error
 		},
 		{
 			name: "valid spec with multiple rules",
@@ -254,7 +254,7 @@ func TestInstallSpec_Validate(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := tt.spec.Validate()
+			err := Validate(tt.spec)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("InstallSpec.Validate() error = %v, wantErr %v", err, tt.wantErr)
 				return

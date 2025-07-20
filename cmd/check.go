@@ -99,7 +99,7 @@ Exit Codes:
 		}
 
 		// Validate all fields for security issues
-		if err := installSpec.ValidateAllFields(); err != nil {
+		if err := spec.Validate(installSpec); err != nil {
 			log.WithError(err).Error("Security validation failed")
 			return fmt.Errorf("security validation failed: %w", err)
 		}

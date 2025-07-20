@@ -45,7 +45,7 @@ func GenerateWithScriptType(installSpec *spec.InstallSpec, targetVersion, script
 	}
 
 	// Validate all fields for security issues (includes template validation)
-	if err := installSpec.ValidateAllFields(); err != nil {
+	if err := spec.Validate(installSpec); err != nil {
 		return nil, fmt.Errorf("invalid install spec: %w", err)
 	}
 
@@ -153,9 +153,13 @@ func createFuncMap() template.FuncMap {
 		"trimPrefix": func(s, prefix string) string {
 			return strings.TrimPrefix(s, prefix)
 		},
-		"shellQuote": func(s string) string {
-			// Escape single quotes by replacing ' with '\''
-			return strings.ReplaceAll(s, "'", "'\\''")
+		// ensureSafe validates that a string is safe to embed in shell scripts
+		// It panics if the string contains dangerous patterns
+		"ensureSafe": func(s string) string {
+			if err := spec.ValidateShellSafe(s, "template value"); err != nil {
+				panic(fmt.Sprintf("unsafe template value: %v", err))
+			}
+			return s
 		},
 		"deref": func(ptr interface{}) interface{} {
 			// Helper function to safely dereference pointers for template comparisons
@@ -192,13 +196,5 @@ func createFuncMap() template.FuncMap {
 				return fmt.Sprintf("%v", ptr)
 			}
 		},
-		"escapeShellTemplate": escapeShellTemplate,
 	}
-}
-
-// escapeShellTemplate escapes dangerous patterns in template strings
-func escapeShellTemplate(template string) string {
-	// This function is kept for backward compatibility
-	// The actual validation now happens in ValidateAllFields
-	return template
 }

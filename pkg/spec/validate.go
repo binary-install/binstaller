@@ -29,8 +29,8 @@ var dangerousPatterns = []struct {
 	{"\r", "carriage return"},
 }
 
-// validateShellSafe checks if a string is safe to embed in shell scripts
-func validateShellSafe(value, fieldName string) error {
+// ValidateShellSafe checks if a string is safe to embed in shell scripts
+func ValidateShellSafe(value, fieldName string) error {
 	if value == "" {
 		return nil
 	}
@@ -52,53 +52,21 @@ func validateShellSafe(value, fieldName string) error {
 	return nil
 }
 
-// ValidateAssetTemplate validates template strings (for backward compatibility)
-func ValidateAssetTemplate(template string) error {
-	return validateShellSafe(template, "asset template")
-}
-
-// Validate validates the InstallSpec for security issues.
-// It checks all templates (asset, checksum, and rule templates) for
-// dangerous shell metacharacters that could lead to command injection.
-func (s *InstallSpec) Validate() error {
-	// Validate main asset template
-	if s.Asset != nil && s.Asset.Template != nil {
-		if err := ValidateAssetTemplate(*s.Asset.Template); err != nil {
-			return fmt.Errorf("invalid asset template: %w", err)
-		}
-
-		// Validate rule templates
-		for i, rule := range s.Asset.Rules {
-			if rule.Template != nil {
-				if err := ValidateAssetTemplate(*rule.Template); err != nil {
-					return fmt.Errorf("invalid rule template at index %d: %w", i, err)
-				}
-			}
-		}
+// Validate validates all fields in InstallSpec that will be embedded in shell scripts
+func Validate(s *InstallSpec) error {
+	if s == nil {
+		return fmt.Errorf("InstallSpec is nil")
 	}
-
-	// Validate checksum template
-	if s.Checksums != nil && s.Checksums.Template != nil {
-		if err := ValidateAssetTemplate(*s.Checksums.Template); err != nil {
-			return fmt.Errorf("invalid checksum template: %w", err)
-		}
-	}
-
-	return nil
-}
-
-// ValidateAllFields validates all fields in InstallSpec that will be embedded in shell scripts
-func (s *InstallSpec) ValidateAllFields() error {
 	// Validate name
 	if s.Name != nil {
-		if err := validateShellSafe(*s.Name, "name"); err != nil {
+		if err := ValidateShellSafe(*s.Name, "name"); err != nil {
 			return err
 		}
 	}
 
 	// Validate repo
 	if s.Repo != nil {
-		if err := validateShellSafe(*s.Repo, "repo"); err != nil {
+		if err := ValidateShellSafe(*s.Repo, "repo"); err != nil {
 			return err
 		}
 	}
@@ -122,7 +90,7 @@ func (s *InstallSpec) ValidateAllFields() error {
 
 	// Validate default_version
 	if s.DefaultVersion != nil {
-		if err := validateShellSafe(*s.DefaultVersion, "default_version"); err != nil {
+		if err := ValidateShellSafe(*s.DefaultVersion, "default_version"); err != nil {
 			return err
 		}
 	}
@@ -131,7 +99,14 @@ func (s *InstallSpec) ValidateAllFields() error {
 	if s.Asset != nil {
 		// Validate default_extension
 		if s.Asset.DefaultExtension != nil {
-			if err := validateShellSafe(*s.Asset.DefaultExtension, "asset.default_extension"); err != nil {
+			if err := ValidateShellSafe(*s.Asset.DefaultExtension, "asset.default_extension"); err != nil {
+				return err
+			}
+		}
+
+		// Validate main asset template
+		if s.Asset.Template != nil {
+			if err := ValidateShellSafe(*s.Asset.Template, "asset.template"); err != nil {
 				return err
 			}
 		}
@@ -139,12 +114,12 @@ func (s *InstallSpec) ValidateAllFields() error {
 		// Validate binaries
 		for i, binary := range s.Asset.Binaries {
 			if binary.Name != nil {
-				if err := validateShellSafe(*binary.Name, fmt.Sprintf("asset.binaries[%d].name", i)); err != nil {
+				if err := ValidateShellSafe(*binary.Name, fmt.Sprintf("asset.binaries[%d].name", i)); err != nil {
 					return err
 				}
 			}
 			if binary.Path != nil {
-				if err := validateShellSafe(*binary.Path, fmt.Sprintf("asset.binaries[%d].path", i)); err != nil {
+				if err := ValidateShellSafe(*binary.Path, fmt.Sprintf("asset.binaries[%d].path", i)); err != nil {
 					return err
 				}
 			}
@@ -153,23 +128,35 @@ func (s *InstallSpec) ValidateAllFields() error {
 		// Validate rules
 		for i, rule := range s.Asset.Rules {
 			if rule.OS != nil {
-				if err := validateShellSafe(*rule.OS, fmt.Sprintf("asset.rules[%d].os", i)); err != nil {
+				if err := ValidateShellSafe(*rule.OS, fmt.Sprintf("asset.rules[%d].os", i)); err != nil {
 					return err
 				}
 			}
 			if rule.Arch != nil {
-				if err := validateShellSafe(*rule.Arch, fmt.Sprintf("asset.rules[%d].arch", i)); err != nil {
+				if err := ValidateShellSafe(*rule.Arch, fmt.Sprintf("asset.rules[%d].arch", i)); err != nil {
 					return err
 				}
 			}
 			if rule.EXT != nil {
-				if err := validateShellSafe(*rule.EXT, fmt.Sprintf("asset.rules[%d].ext", i)); err != nil {
+				if err := ValidateShellSafe(*rule.EXT, fmt.Sprintf("asset.rules[%d].ext", i)); err != nil {
+					return err
+				}
+			}
+			// Validate rule template
+			if rule.Template != nil {
+				if err := ValidateShellSafe(*rule.Template, fmt.Sprintf("asset.rules[%d].template", i)); err != nil {
 					return err
 				}
 			}
 		}
 	}
 
-	// Call the existing Validate method for template validation
-	return s.Validate()
+	// Validate checksum template
+	if s.Checksums != nil && s.Checksums.Template != nil {
+		if err := ValidateShellSafe(*s.Checksums.Template, "checksums.template"); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
