@@ -71,20 +71,10 @@ func Validate(s *InstallSpec) error {
 		}
 	}
 
-	// Validate default_bin_dir - special handling as it can contain shell variables
+	// Validate default_bin_dir
 	if s.DefaultBinDir != nil {
-		// Allow ${...} patterns in default_bin_dir as they are expected
-		// But still check for command substitution and other dangerous patterns
-		binDir := *s.DefaultBinDir
-		if strings.Contains(binDir, "$(") || strings.Contains(binDir, "`") {
-			return fmt.Errorf("default_bin_dir contains dangerous command substitution: %s", binDir)
-		}
-		// Check for dangerous characters except $ which is allowed for variables
-		dangerousInBinDir := []string{";", "|", "&", ">", "<", ">>", "<<", "||", "&&", "\n", "\r"}
-		for _, char := range dangerousInBinDir {
-			if strings.Contains(binDir, char) {
-				return fmt.Errorf("default_bin_dir contains dangerous character '%s': %s", char, binDir)
-			}
+		if err := ValidateShellSafe(*s.DefaultBinDir, "default_bin_dir"); err != nil {
+			return err
 		}
 	}
 

@@ -154,7 +154,10 @@ func createFuncMap() template.FuncMap {
 			return strings.TrimPrefix(s, prefix)
 		},
 		// ensureSafe validates that a string is safe to embed in shell scripts
-		// It panics if the string contains dangerous patterns
+		// It panics if the string contains dangerous patterns.
+		// Note: Go's text/template package automatically recovers from panics in
+		// template functions and returns them as errors from Execute(), so we
+		// don't need explicit recovery here.
 		"ensureSafe": func(s string) string {
 			if err := spec.ValidateShellSafe(s, "template value"); err != nil {
 				panic(fmt.Sprintf("unsafe template value: %v", err))
