@@ -1,10 +1,10 @@
 module github.com/binary-install/binstaller
 
-go 1.24.5
+go 1.24.6
 
 require (
 	github.com/apex/log v1.9.0
-	github.com/aquaproj/aqua/v2 v2.53.8
+	github.com/aquaproj/aqua/v2 v2.53.9
 	github.com/buildkite/interpolate v0.1.5
 	github.com/charmbracelet/colorprofile v0.3.1
 	github.com/charmbracelet/fang v0.3.0
