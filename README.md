@@ -36,7 +36,9 @@ graph LR
 
 1. **Step 1:** `binst init` - Generate a `.config/binstaller.yml` config from various sources
 2. **Step 2 (Optional):** `binst embed-checksums` - Embed checksums into the config for enhanced security
-3. **Step 3:** `binst gen` - Generate the final installation script
+3. **Step 3:** Either:
+   - `binst gen` - Generate the final installation script, or
+   - `binst install` - Install directly using the config (no script generation)
 
 ## ✨ Key Features
 
@@ -171,6 +173,36 @@ binst embed-checksums --config .config/binstaller.yml --version v1.0.0 --mode do
 # Step 3: Generate installation script
 binst gen -o install.sh
 ```
+
+## 🚀 Direct Installation with `binst install`
+
+In addition to generating installer scripts, binstaller can directly install binaries using the same configuration:
+
+```bash
+# Install latest version
+binst install
+
+# Install specific version
+binst install v2.40.0
+
+# Install to custom directory
+binst install -b ~/bin
+
+# Dry run to see what would be installed
+binst install -n
+```
+
+The `binst install` command provides:
+- **Script parity**: Performs the exact same steps as generated installers
+- **Native execution**: No shell script generation or execution required
+- **Same options**: Supports VERSION, -b (bindir), -n (dry-run), -d (debug)
+- **Config discovery**: Uses same default config lookup as other commands
+
+This is useful for:
+- CI/CD pipelines where you want direct installation
+- Local development environments
+- Testing configurations before generating scripts
+- Situations where running shell scripts is restricted
 
 ## 📖 Usage Examples
 
