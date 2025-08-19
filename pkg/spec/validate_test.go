@@ -1,6 +1,7 @@
 package spec
 
 import (
+	"strings"
 	"testing"
 )
 
@@ -109,7 +110,7 @@ func TestValidateShellSafe(t *testing.T) {
 				return
 			}
 			if err != nil && tt.errMsg != "" {
-				if !contains(err.Error(), tt.errMsg) {
+				if !strings.Contains(err.Error(), tt.errMsg) {
 					t.Errorf("ValidateShellSafe() error = %v, want error containing %v", err, tt.errMsg)
 				}
 			}
@@ -260,15 +261,10 @@ func TestValidate(t *testing.T) {
 				return
 			}
 			if err != nil && tt.errMsg != "" {
-				if !contains(err.Error(), tt.errMsg) {
+				if !strings.Contains(err.Error(), tt.errMsg) {
 					t.Errorf("InstallSpec.Validate() error = %v, want error containing %v", err, tt.errMsg)
 				}
 			}
 		})
 	}
-}
-
-// Helper function
-func contains(s, substr string) bool {
-	return len(s) >= len(substr) && s[:len(substr)] == substr || len(s) > len(substr) && contains(s[1:], substr)
 }
