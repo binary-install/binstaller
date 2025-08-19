@@ -695,3 +695,100 @@ func TestGenerateWithScriptType(t *testing.T) {
 		})
 	}
 }
+
+func TestGenerateWithValidation(t *testing.T) {
+	tests := []struct {
+		name        string
+		installSpec *spec.InstallSpec
+		wantError   bool
+		errMsg      string
+	}{
+		{
+			name: "valid spec generates successfully",
+			installSpec: &spec.InstallSpec{
+				Name: spec.StringPtr("test-tool"),
+				Repo: spec.StringPtr("owner/test-tool"),
+				Asset: &spec.AssetConfig{
+					Template:         spec.StringPtr("${NAME}-${VERSION}-${OS}_${ARCH}${EXT}"),
+					DefaultExtension: spec.StringPtr(".tar.gz"),
+				},
+			},
+			wantError: false,
+		},
+		{
+			name: "invalid asset template fails validation",
+			installSpec: &spec.InstallSpec{
+				Name: spec.StringPtr("test-tool"),
+				Repo: spec.StringPtr("owner/test-tool"),
+				Asset: &spec.AssetConfig{
+					Template:         spec.StringPtr("${NAME}$(malicious command)"),
+					DefaultExtension: spec.StringPtr(".tar.gz"),
+				},
+			},
+			wantError: true,
+			errMsg:    "invalid install spec",
+		},
+		{
+			name: "invalid checksum template fails validation",
+			installSpec: &spec.InstallSpec{
+				Name: spec.StringPtr("test-tool"),
+				Repo: spec.StringPtr("owner/test-tool"),
+				Asset: &spec.AssetConfig{
+					Template:         spec.StringPtr("${NAME}-${VERSION}"),
+					DefaultExtension: spec.StringPtr(".tar.gz"),
+				},
+				Checksums: &spec.ChecksumConfig{
+					Template: spec.StringPtr("checksums;rm -rf /"),
+				},
+			},
+			wantError: true,
+			errMsg:    "invalid install spec",
+		},
+		{
+			name: "invalid rule template fails validation",
+			installSpec: &spec.InstallSpec{
+				Name: spec.StringPtr("test-tool"),
+				Repo: spec.StringPtr("owner/test-tool"),
+				Asset: &spec.AssetConfig{
+					Template:         spec.StringPtr("${NAME}-${VERSION}"),
+					DefaultExtension: spec.StringPtr(".tar.gz"),
+					Rules: []spec.RuleElement{
+						{
+							When:     &spec.When{OS: spec.StringPtr("linux")},
+							Template: spec.StringPtr("${NAME}|evil"),
+						},
+					},
+				},
+			},
+			wantError: true,
+			errMsg:    "invalid install spec",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Test Generate
+			_, err := Generate(tt.installSpec)
+			if (err != nil) != tt.wantError {
+				t.Errorf("Generate() error = %v, wantError %v", err, tt.wantError)
+			}
+			if err != nil && tt.errMsg != "" {
+				if !strings.Contains(err.Error(), tt.errMsg) {
+					t.Errorf("Generate() error = %v, want error containing %v", err.Error(), tt.errMsg)
+				}
+			}
+
+			// Test GenerateWithVersion
+			_, err = GenerateWithVersion(tt.installSpec, "v1.0.0")
+			if (err != nil) != tt.wantError {
+				t.Errorf("GenerateWithVersion() error = %v, wantError %v", err, tt.wantError)
+			}
+
+			// Test GenerateRunner
+			_, err = GenerateRunner(tt.installSpec, "")
+			if (err != nil) != tt.wantError {
+				t.Errorf("GenerateRunner() error = %v, wantError %v", err, tt.wantError)
+			}
+		})
+	}
+}

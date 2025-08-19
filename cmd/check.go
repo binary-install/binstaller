@@ -98,6 +98,12 @@ Exit Codes:
 			return fmt.Errorf("validation failed: %w", err)
 		}
 
+		// Validate all fields for security issues
+		if err := spec.Validate(installSpec); err != nil {
+			log.WithError(err).Error("Security validation failed")
+			return fmt.Errorf("security validation failed: %w", err)
+		}
+
 		log.Info("✓ InstallSpec validation passed")
 
 		// Generate asset filenames for all supported platforms

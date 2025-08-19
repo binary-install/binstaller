@@ -232,8 +232,8 @@ resolve_asset_filename() {
   {{- with .Asset.Rules }}
   {{- range . }}
   if
-    {{- if .When.OS }} [ "${UNAME_OS}" = '{{deref .When.OS}}' ] && {{- end }}
-    {{- if .When.Arch }} [ "${UNAME_ARCH}" = '{{deref .When.Arch}}' ] && {{- end }}
+    {{- if .When.OS }} [ "${UNAME_OS}" = '{{ deref .When.OS }}' ] && {{- end }}
+    {{- if .When.Arch }} [ "${UNAME_ARCH}" = '{{ deref .When.Arch }}' ] && {{- end }}
     {{- " true" }}
   then
     {{- "\n   " -}}
