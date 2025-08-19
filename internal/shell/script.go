@@ -153,51 +153,64 @@ func createFuncMap() template.FuncMap {
 		"trimPrefix": func(s, prefix string) string {
 			return strings.TrimPrefix(s, prefix)
 		},
-		// ensureSafe validates that a string is safe to embed in shell scripts
-		// It panics if the string contains dangerous patterns.
-		// Note: Go's text/template package automatically recovers from panics in
-		// template functions and returns them as errors from Execute(), so we
-		// don't need explicit recovery here.
-		"ensureSafe": func(s string) string {
-			if err := spec.ValidateShellSafe(s, "template value"); err != nil {
-				panic(fmt.Sprintf("unsafe template value: %v", err))
-			}
-			return s
-		},
 		"deref": func(ptr interface{}) interface{} {
-			// Helper function to safely dereference pointers for template comparisons
+			// Helper function to safely dereference pointers and validate shell safety
 			if ptr == nil {
 				return ""
 			}
+
+			// Dereference the pointer and get the string value if applicable
+			var result interface{}
+			var strValue string
+			needsValidation := false
+
 			switch v := ptr.(type) {
 			case *spec.NamingConventionOS:
 				if v == nil {
 					return ""
 				}
-				return string(*v)
+				strValue = string(*v)
+				needsValidation = true
+				result = strValue
 			case *spec.NamingConventionArch:
 				if v == nil {
 					return ""
 				}
-				return string(*v)
+				strValue = string(*v)
+				needsValidation = true
+				result = strValue
 			case *string:
 				if v == nil {
 					return ""
 				}
-				return *v
+				strValue = *v
+				needsValidation = true
+				result = strValue
 			case *int64:
 				if v == nil {
 					return int64(0)
 				}
-				return *v
+				return *v // Numbers are safe
 			case *bool:
 				if v == nil {
 					return false
 				}
-				return *v
+				return *v // Booleans are safe
 			default:
-				return fmt.Sprintf("%v", ptr)
+				strValue = fmt.Sprintf("%v", ptr)
+				needsValidation = true
+				result = strValue
 			}
+
+			// Validate string values for shell safety
+			if needsValidation && strValue != "" {
+				if err := spec.ValidateShellSafe(strValue, "template value"); err != nil {
+					// Panic here will be caught by text/template and returned as an error
+					panic(fmt.Sprintf("unsafe value in template: %v", err))
+				}
+			}
+
+			return result
 		},
 	}
 }
