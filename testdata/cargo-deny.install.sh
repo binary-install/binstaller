@@ -238,14 +238,12 @@ hash_verify() {
   # Check for line matches in checksum file
   # Format: "<hash>  <filename>" or "<hash> *<filename>"
   # Filename may include path prefix (e.g., "deployment/m2/file.tar.gz")
-  while IFS= read -r line; do
+  while IFS= read -r line || [ -n "$line" ]; do
     # Normalize tabs to spaces
     line=$(echo "$line" | tr '\t' ' ')
 
     # Remove trailing spaces for hash-only line check
     line_trimmed=$(echo "$line" | sed 's/[[:space:]]*$//')
-
-    log_info "line_trimmed: ${line_trimmed}"
 
     # Check for hash-only line (no filename) - early return
     if [ "$line_trimmed" = "$got" ]; then

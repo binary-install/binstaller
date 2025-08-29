@@ -238,7 +238,7 @@ hash_verify() {
   # Check for line matches in checksum file
   # Format: "<hash>  <filename>" or "<hash> *<filename>"
   # Filename may include path prefix (e.g., "deployment/m2/file.tar.gz")
-  while IFS= read -r line; do
+  while IFS= read -r line || [ -n "$line" ]; do
     # Normalize tabs to spaces
     line=$(echo "$line" | tr '\t' ' ')
 
