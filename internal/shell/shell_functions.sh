@@ -54,26 +54,47 @@ hash_verify() {
 
   BASENAME=${TARGET_PATH##*/}
 
-  # Check for exact line matches in checksum file
+  # Check for line matches in checksum file
   # Format: "<hash>  <filename>" or "<hash> *<filename>"
+  # Filename may include path prefix (e.g., "deployment/m2/file.tar.gz")
   while IFS= read -r line; do
     # Normalize tabs to spaces
     line=$(echo "$line" | tr '\t' ' ')
 
-    # Check for exact match: "<hash>  <filename>"
-    if [ "$line" = "${got}  ${BASENAME}" ]; then
-      return 0
+    # Extract hash and filename parts
+    # First field is the hash, rest is filename (which may contain spaces)
+    line_hash=$(echo "$line" | cut -d' ' -f1)
+
+    # Skip if hash doesn't match
+    if [ "$line_hash" != "$got" ]; then
+      continue
     fi
 
-    # Check for exact match: "<hash> *<filename>" (binary mode)
-    if [ "$line" = "${got} *${BASENAME}" ]; then
+    # Hash matches, now check filename
+    # Get everything after the hash and first space(s)
+    # Skip the hash part (length of $got) plus at least one space
+    hash_len=${#got}
+    line_rest="${line#$got}"
+    # Remove leading spaces
+    while [ "${line_rest#[ ]}" != "$line_rest" ]; do
+      line_rest="${line_rest#[ ]}"
+    done
+
+    # Remove leading asterisk if present (binary mode indicator)
+    if [ "${line_rest#\*}" != "$line_rest" ]; then
+      line_rest="${line_rest#\*}"
+    fi
+
+    # Extract just the filename without any path
+    line_filename="${line_rest##*/}"
+
+    # Check if the filename matches
+    if [ "$line_filename" = "$BASENAME" ]; then
       return 0
     fi
 
     # Also check for hash-only line (no filename)
-    # Remove trailing spaces and check
-    line_trimmed=$(echo "$line" | sed 's/[[:space:]]*$//')
-    if [ "$line_trimmed" = "$got" ]; then
+    if [ -z "$line_rest" ] || [ "$line_rest" = "$line_hash" ]; then
       return 0
     fi
   done < "$SUMFILE"
