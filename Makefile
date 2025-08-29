@@ -87,7 +87,7 @@ fmt:
 	goimports -w .
 	git ls-files -c -o --exclude-standard | xargs nllint -trim-space -trim-trailing-space -fix -ignore-notfound
 
-lint: aqua-install schema-lint ## Run all the linters
+lint: aqua-install schema-lint fmt ## Run all the linters
 	golangci-lint run ./... --disable errcheck
 
 ci: build test lint gen fmt ## Run CI checks (no external API calls)
