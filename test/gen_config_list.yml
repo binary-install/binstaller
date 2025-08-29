@@ -90,3 +90,10 @@ tasks:
       yq -i '.asset.rules += [{"when": {"os": "openbsd"}, "os": "Openbsd"}]' testdata/gum.binstaller.yml
       ./binst embed-checksums --quiet -c ./testdata/gum.binstaller.yml -m download --version v0.15.0
       ./binst embed-checksums --quiet -c ./testdata/gum.binstaller.yml -m download --version v0.16.0
+
+  # asset with special chars (+<commit-hash>)
+  - name: reviewdog-nightly
+    description: Generate config for reviewdog-nightly
+    run: |
+      ./binst init --quiet --force --source github --repo reviewdog/nightly -o=testdata/reviewdog-nightly.binstaller.yml
+      yq -i '.name = "reviewdog"' testdata/reviewdog-nightly.binstaller.yml
