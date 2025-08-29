@@ -83,7 +83,8 @@ cover: test-cover ## Run all the tests with coverage and opens the coverage repo
 	go tool cover -html=coverage.txt
 
 fmt:
-	find . -name '*.go' -type f | while read -r file; do gofmt -w -s "$$file"; goimports -w "$$file"; done
+	gofmt -w -s .
+	goimports -w .
 	git ls-files -c -o --exclude-standard | xargs nllint -trim-space -trim-trailing-space -fix -ignore-notfound
 
 lint: aqua-install schema-lint ## Run all the linters
