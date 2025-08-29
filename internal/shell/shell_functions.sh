@@ -79,6 +79,9 @@ hash_verify() {
   done < "$SUMFILE"
 
   log_err "hash_verify checksum for '$TARGET_PATH' did not verify"
+  log_err "  Expected hash: ${got}"
+  log_err "  Checksum file content:"
+  cat "$SUMFILE" >&2
   return 1
 }
 

@@ -253,6 +253,9 @@ hash_verify() {
   done < "$SUMFILE"
 
   log_err "hash_verify checksum for '$TARGET_PATH' did not verify"
+  log_err "  Expected to find: '${got}  ${BASENAME}' or '${got} *${BASENAME}' or just '${got}'"
+  log_err "  Checksum file content:"
+  cat "$SUMFILE" >&2
   return 1
 }
 
@@ -375,7 +378,7 @@ tag_to_version() {
 
 
 resolve_asset_filename() {
-  
+
   # --- Apply Rules ---
   ASSET_FILENAME=""
   if [ "${UNAME_OS}" = 'windows' ] && true
