@@ -1,5 +1,5 @@
 {
-  "version": "4",
+  "version": "5",
   "remote": {
     "https://deno.land/std@0.224.0/assert/assert_exists.ts": "43420cf7f956748ae6ed1230646567b3593cb7a36c5a5327269279c870c5ddfd",
     "https://deno.land/std@0.224.0/assert/assertion_error.ts": "ba8752bd27ebc51f723702fac2f54d3e94447598f54264a6653d6413738a8917",
@@ -8,9 +8,9 @@
   "workspace": {
     "packageJson": {
       "dependencies": [
-        "npm:@typespec/compiler@latest",
-        "npm:@typespec/json-schema@latest",
-        "npm:quicktype@latest"
+        "npm:@typespec/compiler@*",
+        "npm:@typespec/json-schema@*",
+        "npm:quicktype@*"
       ]
     }
   }
