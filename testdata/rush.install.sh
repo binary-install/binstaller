@@ -235,6 +235,14 @@ hash_verify() {
     # Normalize tabs to spaces
     line=$(echo "$line" | tr '\t' ' ')
 
+    # Remove trailing spaces for hash-only line check
+    line_trimmed=$(echo "$line" | sed 's/[[:space:]]*$//')
+
+    # Check for hash-only line (no filename) - early return
+    if [ "$line_trimmed" = "$got" ]; then
+      return 0
+    fi
+
     # Extract hash and filename parts
     # First field is the hash, rest is filename (which may contain spaces)
     line_hash=$(echo "$line" | cut -d' ' -f1)
@@ -264,11 +272,6 @@ hash_verify() {
 
     # Check if the filename matches
     if [ "$line_filename" = "$BASENAME" ]; then
-      return 0
-    fi
-
-    # Also check for hash-only line (no filename)
-    if [ -z "$line_rest" ] || [ "$line_rest" = "$line_hash" ]; then
       return 0
     fi
   done < "$SUMFILE"
