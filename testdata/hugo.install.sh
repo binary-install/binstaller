@@ -218,16 +218,6 @@ untar() {
   esac
 }
 
-extract_hash() {
-  TARGET=$1
-  checksums=$2
-  if [ -z "$checksums" ]; then
-    log_err "extract_hash checksum file not specified in arg2"
-    return 1
-  fi
-  BASENAME=${TARGET##*/}
-  grep -E "([[:space:]]|/|\*)${BASENAME}$" "${checksums}" 2>/dev/null | tr '\t' ' ' | cut -d ' ' -f 1
-}
 
 
 hash_verify() {
@@ -242,16 +232,35 @@ hash_verify() {
     log_err "failed to calculate hash: ${TARGET_PATH}"
     return 1
   fi
-  # 1) “hash-only” line?
-  if grep -i -E "^${got}[[:space:]]*$" "$SUMFILE" >/dev/null 2>&1; then
-    return 0
-  fi
-  # 2) Check hash & file name match
-  want=$(extract_hash "${TARGET_PATH}" "${SUMFILE}")
-  if [ "$want" != "$got" ]; then
-    log_err "hash_verify checksum for '$TARGET_PATH' did not verify ${want} vs ${got}"
-    return 1
-  fi
+
+  BASENAME=${TARGET_PATH##*/}
+
+  # Check for exact line matches in checksum file
+  # Format: "<hash>  <filename>" or "<hash> *<filename>"
+  while IFS= read -r line; do
+    # Normalize tabs to spaces
+    line=$(echo "$line" | tr '\t' ' ')
+
+    # Check for exact match: "<hash>  <filename>"
+    if [ "$line" = "${got}  ${BASENAME}" ]; then
+      return 0
+    fi
+
+    # Check for exact match: "<hash> *<filename>" (binary mode)
+    if [ "$line" = "${got} *${BASENAME}" ]; then
+      return 0
+    fi
+
+    # Also check for hash-only line (no filename)
+    # Remove trailing spaces and check
+    line_trimmed=$(echo "$line" | sed 's/[[:space:]]*$//')
+    if [ "$line_trimmed" = "$got" ]; then
+      return 0
+    fi
+  done < "$SUMFILE"
+
+  log_err "hash_verify checksum for '$TARGET_PATH' did not verify"
+  return 1
 }
 
 # GitHub HTTP download functions with GITHUB_TOKEN support
@@ -373,7 +382,7 @@ tag_to_version() {
 
 
 resolve_asset_filename() {
-
+  
   # --- Apply Rules ---
   ASSET_FILENAME=""
   if [ "${UNAME_OS}" = 'darwin' ] && true
