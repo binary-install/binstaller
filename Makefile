@@ -83,13 +83,14 @@ cover: test-cover ## Run all the tests with coverage and opens the coverage repo
 	go tool cover -html=coverage.txt
 
 fmt:
-	find . -name '*.go' -type f | while read -r file; do gofmt -w -s "$$file"; goimports -w "$$file"; done
+	gofmt -w -s .
+	goimports -w .
 	git ls-files -c -o --exclude-standard | xargs nllint -trim-space -trim-trailing-space -fix -ignore-notfound
 
-lint: aqua-install schema-lint ## Run all the linters
+lint: aqua-install schema-lint fmt ## Run all the linters
 	golangci-lint run ./... --disable errcheck
 
-ci: build test lint gen fmt ## Run CI checks (no external API calls)
+ci: build test gen lint fmt ## Run CI checks (no external API calls)
 	@echo "Checking for uncommitted changes..."
 	@if [ -n "$$(git status -s)" ]; then \
 		echo "Warning: Uncommitted changes detected (possibly generated files):"; \
@@ -208,7 +209,7 @@ gen-yaml-schema: $(YAML_SCHEMA) ## Generate YAML Schema from JSON Schema
 
 gen-go: $(GENERATED_GO) ## Generate Go structs from JSON Schema
 
-gen: gen-schema gen-yaml-schema gen-go gen-platforms fmt ## Generate JSON Schema, YAML Schema, Go structs, and platform constants
+gen: gen-schema gen-yaml-schema gen-go gen-platforms ## Generate JSON Schema, YAML Schema, Go structs, and platform constants
 
 gen-platforms: ## Generate platform constants from TypeSpec
 	@echo "Generating platform constants from TypeSpec..."
