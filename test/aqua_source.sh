@@ -9,6 +9,7 @@ ignore_tools='
 cnappgoat # Not found in standard aqua registry
 sigspy # Not found in standard aqua registry
 bump # Not found in standard aqua registry
+reviewdog-nightly # Not found in standard aqua registry
 '
 
 gen_config_and_installer() {

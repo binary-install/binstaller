@@ -406,6 +406,7 @@ tag_to_version() {
 
 
 resolve_asset_filename() {
+
   # --- Apply Rules ---
   ASSET_FILENAME=""
   if [ -z "${ASSET_FILENAME}" ]; then
