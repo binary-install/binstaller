@@ -411,8 +411,7 @@ capitalize() {
   printf "%s%s\n" "$first_upper" "$(printf "%s" "$input" | cut -c2-)"
 }
 
-resolve_asset_filename() {
-  OS="$(capitalize "${OS}")"
+resolve_asset_filename() {OS="$(capitalize "${OS}")"
   # --- Apply Rules ---
   ASSET_FILENAME=""
   if [ "${UNAME_ARCH}" = 'amd64' ] && true

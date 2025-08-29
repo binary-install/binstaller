@@ -224,7 +224,7 @@ is_rosetta2_available() {
 
 {{- define "resolve_asset_filename" }}
 resolve_asset_filename() {
-  {{ if eq (deref .Asset.NamingConvention.OS) "titlecase" -}}
+  {{- if eq (deref .Asset.NamingConvention.OS) "titlecase" -}}
   OS="$(capitalize "${OS}")"
   {{- end }}
   # --- Apply Rules ---

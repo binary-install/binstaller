@@ -399,7 +399,6 @@ tag_to_version() {
 
 
 resolve_asset_filename() {
-
   # --- Apply Rules ---
   ASSET_FILENAME=""
   if [ "${UNAME_OS}" = 'windows' ] && true

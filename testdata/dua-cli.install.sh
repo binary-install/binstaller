@@ -411,7 +411,6 @@ is_rosetta2_available() {
   arch -arch x86_64 true 2>/dev/null
 }
 resolve_asset_filename() {
-
   # --- Apply Rules ---
   ASSET_FILENAME=""
   if [ "${UNAME_ARCH}" = 'amd64' ] && true
