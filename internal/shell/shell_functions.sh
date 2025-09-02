@@ -79,8 +79,7 @@ hash_verify() {
     fi
 
     # Hash matches, now check filename
-    # Get everything after the hash and first space(s)
-    # Skip the hash part (length of $got) plus at least one space
+    # Remove the hash part from the beginning of the line
     line_rest="${line#"$got"}"
     # Remove leading spaces
     while [ "${line_rest#[ ]}" != "$line_rest" ]; do
