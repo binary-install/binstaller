@@ -1,0 +1,11 @@
+# Mark generated files
+testdata/*.sh linguist-generated=true
+install.sh linguist-generated=true
+
+# Mark generated Go files
+pkg/spec/generated.go linguist-generated=true
+pkg/asset/platforms_generated.go linguist-generated=true
+
+# Mark generated schema files
+schema/InstallSpec.json linguist-generated=true
+schema/InstallSpec.yml linguist-generated=true

@@ -87,8 +87,14 @@ fmt:
 	goimports -w .
 	git ls-files -c -o --exclude-standard | xargs nllint -trim-space -trim-trailing-space -fix -ignore-notfound
 
-lint: aqua-install schema-lint fmt ## Run all the linters
+lint: aqua-install schema-lint fmt lint-genereated-shell ## Run all the linters
 	golangci-lint run ./... --disable errcheck
+
+lint-genereated-shell:
+	@echo "Start lint generated shell scripts..."
+	@echo "You MUST fix ./internal/shell/*.sh instead of fixing generated shell scripts."
+	shellcheck install.sh ./testdata/reviewdog.install.sh
+	@echo "End of lint genereated shell scripts."
 
 ci: build test gen lint fmt ## Run CI checks (no external API calls)
 	@echo "Checking for uncommitted changes..."
