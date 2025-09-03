@@ -3,7 +3,7 @@ name: Generate Official Install Script
 on:
   push:
     branches: [main]
-    paths: ['.config/binstaller.yml']
+    # paths: ['.config/binstaller.yml']
   workflow_dispatch:
     branches: [main]
 
