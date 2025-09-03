@@ -7,9 +7,10 @@ usage() {
   cat <<EOF
 $this: download ${NAME} from ${REPO}
 
-Usage: $this [-b bindir] [-d] [-n] [tag]
+Usage: $this [-b bindir] [-d] [-q] [-n] [tag]
   -b sets bindir or installation directory, Defaults to ${BINSTALLER_BIN:-${HOME}/.local/bin}
   -d turns on debug logging
+  -q turns on quiet mode (errors only)
   -n turns on dry run mode
    [tag] is a tag from
    https://github.com/shenwei356/rush/releases
