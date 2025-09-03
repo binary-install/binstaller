@@ -12,9 +12,10 @@ usage() {
   cat <<EOF
 $this: download ${NAME} from ${REPO}
 
-Usage: $this [-b bindir] [-d] [-n]{{- if not .TargetVersion }} [tag]{{- end }}
+Usage: $this [-b bindir] [-d] [-q] [-n]{{- if not .TargetVersion }} [tag]{{- end }}
   -b sets bindir or installation directory, Defaults to {{ deref .DefaultBinDir }}
   -d turns on debug logging
+  -q turns on quiet mode (errors only)
   -n turns on dry run mode
   {{- if .TargetVersion }}
    This installer is configured for {{ .TargetVersion }} only.
@@ -37,8 +38,9 @@ usage() {
   cat <<EOF
 $this: download and run ${NAME} from ${REPO}
 
-Usage: $this [-d]{{- if not .TargetVersion }} [tag]{{- end }} -- [binary arguments]
+Usage: $this [-d] [-q]{{- if not .TargetVersion }} [tag]{{- end }} -- [binary arguments]
   -d turns on debug logging
+  -q turns on quiet mode (errors only)
   {{- if .TargetVersion }}
    This script is configured for {{ .TargetVersion }} only.
   {{- else }}
@@ -122,6 +124,7 @@ parse_args() {
   while [ $# -gt 0 ]; do
     case "$1" in
     -d) log_set_priority 10 ;;
+    -q) log_set_priority 3 ;;
     -h | --help | \?) usage "$0" ;;
     -x) set -x ;;
     --)
