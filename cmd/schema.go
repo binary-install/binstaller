@@ -39,8 +39,8 @@ For filtering and processing, use yq or jq tools on the output.`,
   binst schema --format json | jq '."$defs".Platform'
 
   # Get list of supported platform os/arch combinations
-  binst schema | yq '.["$defs"].Platform.properties.os.anyOf[].const'
-  binst schema | yq '.["$defs"].Platform.properties.arch.anyOf[].const'`,
+  binst schema --format json | jq '.["$defs"].Platform.properties.os.anyOf[].const'
+  binst schema --format json | jq '.["$defs"].Platform.properties.arch.anyOf[].const'`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		format, _ := cmd.Flags().GetString("format")
 		return RunSchema(format, os.Stdout)
