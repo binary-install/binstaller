@@ -289,7 +289,7 @@ func TestDryRunFlagParsing(t *testing.T) {
 				},
 			},
 			wantSubstrings: []string{
-				`Usage: $this [-b bindir] [-d] [-n]`,
+				`Usage: $this [-b bindir] [-d] [-q] [-n]`,
 				`-n turns on dry run mode`,
 			},
 		},
