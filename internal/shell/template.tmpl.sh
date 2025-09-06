@@ -38,9 +38,8 @@ usage() {
   cat <<EOF
 $this: download and run ${NAME} from ${REPO}
 
-Usage: $this [-d] [-q]{{- if not .TargetVersion }} [tag]{{- end }} -- [binary arguments]
+Usage: $this [-d]{{- if not .TargetVersion }} [tag]{{- end }} -- [binary arguments]
   -d turns on debug logging
-  -q turns on quiet mode (errors only)
   {{- if .TargetVersion }}
    This script is configured for {{ .TargetVersion }} only.
   {{- else }}
@@ -124,7 +123,6 @@ parse_args() {
   while [ $# -gt 0 ]; do
     case "$1" in
     -d) log_set_priority 10 ;;
-    -q) log_set_priority 3 ;;
     -h | --help | \?) usage "$0" ;;
     -x) set -x ;;
     --)
@@ -401,6 +399,11 @@ EXT='{{ deref .Asset.DefaultExtension }}'
 log_prefix() {
   echo "${REPO}"
 }
+
+{{- if eq .ScriptType "runner" }}
+# Set default log priority to warning for runner script (suppress info logs)
+log_set_priority 3
+{{- end }}
 
 parse_args "$@"
 
