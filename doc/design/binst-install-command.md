@@ -24,7 +24,7 @@ This document outlines the design for implementing the `binst install` command t
 
 ```
 pkg/
-├── verify/          # Checksum verification
+├── verify/          # Checksum verification (uses pkg/checksums)
 ├── archive/         # Archive extraction
 └── install/         # Binary installation
 
@@ -63,7 +63,7 @@ func (v *Verifier) GetExpectedChecksum(version, assetName string) (string, error
 ```
 
 **Implementation Notes:**
-- Reuse logic from `pkg/checksums`
+- Use `pkg/checksums` package for all checksum operations
 - Support embedded checksums from config
 - Download and parse checksum files when needed
 
@@ -147,13 +147,15 @@ func runInstall(cmd *cobra.Command, args []string) error {
         return err
     }
 
-    // 3. Use pkg/asset.FilenameGenerator for asset resolution
-    // 4. Use pkg/httpclient.NewGitHubClient() for downloading
-    // 5. Verify, extract, and install
+    // 3. Resolve version (latest if not specified)
+    // 4. Use pkg/asset.FilenameGenerator for asset resolution
+    // 5. Use pkg/httpclient.NewGitHubClient() for downloading
+    // 6. Verify using pkg/checksums, extract, and install
 
-    // For dry-run: perform all validation but skip actual installation
+    // For dry-run: validate URLs/versions but skip installation
     if dryRun {
-        // Validate URLs, check versions, etc.
+        // Perform version resolution
+        // Validate URLs exist
         // Skip the actual download and installation
     }
 
@@ -164,9 +166,8 @@ func runInstall(cmd *cobra.Command, args []string) error {
 ## Implementation Plan
 
 ### Phase 1: Core Infrastructure (Foundation)
-1. Create package structure
-2. Add basic CLI command skeleton using existing functions
-3. Write integration test framework
+1. Implement version resolution logic
+2. Add basic CLI command skeleton using existing functions from cmd/shared.go and cmd/root.go
 
 ### Phase 2: Resolution and Download
 1. Use `pkg/asset.FilenameGenerator` for asset resolution
@@ -198,6 +199,7 @@ func runInstall(cmd *cobra.Command, args []string) error {
 - Each package gets comprehensive unit tests
 - Mock external dependencies (GitHub API, filesystem)
 - Test error conditions and edge cases
+- Use go-cmp for comparison instead of testify
 
 ### Integration Tests
 - Test full installation flow
