@@ -24,9 +24,6 @@ This document outlines the design for implementing the `binst install` command t
 
 ```
 pkg/
-├── config/          # Config loading and discovery
-├── resolve/         # Asset resolution logic
-├── fetch/           # Download with retry logic
 ├── verify/          # Checksum verification
 ├── archive/         # Archive extraction
 └── install/         # Binary installation
@@ -43,78 +40,12 @@ Based on the codebase analysis, we can leverage:
 2. **`pkg/asset`**: Contains `FilenameGenerator` for asset name resolution
 3. **`pkg/checksums`**: Has checksum calculation and verification logic
 4. **`pkg/httpclient`**: Provides GitHub API client with authentication
-5. **`cmd/shared.go`**: Contains `loadInstallSpec` and config resolution logic
+5. **`cmd/shared.go`**: Contains `loadInstallSpec` for loading config files
+6. **`cmd/root.go`**: Contains `resolveConfigFile` for config path discovery
 
 ### New Packages to Implement
 
-#### 1. `pkg/config` - Configuration Management
-```go
-package config
-
-// Loader handles config file discovery and loading
-type Loader struct {
-    configPath string
-}
-
-// Load reads and validates the InstallSpec
-func (l *Loader) Load() (*spec.InstallSpec, error)
-
-// DiscoverConfig finds the config file using default paths
-func DiscoverConfig() (string, error)
-```
-
-**Implementation Notes:**
-- Reuse `resolveConfigFile` from `cmd/root.go`
-- Reuse `loadInstallSpec` from `cmd/shared.go`
-
-#### 2. `pkg/resolve` - Asset Resolution
-```go
-package resolve
-
-// Resolver determines the correct asset to download
-type Resolver struct {
-    spec    *spec.InstallSpec
-    version string
-}
-
-// ResolveAsset returns the asset filename for given OS/arch
-func (r *Resolver) ResolveAsset(os, arch string) (string, error)
-
-// ResolveVersion determines the actual version to install
-func (r *Resolver) ResolveVersion() (string, error)
-
-// GetDownloadURL constructs the full download URL
-func (r *Resolver) GetDownloadURL(assetName string) (string, error)
-```
-
-**Implementation Notes:**
-- Use `pkg/asset.FilenameGenerator` for asset name generation
-- Handle "latest" version resolution via GitHub API
-- Apply OS/arch detection including Rosetta 2 support
-
-#### 3. `pkg/fetch` - Download Management
-```go
-package fetch
-
-// Downloader handles file downloads with retry logic
-type Downloader struct {
-    client *http.Client
-    token  string
-}
-
-// Download fetches a file to a temporary location
-func (d *Downloader) Download(url string) (string, error)
-
-// DownloadWithRetry implements retry logic matching shell script
-func (d *Downloader) DownloadWithRetry(url string, maxRetries int) (string, error)
-```
-
-**Implementation Notes:**
-- Use `pkg/httpclient` for GitHub API access
-- Implement same retry logic as shell script (3 retries by default)
-- Support `GITHUB_TOKEN` environment variable
-
-#### 4. `pkg/verify` - Checksum Verification
+#### 1. `pkg/verify` - Checksum Verification
 ```go
 package verify
 
@@ -136,7 +67,7 @@ func (v *Verifier) GetExpectedChecksum(version, assetName string) (string, error
 - Support embedded checksums from config
 - Download and parse checksum files when needed
 
-#### 5. `pkg/archive` - Archive Extraction
+#### 2. `pkg/archive` - Archive Extraction
 ```go
 package archive
 
@@ -160,7 +91,7 @@ func (e *Extractor) SelectBinary(files []string, spec *spec.InstallSpec) (string
 - Implement strip_components logic
 - Handle binary selection from `spec.Asset.Binaries`
 
-#### 6. `pkg/install` - Installation Logic
+#### 3. `pkg/install` - Installation Logic
 ```go
 package install
 
@@ -198,10 +129,35 @@ var installCmd = &cobra.Command{
 }
 
 func init() {
-    installCmd.Flags().StringVarP(&configFile, "config", "c", "", "Config file path")
     installCmd.Flags().StringVarP(&binDir, "bin-dir", "b", "", "Installation directory")
     installCmd.Flags().BoolVarP(&dryRun, "dry-run", "n", false, "Dry run mode")
-    installCmd.Flags().BoolVar(&debug, "debug", false, "Enable debug logging")
+    // Config file flag is inherited from root command
+}
+
+func runInstall(cmd *cobra.Command, args []string) error {
+    // 1. Resolve config file path using resolveConfigFile from root.go
+    cfgPath, err := resolveConfigFile(configFile)
+    if err != nil {
+        return err
+    }
+
+    // 2. Load config using loadInstallSpec from shared.go
+    spec, err := loadInstallSpec(cfgPath)
+    if err != nil {
+        return err
+    }
+
+    // 3. Use pkg/asset.FilenameGenerator for asset resolution
+    // 4. Use pkg/httpclient.NewGitHubClient() for downloading
+    // 5. Verify, extract, and install
+
+    // For dry-run: perform all validation but skip actual installation
+    if dryRun {
+        // Validate URLs, check versions, etc.
+        // Skip the actual download and installation
+    }
+
+    return nil
 }
 ```
 
@@ -209,13 +165,12 @@ func init() {
 
 ### Phase 1: Core Infrastructure (Foundation)
 1. Create package structure
-2. Implement `pkg/config` using existing code
-3. Add basic CLI command skeleton
-4. Write integration test framework
+2. Add basic CLI command skeleton using existing functions
+3. Write integration test framework
 
 ### Phase 2: Resolution and Download
-1. Implement `pkg/resolve` with OS/arch detection
-2. Implement `pkg/fetch` with retry logic
+1. Use `pkg/asset.FilenameGenerator` for asset resolution
+2. Use `pkg/httpclient` for downloading files
 3. Add tests for version resolution
 4. Test download functionality
 
@@ -231,11 +186,11 @@ func init() {
 3. Add dry-run support
 4. Test full installation flow
 
-### Phase 5: Parity Testing
-1. Create parity test suite comparing with generated scripts
+### Phase 5: End-to-End Testing
+1. Create e2e test suite with scripts and make tasks
 2. Test on multiple platforms (Linux, macOS)
 3. Test with various projects from testdata/
-4. Fix any behavioral differences
+4. Ensure behavioral compatibility with generated scripts
 
 ## Testing Strategy
 
@@ -249,15 +204,11 @@ func init() {
 - Use testdata configurations
 - Compare results with generated installers
 
-### Parity Tests
-```go
-func TestInstallParity(t *testing.T) {
-    // 1. Generate installer script
-    // 2. Run installer script in container
-    // 3. Run binst install in same container
-    // 4. Compare installed binaries (path, permissions, content)
-}
-```
+### End-to-End Tests
+- Create e2e tests with scripts and make tasks
+- Test full installation flow on different platforms
+- Compare results with generated installers
+- Use GitHub Actions for CI testing
 
 ### Platform Testing
 - Linux: amd64, arm64
@@ -275,7 +226,7 @@ func TestInstallParity(t *testing.T) {
 ## Error Handling
 
 Match the shell script's error behavior:
-1. Network errors: Retry with backoff
+1. Network errors: Fail immediately (no retry logic)
 2. Checksum mismatch: Fail immediately
 3. Missing assets: Clear error message
 4. Permission errors: Suggest fixes
@@ -283,22 +234,23 @@ Match the shell script's error behavior:
 ## Environment Variables
 
 Support the same variables as generated scripts:
-- `GITHUB_TOKEN`: For API authentication
+- `GITHUB_TOKEN`: Optional for API authentication (helps with rate limits)
 - `BINSTALLER_BIN`: Override default bin directory
 - Standard proxy variables: `HTTP_PROXY`, `HTTPS_PROXY`, `NO_PROXY`
 
 ## Future Extensibility
 
 This design enables future `binst x` command by:
-1. Reusing resolution/fetch/verify packages
-2. Adding caching layer on top
-3. Executing in temporary directory instead of installing
+1. Reusing verify/archive/install packages
+2. Using existing asset and httpclient packages
+3. Adding caching layer on top
+4. Executing in temporary directory instead of installing
 
 ## Open Questions
 
-1. Should we support parallel asset downloads for faster installation?
-2. How should we handle GitHub API rate limits?
-3. Should dry-run mode make network requests?
+1. ~Should we support parallel asset downloads for faster installation?~ No, download only one asset (exception: checksum files)
+2. ~How should we handle GitHub API rate limits?~ Support optional GITHUB_TOKEN environment variable
+3. ~Should dry-run mode make network requests?~ Yes, validate URLs/versions but skip actual installation
 
 ## References
 
