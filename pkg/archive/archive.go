@@ -119,13 +119,23 @@ func (e *Extractor) extractTarReader(r io.Reader, destDir string) error {
 				return fmt.Errorf("absolute symlink %q not allowed", header.Name)
 			}
 
-			// Calculate the absolute path where the symlink would point
+			// Calculate the real symlinkDir and destDir (resolving existing symlinks)
 			symlinkDir := filepath.Dir(targetPath)
-			resolvedTarget := filepath.Join(symlinkDir, linkTarget)
-			resolvedTarget = filepath.Clean(resolvedTarget)
+			realDestDir, err := filepath.EvalSymlinks(filepath.Clean(destDir))
+			if err != nil {
+				return fmt.Errorf("failed to evaluate symlinks in destination directory: %w", err)
+			}
+			realSymlinkDir, err := filepath.EvalSymlinks(symlinkDir)
+			if err != nil {
+				// If the parent doesn't exist yet (new path), fallback to using symlinkDir
+				realSymlinkDir = symlinkDir
+			}
+			finalTarget := filepath.Join(realSymlinkDir, linkTarget)
+			finalTarget = filepath.Clean(finalTarget)
 
-			// Ensure the symlink target is within destDir
-			if !strings.HasPrefix(resolvedTarget, filepath.Clean(destDir)) {
+			// Ensure the symlink target is within destDir (after symlink resolution)
+			relPath, err := filepath.Rel(realDestDir, finalTarget)
+			if err != nil || strings.HasPrefix(relPath, "..") || filepath.IsAbs(relPath) {
 				return fmt.Errorf("symlink %q would point outside destination directory", header.Name)
 			}
 
