@@ -439,7 +439,7 @@ func matchesRule(when *spec.When, osName, arch string) bool {
 	return true
 }
 
-// installBinary copies the binary to its destination and makes it executable
+// installBinary copies the binary to its destination atomically and makes it executable
 func installBinary(src, dest string) error {
 	// Open source file
 	srcFile, err := os.Open(src)
@@ -448,22 +448,74 @@ func installBinary(src, dest string) error {
 	}
 	defer srcFile.Close()
 
-	// Create destination file
-	destFile, err := os.OpenFile(dest, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0755)
+	// Create temporary file in the same directory as destination for atomic rename
+	destDir := filepath.Dir(dest)
+	tempFile, err := os.CreateTemp(destDir, ".binst-tmp-*")
 	if err != nil {
-		return fmt.Errorf("failed to create destination file: %w", err)
+		return fmt.Errorf("failed to create temporary file: %w", err)
 	}
-	defer destFile.Close()
+	tempPath := tempFile.Name()
 
-	// Copy file
-	if _, err := io.Copy(destFile, srcFile); err != nil {
+	// Ensure temp file is cleaned up on error
+	defer func() {
+		if tempFile != nil {
+			tempFile.Close()
+			os.Remove(tempPath)
+		}
+	}()
+
+	// Copy file content
+	if _, err := io.Copy(tempFile, srcFile); err != nil {
 		return fmt.Errorf("failed to copy file: %w", err)
 	}
 
-	// Ensure file is executable
-	if err := os.Chmod(dest, 0755); err != nil {
+	// Close temp file before operations
+	if err := tempFile.Close(); err != nil {
+		return fmt.Errorf("failed to close temp file: %w", err)
+	}
+	tempFile = nil // Prevent double cleanup
+
+	// Set executable permissions on temp file
+	if err := os.Chmod(tempPath, 0755); err != nil {
 		return fmt.Errorf("failed to make file executable: %w", err)
 	}
 
+	// Atomic rename (replaces existing file if present)
+	if err := os.Rename(tempPath, dest); err != nil {
+		// Handle cross-device rename failure
+		if err := copyAndRemove(tempPath, dest); err != nil {
+			return fmt.Errorf("failed to install binary: %w", err)
+		}
+	}
+
 	return nil
+}
+
+// copyAndRemove handles cross-device moves when rename fails
+func copyAndRemove(src, dest string) error {
+	// Open source
+	srcFile, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+	defer srcFile.Close()
+
+	// Create destination with proper permissions
+	destFile, err := os.OpenFile(dest, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0755)
+	if err != nil {
+		return err
+	}
+	defer destFile.Close()
+
+	// Copy content
+	if _, err := io.Copy(destFile, srcFile); err != nil {
+		return err
+	}
+
+	// Close files before removal
+	srcFile.Close()
+	destFile.Close()
+
+	// Remove source
+	return os.Remove(src)
 }
