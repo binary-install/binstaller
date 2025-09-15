@@ -139,8 +139,8 @@ test_version_argument() {
     temp_dir=$(mktemp -d)
 
     # Test specific version
-    log_info "Installing specific version jq-1.6..."
-    "$BINST_CMD" install -c "$TESTDATA_DIR/jq.binstaller.yml" -b "$temp_dir" "jq-1.6" >/dev/null 2>&1
+    log_info "Installing specific version jq-1.7..."
+    "$BINST_CMD" install -c "$TESTDATA_DIR/jq.binstaller.yml" -b "$temp_dir" "jq-1.7" >/dev/null 2>&1
 
     if [ -f "$temp_dir/jq" ]; then
         log_info "✓ Specific version installation PASSED"

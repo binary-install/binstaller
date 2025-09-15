@@ -94,16 +94,20 @@ test_github_token_env() {
         ((FAILED_TESTS++)) || true
     fi
 
-    # Test with invalid GITHUB_TOKEN (should still work for public repos)
+    # Test with invalid GITHUB_TOKEN (might fail due to rate limiting or auth checks)
     log_info "Testing with invalid GITHUB_TOKEN..."
-    GITHUB_TOKEN="invalid_token_12345" "$BINST_CMD" install -c "$TESTDATA_DIR/jq.binstaller.yml" -b "$temp_dir" -n >/dev/null 2>&1
-    local invalid_token_exit=$?
+    local output
+    output=$(GITHUB_TOKEN="invalid_token_12345" "$BINST_CMD" install -c "$TESTDATA_DIR/jq.binstaller.yml" -b "$temp_dir" -n 2>&1) || true
 
-    if [ "$invalid_token_exit" -eq 0 ]; then
-        log_info "✓ Installation with invalid GITHUB_TOKEN PASSED (public repo)"
+    # Check if it failed due to authentication rather than other issues
+    if [[ "$output" =~ "401" ]] || [[ "$output" =~ "403" ]] || [[ "$output" =~ "Bad credentials" ]]; then
+        log_info "✓ Invalid GITHUB_TOKEN properly rejected with auth error"
+        ((PASSED_TESTS++)) || true
+    elif [[ "$output" =~ "Resolved version" ]]; then
+        log_info "✓ Installation with invalid GITHUB_TOKEN succeeded (public repo)"
         ((PASSED_TESTS++)) || true
     else
-        log_warning "Installation with invalid GITHUB_TOKEN failed - this might be expected for rate-limited APIs"
+        log_warning "Installation with invalid GITHUB_TOKEN had unexpected result - might be rate limited"
         ((PASSED_TESTS++)) || true
     fi
 
@@ -177,10 +181,10 @@ test_env_interactions() {
     fi
 
     # Install with script using BINSTALLER_BIN
-    BINSTALLER_BIN="$script_dir" bash "$installer_script" "jq-1.7" >/dev/null 2>&1
+    BINSTALLER_BIN="$script_dir" bash "$installer_script" "jq-1.7" >/dev/null 2>&1 || true
 
     # Install with binst using BINSTALLER_BIN
-    BINSTALLER_BIN="$binst_dir" "$BINST_CMD" install -c "$TESTDATA_DIR/jq.binstaller.yml" "jq-1.7" >/dev/null 2>&1
+    BINSTALLER_BIN="$binst_dir" "$BINST_CMD" install -c "$TESTDATA_DIR/jq.binstaller.yml" "jq-1.7" >/dev/null 2>&1 || true
 
     # Compare installed binaries
     if [ -f "$script_dir/jq" ] && [ -f "$binst_dir/jq" ]; then

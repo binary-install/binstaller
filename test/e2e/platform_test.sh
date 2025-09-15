@@ -84,8 +84,8 @@ test_archive_formats() {
     # Projects with different archive formats
     local -A archive_tests=(
         ["tar.gz"]="reviewdog"    # .tar.gz format
-        ["zip"]="shellcheck"       # .zip format
-        ["tar.xz"]="bat"          # .tar.xz format
+        ["zip"]="ast-grep"        # .zip format (default extension)
+        ["tar.xz"]="shellcheck"   # .tar.xz format
         ["binary"]="jq"           # Direct binary (no archive)
     )
 

@@ -29,14 +29,22 @@ func NewVerifier(spec *spec.InstallSpec, version string) *Verifier {
 // GetChecksum retrieves the checksum for a given filename
 // It first checks embedded checksums, then tries to download checksum file
 func (v *Verifier) GetChecksum(ctx context.Context, filename string) (string, error) {
-	return v.getChecksumWithAssetFilename(ctx, filename, filename)
+	hash, err := v.getChecksumWithAssetFilename(ctx, filename, filename)
+	if err != nil {
+		return "", err
+	}
+	if hash == "" {
+		return "", fmt.Errorf("no checksum found for %s", filename)
+	}
+	return hash, nil
 }
 
 // getChecksumWithAssetFilename retrieves the checksum for a given filename
 // It accepts both the filename to look up and the asset filename for template interpolation
 func (v *Verifier) getChecksumWithAssetFilename(ctx context.Context, filename, assetFilename string) (string, error) {
 	if v.Spec.Checksums == nil {
-		return "", fmt.Errorf("no checksums configuration found")
+		// Return a special error that VerifyFile can recognize
+		return "", nil
 	}
 
 	// First, check embedded checksums
@@ -60,9 +68,13 @@ func (v *Verifier) getChecksumWithAssetFilename(ctx context.Context, filename, a
 		if hash, ok := checksumMap[filename]; ok {
 			return hash, nil
 		}
+
+		// Checksum file exists but doesn't contain the file
+		return "", fmt.Errorf("no checksum found for %s", filename)
 	}
 
-	return "", fmt.Errorf("no checksum found for %s", filename)
+	// No checksum configuration at all - return empty without error
+	return "", nil
 }
 
 // VerifyFile verifies a file against its expected checksum
@@ -71,6 +83,12 @@ func (v *Verifier) VerifyFile(ctx context.Context, filepath, filename string) er
 	if err != nil {
 		// Skip verification with warning when checksums are not found
 		// This matches the behavior of generated shell scripts
+		log.Warnf("No checksum found for %s, skipping verification: %v", filename, err)
+		return nil
+	}
+
+	// If no checksum was found (nil error but empty hash), skip verification
+	if expectedHash == "" {
 		log.Warnf("No checksum found for %s, skipping verification", filename)
 		return nil
 	}

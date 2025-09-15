@@ -381,9 +381,14 @@ func (e *Embedder) createChecksumFilenameWithAsset(assetFilename string) string 
 	template := spec.StringValue(e.Spec.Checksums.Template)
 
 	// Check for unsupported ASSET_FILENAME variable in embed-checksums mode
-	if e.Mode != "" && strings.Contains(template, "${ASSET_FILENAME}") {
-		log.Errorf("${ASSET_FILENAME} is not supported in checksum templates for embed-checksums. Use 'binst embed-checksums --mode calculate' instead.")
-		return ""
+	if strings.Contains(template, "${ASSET_FILENAME}") {
+		if e.Mode != "" {
+			log.Errorf("${ASSET_FILENAME} is not supported in checksum templates for embed-checksums. Use 'binst embed-checksums --mode calculate' instead.")
+		}
+		// Return empty string when ASSET_FILENAME is used but no asset filename is provided
+		if assetFilename == "" {
+			return ""
+		}
 	}
 
 	// Build additional variables map

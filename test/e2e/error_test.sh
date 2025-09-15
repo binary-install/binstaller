@@ -157,9 +157,10 @@ asset:
       arch: i386
 checksums:
   algorithm: sha256
-  pattern: inline
-  values:
-    jq-linux-amd64: "0000000000000000000000000000000000000000000000000000000000000000"
+  embedded_checksums:
+    jq-1.7:
+      - filename: jq-linux-amd64
+        hash: "0000000000000000000000000000000000000000000000000000000000000000"
 EOF
 
     # Test with wrong checksum
