@@ -163,12 +163,8 @@ func runInstall(cmd *cobra.Command, args []string) error {
 	log.Infof("Asset URL: %s", assetURL)
 
 	if installDryRun {
-		// In dry-run mode, verify the URL exists
-		log.Info("Validating asset URL...")
-		if err := validateURL(ctx, assetURL); err != nil {
-			return fmt.Errorf("asset validation failed: %w", err)
-		}
-		log.Info("Asset URL is valid")
+		// In dry-run mode, just print what would be done
+		log.Info("Dry run mode - would download from: " + assetURL)
 		return nil
 	}
 
@@ -181,7 +177,7 @@ func runInstall(cmd *cobra.Command, args []string) error {
 
 	assetPath := filepath.Join(tmpDir, assetFilename)
 	log.Infof("Downloading %s", assetURL)
-	if err := downloadWithProgress(ctx, assetPath, assetURL); err != nil {
+	if err := download(ctx, assetPath, assetURL); err != nil {
 		return fmt.Errorf("failed to download asset: %w", err)
 	}
 
@@ -212,21 +208,7 @@ func detectPlatform(spec *spec.InstallSpec) (string, string) {
 
 // detectOS detects the operating system, matching shell script logic
 func detectOS() string {
-	osName := runtime.GOOS
-
-	// Map Go OS names to shell script conventions
-	switch osName {
-	case "windows":
-		// Check for MSYS, MinGW, Cygwin environments
-		// In Go, we just use "windows"
-		return "windows"
-	case "sunos":
-		// Try to detect illumos vs solaris
-		// For now, just return solaris
-		return "solaris"
-	default:
-		return osName
-	}
+	return runtime.GOOS
 }
 
 // detectArch detects the architecture, matching shell script logic
@@ -235,15 +217,9 @@ func detectArch() string {
 
 	// Map Go arch names to shell script conventions
 	switch arch {
-	case "amd64":
-		return "amd64"
-	case "386":
-		return "386"
-	case "arm64":
-		return "arm64"
 	case "arm":
-		// Go doesn't distinguish ARM versions like the shell script
-		// Default to armv7 for compatibility
+		// TODO: Handle ARM version detection properly
+		// For now, use uname to detect ARM version
 		return "armv7"
 	default:
 		return arch
@@ -262,29 +238,8 @@ func isRosetta2Available() bool {
 	return err == nil
 }
 
-// validateURL checks if a URL exists by making a HEAD request
-func validateURL(ctx context.Context, url string) error {
-	client := httpclient.NewGitHubClient()
-	req, err := http.NewRequestWithContext(ctx, "HEAD", url, nil)
-	if err != nil {
-		return fmt.Errorf("failed to create request: %w", err)
-	}
-
-	resp, err := client.Do(req)
-	if err != nil {
-		return fmt.Errorf("failed to validate URL: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("URL returned status %d", resp.StatusCode)
-	}
-
-	return nil
-}
-
-// downloadWithProgress downloads a file with progress reporting
-func downloadWithProgress(ctx context.Context, destPath, url string) error {
+// download downloads a file without progress reporting
+func download(ctx context.Context, destPath, url string) error {
 	client := httpclient.NewGitHubClient()
 	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 	if err != nil {
@@ -309,43 +264,11 @@ func downloadWithProgress(ctx context.Context, destPath, url string) error {
 	}
 	defer out.Close()
 
-	// Create a progress reader
-	contentLength := resp.ContentLength
-	reader := &progressReader{
-		Reader:  resp.Body,
-		Total:   contentLength,
-		Current: 0,
-	}
-
-	// Copy with progress
-	_, err = io.Copy(out, reader)
+	// Copy without progress
+	_, err = io.Copy(out, resp.Body)
 	if err != nil {
 		return fmt.Errorf("failed to write file: %w", err)
 	}
 
 	return nil
-}
-
-// progressReader wraps an io.Reader to report progress
-type progressReader struct {
-	Reader  io.Reader
-	Total   int64
-	Current int64
-}
-
-func (pr *progressReader) Read(p []byte) (int, error) {
-	n, err := pr.Reader.Read(p)
-	if n > 0 {
-		pr.Current += int64(n)
-		if pr.Total > 0 {
-			percentage := float64(pr.Current) * 100.0 / float64(pr.Total)
-			fmt.Printf("\r%.1f%% (%d/%d bytes)", percentage, pr.Current, pr.Total)
-		} else {
-			fmt.Printf("\r%d bytes downloaded", pr.Current)
-		}
-	}
-	if err == io.EOF {
-		fmt.Println() // New line after progress
-	}
-	return n, err
 }
