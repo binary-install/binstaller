@@ -90,7 +90,6 @@ run_parity_test() {
     # Create temporary directories for installation
     local temp_dir
     temp_dir=$(mktemp -d)
-    trap "rm -rf '$temp_dir'" EXIT
 
     local script_install_dir="$temp_dir/script"
     local binst_install_dir="$temp_dir/binst"
@@ -107,9 +106,9 @@ run_parity_test() {
     log_info "Installing with generated script..."
     local script_exit_code=0
     if [ -n "$version" ]; then
-        BINDIR="$script_install_dir" bash "$installer_script" "$version" >/dev/null 2>&1 || script_exit_code=$?
+        BINSTALLER_BIN="$script_install_dir" bash "$installer_script" "$version" >/dev/null 2>&1 || script_exit_code=$?
     else
-        BINDIR="$script_install_dir" bash "$installer_script" >/dev/null 2>&1 || script_exit_code=$?
+        BINSTALLER_BIN="$script_install_dir" bash "$installer_script" >/dev/null 2>&1 || script_exit_code=$?
     fi
 
     # Install using binst install
@@ -124,14 +123,14 @@ run_parity_test() {
     # Compare exit codes
     if [ "$script_exit_code" -ne "$binst_exit_code" ]; then
         log_error "Exit code mismatch for $test_name: script=$script_exit_code, binst=$binst_exit_code"
-        ((FAILED_TESTS++))
+        ((FAILED_TESTS++)) || true
         return 1
     fi
 
     # If both failed, that's still parity
     if [ "$script_exit_code" -ne 0 ]; then
         log_warning "Both methods failed for $test_name with exit code $script_exit_code (parity maintained)"
-        ((PASSED_TESTS++))
+        ((PASSED_TESTS++)) || true
         return 0
     fi
 
@@ -171,11 +170,11 @@ run_parity_test() {
 
     if [ "$all_match" = true ]; then
         log_info "✓ Parity test PASSED for $test_name"
-        ((PASSED_TESTS++))
+        ((PASSED_TESTS++)) || true
         return 0
     else
         log_error "✗ Parity test FAILED for $test_name"
-        ((FAILED_TESTS++))
+        ((FAILED_TESTS++)) || true
         return 1
     fi
 }

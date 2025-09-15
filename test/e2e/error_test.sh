@@ -38,7 +38,6 @@ test_invalid_version() {
 
     local temp_dir
     temp_dir=$(mktemp -d)
-    trap "rm -rf '$temp_dir'" EXIT
 
     # Test with non-existent version
     local output exit_code
@@ -46,10 +45,10 @@ test_invalid_version() {
 
     if [ "${exit_code:-0}" -ne 0 ] && [[ "$output" =~ "404" || "$output" =~ "Not Found" || "$output" =~ "failed" ]]; then
         log_info "✓ Invalid version error handling PASSED"
-        ((PASSED_TESTS++))
+        ((PASSED_TESTS++)) || true
     else
         log_error "✗ Invalid version error handling FAILED: expected error for non-existent version"
-        ((FAILED_TESTS++))
+        ((FAILED_TESTS++)) || true
     fi
 
     rm -rf "$temp_dir"
@@ -61,7 +60,6 @@ test_missing_config() {
 
     local temp_dir
     temp_dir=$(mktemp -d)
-    trap "rm -rf '$temp_dir'" EXIT
 
     # Test with non-existent config
     local output exit_code
@@ -69,10 +67,10 @@ test_missing_config() {
 
     if [ "${exit_code:-0}" -ne 0 ] && [[ "$output" =~ "no such file" || "$output" =~ "not found" || "$output" =~ "failed to read" ]]; then
         log_info "✓ Missing config file error handling PASSED"
-        ((PASSED_TESTS++))
+        ((PASSED_TESTS++)) || true
     else
         log_error "✗ Missing config file error handling FAILED: expected error for missing config"
-        ((FAILED_TESTS++))
+        ((FAILED_TESTS++)) || true
     fi
 
     rm -rf "$temp_dir"
@@ -84,7 +82,6 @@ test_invalid_config() {
 
     local temp_dir
     temp_dir=$(mktemp -d)
-    trap "rm -rf '$temp_dir'" EXIT
 
     # Create invalid config
     cat > "$temp_dir/invalid.yml" <<EOF
@@ -98,10 +95,10 @@ EOF
 
     if [ "${exit_code:-0}" -ne 0 ] && [[ "$output" =~ "yaml" || "$output" =~ "parse" || "$output" =~ "invalid" ]]; then
         log_info "✓ Invalid config file error handling PASSED"
-        ((PASSED_TESTS++))
+        ((PASSED_TESTS++)) || true
     else
         log_error "✗ Invalid config file error handling FAILED: expected error for invalid YAML"
-        ((FAILED_TESTS++))
+        ((FAILED_TESTS++)) || true
     fi
 
     rm -rf "$temp_dir"
@@ -113,7 +110,6 @@ test_network_failure() {
 
     local temp_dir
     temp_dir=$(mktemp -d)
-    trap "rm -rf '$temp_dir'" EXIT
 
     # Create a config pointing to invalid GitHub repo
     cat > "$temp_dir/network-test.yml" <<EOF
@@ -130,10 +126,10 @@ EOF
 
     if [ "${exit_code:-0}" -ne 0 ] && [[ "$output" =~ "404" || "$output" =~ "failed" || "$output" =~ "error" ]]; then
         log_info "✓ Network failure error handling PASSED"
-        ((PASSED_TESTS++))
+        ((PASSED_TESTS++)) || true
     else
         log_error "✗ Network failure error handling FAILED: expected error for invalid repo"
-        ((FAILED_TESTS++))
+        ((FAILED_TESTS++)) || true
     fi
 
     rm -rf "$temp_dir"
@@ -145,15 +141,20 @@ test_checksum_mismatch() {
 
     local temp_dir
     temp_dir=$(mktemp -d)
-    trap "rm -rf '$temp_dir'" EXIT
 
     # Create a config with wrong checksum
     cat > "$temp_dir/checksum-test.yml" <<EOF
-version: 1
+schema: v1
 name: jq
 repo: jqlang/jq
 asset:
-  filename: jq-linux-amd64
+  template: \${NAME}-\${OS}-\${ARCH}
+  rules:
+    - when: { os: darwin }
+      os: macos
+    - when:
+        arch: "386"
+      arch: i386
 checksums:
   algorithm: sha256
   pattern: inline
@@ -167,10 +168,10 @@ EOF
 
     if [ "${exit_code:-0}" -ne 0 ] && [[ "$output" =~ "checksum" || "$output" =~ "verification failed" || "$output" =~ "mismatch" ]]; then
         log_info "✓ Checksum mismatch error handling PASSED"
-        ((PASSED_TESTS++))
+        ((PASSED_TESTS++)) || true
     else
         log_error "✗ Checksum mismatch error handling FAILED: expected error for wrong checksum"
-        ((FAILED_TESTS++))
+        ((FAILED_TESTS++)) || true
     fi
 
     rm -rf "$temp_dir"
@@ -182,7 +183,6 @@ test_permission_denied() {
 
     local temp_dir
     temp_dir=$(mktemp -d)
-    trap "rm -rf '$temp_dir'" EXIT
 
     # Create read-only directory
     local readonly_dir="$temp_dir/readonly"
@@ -195,10 +195,10 @@ test_permission_denied() {
 
     if [ "${exit_code:-0}" -ne 0 ] && [[ "$output" =~ "permission denied" || "$output" =~ "Permission denied" || "$output" =~ "failed to" ]]; then
         log_info "✓ Permission denied error handling PASSED"
-        ((PASSED_TESTS++))
+        ((PASSED_TESTS++)) || true
     else
         log_error "✗ Permission denied error handling FAILED: expected error for read-only directory"
-        ((FAILED_TESTS++))
+        ((FAILED_TESTS++)) || true
     fi
 
     chmod 755 "$readonly_dir"
@@ -217,7 +217,6 @@ test_disk_space() {
 
     local temp_dir
     temp_dir=$(mktemp -d)
-    trap "umount '$temp_dir/small' 2>/dev/null || true; rm -rf '$temp_dir'" EXIT
 
     # Try to create small tmpfs (may fail without privileges)
     mkdir -p "$temp_dir/small"
@@ -228,10 +227,10 @@ test_disk_space() {
 
         if [ "${exit_code:-0}" -ne 0 ] && [[ "$output" =~ "space" || "$output" =~ "full" || "$output" =~ "failed" ]]; then
             log_info "✓ Disk space error handling PASSED"
-            ((PASSED_TESTS++))
+            ((PASSED_TESTS++)) || true
         else
             log_error "✗ Disk space error handling FAILED: expected error for full filesystem"
-            ((FAILED_TESTS++))
+            ((FAILED_TESTS++)) || true
         fi
 
         umount "$temp_dir/small" 2>/dev/null || true
@@ -248,7 +247,6 @@ test_concurrent_installation() {
 
     local temp_dir
     temp_dir=$(mktemp -d)
-    trap "rm -rf '$temp_dir'" EXIT
 
     # Run two installations concurrently to same location
     log_info "Running concurrent installations..."
@@ -266,10 +264,10 @@ test_concurrent_installation() {
     # At least one should succeed, and binary should be valid
     if { [ "$exit1" -eq 0 ] || [ "$exit2" -eq 0 ]; } && [ -f "$temp_dir/jq" ] && [ -x "$temp_dir/jq" ]; then
         log_info "✓ Concurrent installation handling PASSED"
-        ((PASSED_TESTS++))
+        ((PASSED_TESTS++)) || true
     else
         log_error "✗ Concurrent installation handling FAILED: both installations failed or binary invalid"
-        ((FAILED_TESTS++))
+        ((FAILED_TESTS++)) || true
     fi
 
     rm -rf "$temp_dir"

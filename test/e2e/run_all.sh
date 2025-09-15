@@ -77,11 +77,11 @@ run_test_suite() {
 
     if "$suite_path"; then
         log_info "✓ $suite PASSED"
-        ((PASSED_SUITES++))
+        ((PASSED_SUITES++)) || true
         return 0
     else
         log_error "✗ $suite FAILED"
-        ((FAILED_SUITES++))
+        ((FAILED_SUITES++)) || true
         FAILED_SUITE_NAMES+=("$suite")
         return 1
     fi

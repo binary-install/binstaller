@@ -38,7 +38,6 @@ test_binstaller_bin_env() {
 
     local temp_dir
     temp_dir=$(mktemp -d)
-    trap "rm -rf '$temp_dir'" EXIT
 
     local env_bin_dir="$temp_dir/env/bin"
     mkdir -p "$env_bin_dir"
@@ -49,10 +48,10 @@ test_binstaller_bin_env() {
 
     if [ -f "$env_bin_dir/jq" ]; then
         log_info "✓ BINSTALLER_BIN test PASSED"
-        ((PASSED_TESTS++))
+        ((PASSED_TESTS++)) || true
     else
         log_error "✗ BINSTALLER_BIN test FAILED: jq not found in $env_bin_dir"
-        ((FAILED_TESTS++))
+        ((FAILED_TESTS++)) || true
     fi
 
     # Test priority: -b flag should override BINSTALLER_BIN
@@ -65,10 +64,10 @@ test_binstaller_bin_env() {
 
     if [ -f "$flag_bin_dir/jq" ] && [ ! -f "$env_bin_dir/jq" ]; then
         log_info "✓ -b flag priority test PASSED"
-        ((PASSED_TESTS++))
+        ((PASSED_TESTS++)) || true
     else
         log_error "✗ -b flag priority test FAILED"
-        ((FAILED_TESTS++))
+        ((FAILED_TESTS++)) || true
     fi
 
     rm -rf "$temp_dir"
@@ -80,7 +79,6 @@ test_github_token_env() {
 
     local temp_dir
     temp_dir=$(mktemp -d)
-    trap "rm -rf '$temp_dir'" EXIT
 
     # Test without GITHUB_TOKEN (should still work for public repos)
     log_info "Testing without GITHUB_TOKEN..."
@@ -90,10 +88,10 @@ test_github_token_env() {
 
     if [ "$no_token_exit" -eq 0 ]; then
         log_info "✓ Installation without GITHUB_TOKEN PASSED"
-        ((PASSED_TESTS++))
+        ((PASSED_TESTS++)) || true
     else
         log_error "✗ Installation without GITHUB_TOKEN FAILED"
-        ((FAILED_TESTS++))
+        ((FAILED_TESTS++)) || true
     fi
 
     # Test with invalid GITHUB_TOKEN (should still work for public repos)
@@ -103,10 +101,10 @@ test_github_token_env() {
 
     if [ "$invalid_token_exit" -eq 0 ]; then
         log_info "✓ Installation with invalid GITHUB_TOKEN PASSED (public repo)"
-        ((PASSED_TESTS++))
+        ((PASSED_TESTS++)) || true
     else
         log_warning "Installation with invalid GITHUB_TOKEN failed - this might be expected for rate-limited APIs"
-        ((PASSED_TESTS++))
+        ((PASSED_TESTS++)) || true
     fi
 
     # Test with valid GITHUB_TOKEN if available
@@ -116,10 +114,10 @@ test_github_token_env() {
 
         if [ -f "$temp_dir/jq" ]; then
             log_info "✓ Installation with valid GITHUB_TOKEN PASSED"
-            ((PASSED_TESTS++))
+            ((PASSED_TESTS++)) || true
         else
             log_error "✗ Installation with valid GITHUB_TOKEN FAILED"
-            ((FAILED_TESTS++))
+            ((FAILED_TESTS++)) || true
         fi
     else
         log_warning "Skipping valid GITHUB_TOKEN test (token not available)"
@@ -138,7 +136,6 @@ test_default_install_dir() {
     # Create temporary HOME
     local temp_home
     temp_home=$(mktemp -d)
-    trap "rm -rf '$temp_home'; export HOME='$original_home'" EXIT
 
     export HOME="$temp_home"
     local expected_dir="$HOME/.local/bin"
@@ -150,10 +147,10 @@ test_default_install_dir() {
 
     if [ -f "$expected_dir/jq" ]; then
         log_info "✓ Default directory installation PASSED"
-        ((PASSED_TESTS++))
+        ((PASSED_TESTS++)) || true
     else
         log_error "✗ Default directory installation FAILED: jq not found in $expected_dir"
-        ((FAILED_TESTS++))
+        ((FAILED_TESTS++)) || true
     fi
 
     # Restore HOME
@@ -167,9 +164,8 @@ test_env_interactions() {
 
     local temp_dir
     temp_dir=$(mktemp -d)
-    trap "rm -rf '$temp_dir'" EXIT
 
-    # Test interaction between BINDIR (used by script) and BINSTALLER_BIN
+    # Test that both script and binst install use BINSTALLER_BIN correctly
     local script_dir="$temp_dir/script"
     local binst_dir="$temp_dir/binst"
     mkdir -p "$script_dir" "$binst_dir"
@@ -180,8 +176,8 @@ test_env_interactions() {
         "$BINST_CMD" gen --config "$TESTDATA_DIR/jq.binstaller.yml" -o "$installer_script"
     fi
 
-    # Install with script using BINDIR
-    BINDIR="$script_dir" bash "$installer_script" "jq-1.7" >/dev/null 2>&1
+    # Install with script using BINSTALLER_BIN
+    BINSTALLER_BIN="$script_dir" bash "$installer_script" "jq-1.7" >/dev/null 2>&1
 
     # Install with binst using BINSTALLER_BIN
     BINSTALLER_BIN="$binst_dir" "$BINST_CMD" install -c "$TESTDATA_DIR/jq.binstaller.yml" "jq-1.7" >/dev/null 2>&1
@@ -194,14 +190,14 @@ test_env_interactions() {
 
         if [ "$hash1" = "$hash2" ]; then
             log_info "✓ Environment variable parity test PASSED"
-            ((PASSED_TESTS++))
+            ((PASSED_TESTS++)) || true
         else
             log_error "✗ Environment variable parity test FAILED: different binaries"
-            ((FAILED_TESTS++))
+            ((FAILED_TESTS++)) || true
         fi
     else
         log_error "✗ Environment variable parity test FAILED: missing binaries"
-        ((FAILED_TESTS++))
+        ((FAILED_TESTS++)) || true
     fi
 
     rm -rf "$temp_dir"
