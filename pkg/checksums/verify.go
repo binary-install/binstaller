@@ -29,6 +29,12 @@ func NewVerifier(spec *spec.InstallSpec, version string) *Verifier {
 // GetChecksum retrieves the checksum for a given filename
 // It first checks embedded checksums, then tries to download checksum file
 func (v *Verifier) GetChecksum(ctx context.Context, filename string) (string, error) {
+	return v.getChecksumWithAssetFilename(ctx, filename, filename)
+}
+
+// getChecksumWithAssetFilename retrieves the checksum for a given filename
+// It accepts both the filename to look up and the asset filename for template interpolation
+func (v *Verifier) getChecksumWithAssetFilename(ctx context.Context, filename, assetFilename string) (string, error) {
 	if v.Spec.Checksums == nil {
 		return "", fmt.Errorf("no checksums configuration found")
 	}
@@ -46,7 +52,7 @@ func (v *Verifier) GetChecksum(ctx context.Context, filename string) (string, er
 
 	// If not found in embedded checksums, try to download checksum file
 	if spec.StringValue(v.Spec.Checksums.Template) != "" {
-		checksumMap, err := v.downloadChecksumFile(ctx)
+		checksumMap, err := v.downloadChecksumFileWithAssetFilename(ctx, assetFilename)
 		if err != nil {
 			return "", fmt.Errorf("failed to download checksum file: %w", err)
 		}
@@ -61,9 +67,12 @@ func (v *Verifier) GetChecksum(ctx context.Context, filename string) (string, er
 
 // VerifyFile verifies a file against its expected checksum
 func (v *Verifier) VerifyFile(ctx context.Context, filepath, filename string) error {
-	expectedHash, err := v.GetChecksum(ctx, filename)
+	expectedHash, err := v.getChecksumWithAssetFilename(ctx, filename, filename)
 	if err != nil {
-		return fmt.Errorf("failed to get checksum: %w", err)
+		// Skip verification with warning when checksums are not found
+		// This matches the behavior of generated shell scripts
+		log.Warnf("No checksum found for %s, skipping verification", filename)
+		return nil
 	}
 
 	algorithm := "sha256" // default
@@ -86,13 +95,18 @@ func (v *Verifier) VerifyFile(ctx context.Context, filepath, filename string) er
 
 // downloadChecksumFile downloads and parses the checksum file
 func (v *Verifier) downloadChecksumFile(ctx context.Context) (map[string]string, error) {
+	return v.downloadChecksumFileWithAssetFilename(ctx, "")
+}
+
+// downloadChecksumFileWithAssetFilename downloads and parses the checksum file with asset filename support
+func (v *Verifier) downloadChecksumFileWithAssetFilename(ctx context.Context, assetFilename string) (map[string]string, error) {
 	// Create embedder to reuse checksum template interpolation
 	embedder := &Embedder{
 		Spec:    v.Spec,
 		Version: v.Version,
 	}
 
-	checksumFilename := embedder.createChecksumFilename()
+	checksumFilename := embedder.createChecksumFilenameWithAsset(assetFilename)
 	if checksumFilename == "" {
 		return nil, fmt.Errorf("unable to generate checksum filename")
 	}
