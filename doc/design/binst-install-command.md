@@ -24,7 +24,6 @@ This document outlines the design for implementing the `binst install` command t
 
 ```
 pkg/
-├── verify/          # Checksum verification (uses pkg/checksums)
 ├── archive/         # Archive extraction
 └── install/         # Binary installation
 
@@ -45,29 +44,7 @@ Based on the codebase analysis, we can leverage:
 
 ### New Packages to Implement
 
-#### 1. `pkg/verify` - Checksum Verification
-```go
-package verify
-
-// Verifier handles checksum verification
-type Verifier struct {
-    spec      *spec.InstallSpec
-    algorithm string
-}
-
-// Verify checks file integrity against checksums
-func (v *Verifier) Verify(filepath, version, assetName string) error
-
-// GetExpectedChecksum retrieves checksum from embedded or downloaded source
-func (v *Verifier) GetExpectedChecksum(version, assetName string) (string, error)
-```
-
-**Implementation Notes:**
-- Use `pkg/checksums` package for all checksum operations
-- Support embedded checksums from config
-- Download and parse checksum files when needed
-
-#### 2. `pkg/archive` - Archive Extraction
+#### 1. `pkg/archive` - Archive Extraction
 ```go
 package archive
 
@@ -91,7 +68,7 @@ func (e *Extractor) SelectBinary(files []string, spec *spec.InstallSpec) (string
 - Implement strip_components logic
 - Handle binary selection from `spec.Asset.Binaries`
 
-#### 3. `pkg/install` - Installation Logic
+#### 2. `pkg/install` - Installation Logic
 ```go
 package install
 
@@ -148,9 +125,9 @@ func runInstall(cmd *cobra.Command, args []string) error {
     }
 
     // 3. Resolve version (latest if not specified)
-    // 4. Use pkg/asset.FilenameGenerator for asset resolution
-    // 5. Use pkg/httpclient.NewGitHubClient() for downloading
-    // 6. Verify using pkg/checksums, extract, and install
+    // 4. Use pkg/asset.FilenameGenerator directly for asset resolution
+    // 5. Use pkg/httpclient directly for downloading (no wrapper)
+    // 6. Verify using pkg/checksums directly, extract, and install
 
     // For dry-run: validate URLs/versions but skip installation
     if dryRun {
@@ -165,9 +142,9 @@ func runInstall(cmd *cobra.Command, args []string) error {
 
 ## Implementation Plan
 
-### Phase 1: Core Infrastructure (Foundation)
-1. Implement version resolution logic
-2. Add basic CLI command skeleton using existing functions from cmd/shared.go and cmd/root.go
+### Phase 1: Version Resolution
+1. Implement version resolution logic to resolve "latest" to actual version
+2. Add basic CLI command skeleton
 
 ### Phase 2: Resolution and Download
 1. Use `pkg/asset.FilenameGenerator` for asset resolution
@@ -176,7 +153,7 @@ func runInstall(cmd *cobra.Command, args []string) error {
 4. Test download functionality
 
 ### Phase 3: Verification and Extraction
-1. Implement `pkg/verify` using existing checksum code
+1. Use `pkg/checksums` directly for verification
 2. Implement `pkg/archive` for tar.gz and zip
 3. Add tests for checksum verification
 4. Test archive extraction
@@ -199,7 +176,7 @@ func runInstall(cmd *cobra.Command, args []string) error {
 - Each package gets comprehensive unit tests
 - Mock external dependencies (GitHub API, filesystem)
 - Test error conditions and edge cases
-- Use go-cmp for comparison instead of testify
+- Use go-cmp for comparison if necessary
 
 ### Integration Tests
 - Test full installation flow
@@ -243,7 +220,7 @@ Support the same variables as generated scripts:
 ## Future Extensibility
 
 This design enables future `binst x` command by:
-1. Reusing verify/archive/install packages
+1. Reusing archive/install packages and pkg/checksums
 2. Using existing asset and httpclient packages
 3. Adding caching layer on top
 4. Executing in temporary directory instead of installing
