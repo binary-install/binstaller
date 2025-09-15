@@ -220,56 +220,6 @@ func TestStripPath(t *testing.T) {
 	}
 }
 
-func TestListFiles(t *testing.T) {
-	// Create a temporary directory with some files
-	tmpDir := t.TempDir()
-
-	// Create test files
-	files := []string{
-		"file1.txt",
-		"dir1/file2.txt",
-		"dir1/dir2/file3.txt",
-	}
-
-	for _, file := range files {
-		path := filepath.Join(tmpDir, file)
-		if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
-			t.Fatalf("Failed to create directory: %v", err)
-		}
-		if err := os.WriteFile(path, []byte("content"), 0644); err != nil {
-			t.Fatalf("Failed to create file: %v", err)
-		}
-	}
-
-	// Create a directory (should not be in the list)
-	if err := os.MkdirAll(filepath.Join(tmpDir, "emptydir"), 0755); err != nil {
-		t.Fatalf("Failed to create directory: %v", err)
-	}
-
-	// List files
-	listedFiles, err := ListFiles(tmpDir)
-	if err != nil {
-		t.Fatalf("Failed to list files: %v", err)
-	}
-
-	// Verify all files are listed
-	if len(listedFiles) != len(files) {
-		t.Errorf("Expected %d files, got %d", len(files), len(listedFiles))
-	}
-
-	// Convert to map for easier checking
-	fileMap := make(map[string]bool)
-	for _, f := range listedFiles {
-		fileMap[f] = true
-	}
-
-	for _, expectedFile := range files {
-		if !fileMap[expectedFile] {
-			t.Errorf("Expected file %s not found in list", expectedFile)
-		}
-	}
-}
-
 // Helper functions to create test archives
 
 func createTestTarGz(path string) error {

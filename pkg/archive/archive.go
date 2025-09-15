@@ -415,26 +415,3 @@ func (e *Extractor) extractZipSymlink(file *zip.File, targetPath, destDir string
 
 	return nil
 }
-
-// ListFiles returns all regular files in a directory
-func ListFiles(dir string) ([]string, error) {
-	var files []string
-
-	err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-
-		if !info.IsDir() {
-			relPath, err := filepath.Rel(dir, path)
-			if err != nil {
-				return err
-			}
-			files = append(files, relPath)
-		}
-
-		return nil
-	})
-
-	return files, err
-}
