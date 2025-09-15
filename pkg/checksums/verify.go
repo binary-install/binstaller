@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"os"
 	"strings"
 
 	"github.com/apex/log"
@@ -103,16 +102,12 @@ func (v *Verifier) downloadChecksumFile(ctx context.Context) (map[string]string,
 
 	log.Infof("Downloading checksums from %s", checksumURL)
 
-	// Create request with context
-	req, err := http.NewRequestWithContext(ctx, "GET", checksumURL, nil)
+	// Create request with GitHub auth
+	req, err := httpclient.NewRequestWithGitHubAuth("GET", checksumURL)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
-
-	// Add GitHub auth if available
-	if token := os.Getenv("GITHUB_TOKEN"); token != "" {
-		req.Header.Set("Authorization", "Bearer "+token)
-	}
+	req = req.WithContext(ctx)
 
 	client := httpclient.NewGitHubClient()
 	resp, err := client.Do(req)

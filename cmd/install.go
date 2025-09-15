@@ -18,6 +18,7 @@ import (
 	"github.com/binary-install/binstaller/pkg/checksums"
 	"github.com/binary-install/binstaller/pkg/httpclient"
 	"github.com/binary-install/binstaller/pkg/spec"
+	"github.com/buildkite/interpolate"
 	"github.com/spf13/cobra"
 )
 
@@ -204,22 +205,28 @@ func runInstall(cmd *cobra.Command, args []string) error {
 	}
 
 	// Phase 3: Binary Selection
-	binaryName, binaryPath, err := selectBinary(spec, osName, arch, extractDir)
+	binaries, err := selectBinaries(spec, osName, arch, extractDir, assetFilename)
 	if err != nil {
-		return fmt.Errorf("failed to select binary: %w", err)
+		return fmt.Errorf("failed to select binaries: %w", err)
 	}
-	log.Infof("Selected binary: %s (from %s)", binaryName, binaryPath)
+	for _, binary := range binaries {
+		log.Infof("Selected binary: %s (from %s)", binary.Name, binary.Path)
+	}
 
 	// Phase 4: Installation
 	// Determine installation directory
 	binDir := installBinDir
 	if binDir == "" {
-		// Default to ~/.local/bin
-		homeDir, err := os.UserHomeDir()
-		if err != nil {
-			return fmt.Errorf("failed to get home directory: %w", err)
+		// Check $BINSTALLER_BIN environment variable first
+		binDir = os.Getenv("BINSTALLER_BIN")
+		if binDir == "" {
+			// Default to ~/.local/bin
+			homeDir, err := os.UserHomeDir()
+			if err != nil {
+				return fmt.Errorf("failed to get home directory: %w", err)
+			}
+			binDir = filepath.Join(homeDir, ".local", "bin")
 		}
-		binDir = filepath.Join(homeDir, ".local", "bin")
 	}
 
 	// Create bin directory if it doesn't exist
@@ -227,16 +234,18 @@ func runInstall(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to create bin directory: %w", err)
 	}
 
-	// Install the binary
-	destPath := filepath.Join(binDir, binaryName)
-	srcPath := filepath.Join(extractDir, binaryPath)
+	// Install all binaries
+	for _, binary := range binaries {
+		destPath := filepath.Join(binDir, binary.Name)
+		srcPath := filepath.Join(extractDir, binary.Path)
 
-	log.Infof("Installing %s to %s", binaryName, destPath)
-	if err := installBinary(srcPath, destPath); err != nil {
-		return fmt.Errorf("failed to install binary: %w", err)
+		log.Infof("Installing %s to %s", binary.Name, destPath)
+		if err := installBinary(srcPath, destPath); err != nil {
+			return fmt.Errorf("failed to install binary %s: %w", binary.Name, err)
+		}
 	}
 
-	log.Infof("Successfully installed %s %s to %s", *spec.Name, versionNumber, destPath)
+	log.Infof("Successfully installed %s %s to %s", *spec.Name, versionNumber, binDir)
 	return nil
 }
 
@@ -324,56 +333,84 @@ func download(ctx context.Context, destPath, url string) error {
 	return nil
 }
 
-// selectBinary selects the correct binary from the extracted files based on the spec
-func selectBinary(installSpec *spec.InstallSpec, osName, arch string, extractDir string) (string, string, error) {
+// BinaryInfo holds information about a binary to install
+type BinaryInfo struct {
+	Name string
+	Path string
+}
+
+// selectBinaries selects all binaries from the extracted files based on the spec
+func selectBinaries(installSpec *spec.InstallSpec, osName, arch string, extractDir string, assetFilename string) ([]BinaryInfo, error) {
 	// Get binaries configuration
-	binaries := getBinariesForPlatform(installSpec, osName, arch)
-	if len(binaries) == 0 {
-		return "", "", fmt.Errorf("no binaries configured")
+	binariesConfig := getBinariesForPlatform(installSpec, osName, arch)
+	if len(binariesConfig) == 0 {
+		return nil, fmt.Errorf("no binaries configured")
 	}
 
-	// For now, use the first binary in the list
-	binary := binaries[0]
+	var result []BinaryInfo
 
-	binaryName := spec.StringValue(binary.Name)
-	if binaryName == "" {
-		binaryName = spec.StringValue(installSpec.Name)
+	// Process each binary in the configuration
+	for _, binary := range binariesConfig {
+		binaryName := spec.StringValue(binary.Name)
+		if binaryName == "" {
+			binaryName = spec.StringValue(installSpec.Name)
+		}
+
+		binaryPath := spec.StringValue(binary.Path)
+		if binaryPath == "" {
+			binaryPath = binaryName
+		}
+
+		// Interpolate variables in the path
+		binaryPath, err := interpolateBinaryPath(binaryPath, assetFilename, extractDir)
+		if err != nil {
+			return nil, fmt.Errorf("failed to interpolate binary path: %w", err)
+		}
+
+		// Verify the binary exists
+		fullPath := filepath.Join(extractDir, binaryPath)
+		if _, err := os.Stat(fullPath); os.IsNotExist(err) {
+			return nil, fmt.Errorf("binary not found at %s", binaryPath)
+		}
+
+		result = append(result, BinaryInfo{
+			Name: binaryName,
+			Path: binaryPath,
+		})
 	}
 
-	binaryPath := spec.StringValue(binary.Path)
-	if binaryPath == "" {
-		binaryPath = binaryName
+	return result, nil
+}
+
+// interpolateBinaryPath handles variable interpolation in binary paths
+func interpolateBinaryPath(path string, assetFilename string, extractDir string) (string, error) {
+	// Handle ${ASSET_FILENAME} using interpolate package
+	if strings.Contains(path, "${ASSET_FILENAME}") {
+		// Create environment map
+		envMap := map[string]string{
+			"ASSET_FILENAME": assetFilename,
+		}
+		env := interpolate.NewMapEnv(envMap)
+		interpolated, err := interpolate.Interpolate(env, path)
+		if err != nil {
+			return "", fmt.Errorf("failed to interpolate path: %w", err)
+		}
+		path = interpolated
 	}
 
-	// Handle ${ASSET_FILENAME} in path
-	if binaryPath == "${ASSET_FILENAME}" {
-		// If the extracted directory contains only one file, use that
+	// Special case: if path is the asset filename itself, check if it's the only file
+	if path == assetFilename {
 		files, err := archive.ListFiles(extractDir)
 		if err != nil {
-			return "", "", fmt.Errorf("failed to list extracted files: %w", err)
+			return "", fmt.Errorf("failed to list extracted files: %w", err)
 		}
 
 		if len(files) == 1 {
-			binaryPath = files[0]
-		} else {
-			// Try to find a file matching the binary name
-			for _, file := range files {
-				base := filepath.Base(file)
-				if base == binaryName || strings.TrimSuffix(base, filepath.Ext(base)) == binaryName {
-					binaryPath = file
-					break
-				}
-			}
+			return files[0], nil
 		}
 	}
 
-	// Verify the binary exists
-	fullPath := filepath.Join(extractDir, binaryPath)
-	if _, err := os.Stat(fullPath); os.IsNotExist(err) {
-		return "", "", fmt.Errorf("binary not found at %s", binaryPath)
-	}
-
-	return binaryName, binaryPath, nil
+	return path, nil
 }
 
 // getBinariesForPlatform returns the binaries configuration for the given platform

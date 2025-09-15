@@ -112,7 +112,24 @@ func (e *Extractor) extractTarReader(r io.Reader, destDir string) error {
 				return err
 			}
 		case tar.TypeSymlink:
-			if err := os.Symlink(header.Linkname, targetPath); err != nil {
+			// Resolve the symlink target to ensure it's within destDir
+			linkTarget := header.Linkname
+			if filepath.IsAbs(linkTarget) {
+				// Absolute symlinks are not allowed
+				return fmt.Errorf("absolute symlink %q not allowed", header.Name)
+			}
+
+			// Calculate the absolute path where the symlink would point
+			symlinkDir := filepath.Dir(targetPath)
+			resolvedTarget := filepath.Join(symlinkDir, linkTarget)
+			resolvedTarget = filepath.Clean(resolvedTarget)
+
+			// Ensure the symlink target is within destDir
+			if !strings.HasPrefix(resolvedTarget, filepath.Clean(destDir)) {
+				return fmt.Errorf("symlink %q would point outside destination directory", header.Name)
+			}
+
+			if err := os.Symlink(linkTarget, targetPath); err != nil {
 				return fmt.Errorf("failed to create symlink: %w", err)
 			}
 		}

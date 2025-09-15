@@ -332,16 +332,16 @@ func boolPtr(b bool) *bool {
 	return &b
 }
 
-func TestSelectBinary(t *testing.T) {
+func TestSelectBinaries(t *testing.T) {
 	tests := []struct {
-		name           string
-		spec           *spec.InstallSpec
-		osName         string
-		arch           string
-		extractedFiles []string
-		expectedName   string
-		expectedPath   string
-		wantErr        bool
+		name             string
+		spec             *spec.InstallSpec
+		osName           string
+		arch             string
+		assetFilename    string
+		extractedFiles   []string
+		expectedBinaries []BinaryInfo
+		wantErr          bool
 	}{
 		{
 			name: "Basic binary selection",
@@ -356,11 +356,39 @@ func TestSelectBinary(t *testing.T) {
 					},
 				},
 			},
-			osName:       "linux",
-			arch:         "amd64",
-			expectedName: "mytool",
-			expectedPath: "mytool",
-			wantErr:      false,
+			osName:        "linux",
+			arch:          "amd64",
+			assetFilename: "mytool-linux-amd64.tar.gz",
+			expectedBinaries: []BinaryInfo{
+				{Name: "mytool", Path: "mytool"},
+			},
+			wantErr: false,
+		},
+		{
+			name: "Multiple binaries",
+			spec: &spec.InstallSpec{
+				Name: stringPtr("mytool"),
+				Asset: &spec.Asset{
+					Binaries: []spec.BinaryElement{
+						{
+							Name: stringPtr("mytool"),
+							Path: stringPtr("mytool"),
+						},
+						{
+							Name: stringPtr("mytool-helper"),
+							Path: stringPtr("mytool-helper"),
+						},
+					},
+				},
+			},
+			osName:        "linux",
+			arch:          "amd64",
+			assetFilename: "mytool-linux-amd64.tar.gz",
+			expectedBinaries: []BinaryInfo{
+				{Name: "mytool", Path: "mytool"},
+				{Name: "mytool-helper", Path: "mytool-helper"},
+			},
+			wantErr: false,
 		},
 		{
 			name: "Binary with path in subdirectory",
@@ -375,11 +403,13 @@ func TestSelectBinary(t *testing.T) {
 					},
 				},
 			},
-			osName:       "linux",
-			arch:         "amd64",
-			expectedName: "mytool",
-			expectedPath: "bin/mytool",
-			wantErr:      false,
+			osName:        "linux",
+			arch:          "amd64",
+			assetFilename: "mytool-linux-amd64.tar.gz",
+			expectedBinaries: []BinaryInfo{
+				{Name: "mytool", Path: "bin/mytool"},
+			},
+			wantErr: false,
 		},
 		{
 			name: "Platform-specific binary from rule",
@@ -407,11 +437,13 @@ func TestSelectBinary(t *testing.T) {
 					},
 				},
 			},
-			osName:       "windows",
-			arch:         "amd64",
-			expectedName: "mytool.exe",
-			expectedPath: "mytool.exe",
-			wantErr:      false,
+			osName:        "windows",
+			arch:          "amd64",
+			assetFilename: "mytool-windows-amd64.zip",
+			expectedBinaries: []BinaryInfo{
+				{Name: "mytool.exe", Path: "mytool.exe"},
+			},
+			wantErr: false,
 		},
 		{
 			name: "No binaries configured",
@@ -419,9 +451,10 @@ func TestSelectBinary(t *testing.T) {
 				Name:  stringPtr("mytool"),
 				Asset: &spec.Asset{},
 			},
-			osName:  "linux",
-			arch:    "amd64",
-			wantErr: true,
+			osName:        "linux",
+			arch:          "amd64",
+			assetFilename: "mytool-linux-amd64.tar.gz",
+			wantErr:       true,
 		},
 		{
 			name: "Use name from spec when binary name not specified",
@@ -435,11 +468,34 @@ func TestSelectBinary(t *testing.T) {
 					},
 				},
 			},
-			osName:       "linux",
-			arch:         "amd64",
-			expectedName: "mytool",
-			expectedPath: "bin/tool",
-			wantErr:      false,
+			osName:        "linux",
+			arch:          "amd64",
+			assetFilename: "mytool-linux-amd64.tar.gz",
+			expectedBinaries: []BinaryInfo{
+				{Name: "mytool", Path: "bin/tool"},
+			},
+			wantErr: false,
+		},
+		{
+			name: "Binary with ASSET_FILENAME interpolation",
+			spec: &spec.InstallSpec{
+				Name: stringPtr("mytool"),
+				Asset: &spec.Asset{
+					Binaries: []spec.BinaryElement{
+						{
+							Name: stringPtr("mytool"),
+							Path: stringPtr("${ASSET_FILENAME}"),
+						},
+					},
+				},
+			},
+			osName:        "linux",
+			arch:          "amd64",
+			assetFilename: "mytool-linux-amd64",
+			expectedBinaries: []BinaryInfo{
+				{Name: "mytool", Path: "mytool-linux-amd64"},
+			},
+			wantErr: false,
 		},
 	}
 
@@ -448,26 +504,35 @@ func TestSelectBinary(t *testing.T) {
 			// Create temp directory to simulate extracted files
 			tmpDir := t.TempDir()
 
-			// For tests that expect success, create the binary file
-			if !tt.wantErr && tt.expectedPath != "" {
-				binaryPath := filepath.Join(tmpDir, tt.expectedPath)
-				os.MkdirAll(filepath.Dir(binaryPath), 0755)
-				os.WriteFile(binaryPath, []byte("binary"), 0755)
+			// For tests that expect success, create the binary files
+			if !tt.wantErr {
+				for _, expectedBinary := range tt.expectedBinaries {
+					binaryPath := filepath.Join(tmpDir, expectedBinary.Path)
+					os.MkdirAll(filepath.Dir(binaryPath), 0755)
+					os.WriteFile(binaryPath, []byte("binary"), 0755)
+				}
 			}
 
-			name, path, err := selectBinary(tt.spec, tt.osName, tt.arch, tmpDir)
+			binaries, err := selectBinaries(tt.spec, tt.osName, tt.arch, tmpDir, tt.assetFilename)
 
 			if (err != nil) != tt.wantErr {
-				t.Errorf("selectBinary() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("selectBinaries() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 
 			if !tt.wantErr {
-				if name != tt.expectedName {
-					t.Errorf("selectBinary() name = %v, want %v", name, tt.expectedName)
+				if len(binaries) != len(tt.expectedBinaries) {
+					t.Errorf("selectBinaries() returned %d binaries, want %d", len(binaries), len(tt.expectedBinaries))
+					return
 				}
-				if path != tt.expectedPath {
-					t.Errorf("selectBinary() path = %v, want %v", path, tt.expectedPath)
+
+				for i, binary := range binaries {
+					if binary.Name != tt.expectedBinaries[i].Name {
+						t.Errorf("selectBinaries() binary[%d].Name = %v, want %v", i, binary.Name, tt.expectedBinaries[i].Name)
+					}
+					if binary.Path != tt.expectedBinaries[i].Path {
+						t.Errorf("selectBinaries() binary[%d].Path = %v, want %v", i, binary.Path, tt.expectedBinaries[i].Path)
+					}
 				}
 			}
 		})
