@@ -13,7 +13,9 @@ import (
 	"strings"
 
 	"github.com/apex/log"
+	"github.com/binary-install/binstaller/pkg/archive"
 	"github.com/binary-install/binstaller/pkg/asset"
+	"github.com/binary-install/binstaller/pkg/checksums"
 	"github.com/binary-install/binstaller/pkg/httpclient"
 	"github.com/binary-install/binstaller/pkg/spec"
 	"github.com/spf13/cobra"
@@ -181,12 +183,61 @@ func runInstall(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to download asset: %w", err)
 	}
 
-	// TODO: Phase 3+ implementation
-	// - Use pkg/checksums for verification
-	// - Implement extraction
-	// - Install binary
+	// Phase 3: Checksum Verification
+	log.Infof("Verifying checksum for %s", assetFilename)
+	verifier := checksums.NewVerifier(spec, resolvedVersion)
+	if err := verifier.VerifyFile(ctx, assetPath, assetFilename); err != nil {
+		return fmt.Errorf("checksum verification failed: %w", err)
+	}
 
-	return fmt.Errorf("installation not yet implemented (Phase 2 complete)")
+	// Phase 3: Archive Extraction
+	stripComponents := 0
+	if spec.Unpack != nil && spec.Unpack.StripComponents != nil {
+		stripComponents = int(*spec.Unpack.StripComponents)
+	}
+
+	extractDir := filepath.Join(tmpDir, "extracted")
+	extractor := archive.NewExtractor(stripComponents)
+	log.Infof("Extracting %s", assetFilename)
+	if err := extractor.Extract(assetPath, extractDir); err != nil {
+		return fmt.Errorf("failed to extract archive: %w", err)
+	}
+
+	// Phase 3: Binary Selection
+	binaryName, binaryPath, err := selectBinary(spec, osName, arch, extractDir)
+	if err != nil {
+		return fmt.Errorf("failed to select binary: %w", err)
+	}
+	log.Infof("Selected binary: %s (from %s)", binaryName, binaryPath)
+
+	// Phase 4: Installation
+	// Determine installation directory
+	binDir := installBinDir
+	if binDir == "" {
+		// Default to ~/.local/bin
+		homeDir, err := os.UserHomeDir()
+		if err != nil {
+			return fmt.Errorf("failed to get home directory: %w", err)
+		}
+		binDir = filepath.Join(homeDir, ".local", "bin")
+	}
+
+	// Create bin directory if it doesn't exist
+	if err := os.MkdirAll(binDir, 0755); err != nil {
+		return fmt.Errorf("failed to create bin directory: %w", err)
+	}
+
+	// Install the binary
+	destPath := filepath.Join(binDir, binaryName)
+	srcPath := filepath.Join(extractDir, binaryPath)
+
+	log.Infof("Installing %s to %s", binaryName, destPath)
+	if err := installBinary(srcPath, destPath); err != nil {
+		return fmt.Errorf("failed to install binary: %w", err)
+	}
+
+	log.Infof("Successfully installed %s %s to %s", *spec.Name, versionNumber, destPath)
+	return nil
 }
 
 // detectPlatform detects the current OS and architecture, matching shell script logic
@@ -268,6 +319,125 @@ func download(ctx context.Context, destPath, url string) error {
 	_, err = io.Copy(out, resp.Body)
 	if err != nil {
 		return fmt.Errorf("failed to write file: %w", err)
+	}
+
+	return nil
+}
+
+// selectBinary selects the correct binary from the extracted files based on the spec
+func selectBinary(installSpec *spec.InstallSpec, osName, arch string, extractDir string) (string, string, error) {
+	// Get binaries configuration
+	binaries := getBinariesForPlatform(installSpec, osName, arch)
+	if len(binaries) == 0 {
+		return "", "", fmt.Errorf("no binaries configured")
+	}
+
+	// For now, use the first binary in the list
+	binary := binaries[0]
+
+	binaryName := spec.StringValue(binary.Name)
+	if binaryName == "" {
+		binaryName = spec.StringValue(installSpec.Name)
+	}
+
+	binaryPath := spec.StringValue(binary.Path)
+	if binaryPath == "" {
+		binaryPath = binaryName
+	}
+
+	// Handle ${ASSET_FILENAME} in path
+	if binaryPath == "${ASSET_FILENAME}" {
+		// If the extracted directory contains only one file, use that
+		files, err := archive.ListFiles(extractDir)
+		if err != nil {
+			return "", "", fmt.Errorf("failed to list extracted files: %w", err)
+		}
+
+		if len(files) == 1 {
+			binaryPath = files[0]
+		} else {
+			// Try to find a file matching the binary name
+			for _, file := range files {
+				base := filepath.Base(file)
+				if base == binaryName || strings.TrimSuffix(base, filepath.Ext(base)) == binaryName {
+					binaryPath = file
+					break
+				}
+			}
+		}
+	}
+
+	// Verify the binary exists
+	fullPath := filepath.Join(extractDir, binaryPath)
+	if _, err := os.Stat(fullPath); os.IsNotExist(err) {
+		return "", "", fmt.Errorf("binary not found at %s", binaryPath)
+	}
+
+	return binaryName, binaryPath, nil
+}
+
+// getBinariesForPlatform returns the binaries configuration for the given platform
+func getBinariesForPlatform(spec *spec.InstallSpec, osName, arch string) []spec.BinaryElement {
+	if spec.Asset == nil {
+		return nil
+	}
+
+	// Start with default binaries
+	binaries := spec.Asset.Binaries
+
+	// Apply matching rules
+	for _, rule := range spec.Asset.Rules {
+		if matchesRule(rule.When, osName, arch) && len(rule.Binaries) > 0 {
+			binaries = rule.Binaries
+		}
+	}
+
+	return binaries
+}
+
+// matchesRule checks if a platform matches a rule condition
+func matchesRule(when *spec.When, osName, arch string) bool {
+	if when == nil {
+		return true
+	}
+
+	// Check OS match
+	if when.OS != nil && *when.OS != osName {
+		return false
+	}
+
+	// Check architecture match
+	if when.Arch != nil && *when.Arch != arch {
+		return false
+	}
+
+	return true
+}
+
+// installBinary copies the binary to its destination and makes it executable
+func installBinary(src, dest string) error {
+	// Open source file
+	srcFile, err := os.Open(src)
+	if err != nil {
+		return fmt.Errorf("failed to open source file: %w", err)
+	}
+	defer srcFile.Close()
+
+	// Create destination file
+	destFile, err := os.OpenFile(dest, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0755)
+	if err != nil {
+		return fmt.Errorf("failed to create destination file: %w", err)
+	}
+	defer destFile.Close()
+
+	// Copy file
+	if _, err := io.Copy(destFile, srcFile); err != nil {
+		return fmt.Errorf("failed to copy file: %w", err)
+	}
+
+	// Ensure file is executable
+	if err := os.Chmod(dest, 0755); err != nil {
+		return fmt.Errorf("failed to make file executable: %w", err)
 	}
 
 	return nil

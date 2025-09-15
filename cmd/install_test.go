@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"path/filepath"
 	"runtime"
 	"testing"
 
@@ -329,4 +330,355 @@ func mapGoArchToShellArch(goArch string) string {
 // Helper function to create bool pointer
 func boolPtr(b bool) *bool {
 	return &b
+}
+
+func TestSelectBinary(t *testing.T) {
+	tests := []struct {
+		name           string
+		spec           *spec.InstallSpec
+		osName         string
+		arch           string
+		extractedFiles []string
+		expectedName   string
+		expectedPath   string
+		wantErr        bool
+	}{
+		{
+			name: "Basic binary selection",
+			spec: &spec.InstallSpec{
+				Name: stringPtr("mytool"),
+				Asset: &spec.Asset{
+					Binaries: []spec.BinaryElement{
+						{
+							Name: stringPtr("mytool"),
+							Path: stringPtr("mytool"),
+						},
+					},
+				},
+			},
+			osName:       "linux",
+			arch:         "amd64",
+			expectedName: "mytool",
+			expectedPath: "mytool",
+			wantErr:      false,
+		},
+		{
+			name: "Binary with path in subdirectory",
+			spec: &spec.InstallSpec{
+				Name: stringPtr("mytool"),
+				Asset: &spec.Asset{
+					Binaries: []spec.BinaryElement{
+						{
+							Name: stringPtr("mytool"),
+							Path: stringPtr("bin/mytool"),
+						},
+					},
+				},
+			},
+			osName:       "linux",
+			arch:         "amd64",
+			expectedName: "mytool",
+			expectedPath: "bin/mytool",
+			wantErr:      false,
+		},
+		{
+			name: "Platform-specific binary from rule",
+			spec: &spec.InstallSpec{
+				Name: stringPtr("mytool"),
+				Asset: &spec.Asset{
+					Binaries: []spec.BinaryElement{
+						{
+							Name: stringPtr("mytool"),
+							Path: stringPtr("mytool"),
+						},
+					},
+					Rules: []spec.RuleElement{
+						{
+							When: &spec.When{
+								OS: stringPtr("windows"),
+							},
+							Binaries: []spec.BinaryElement{
+								{
+									Name: stringPtr("mytool.exe"),
+									Path: stringPtr("mytool.exe"),
+								},
+							},
+						},
+					},
+				},
+			},
+			osName:       "windows",
+			arch:         "amd64",
+			expectedName: "mytool.exe",
+			expectedPath: "mytool.exe",
+			wantErr:      false,
+		},
+		{
+			name: "No binaries configured",
+			spec: &spec.InstallSpec{
+				Name:  stringPtr("mytool"),
+				Asset: &spec.Asset{},
+			},
+			osName:  "linux",
+			arch:    "amd64",
+			wantErr: true,
+		},
+		{
+			name: "Use name from spec when binary name not specified",
+			spec: &spec.InstallSpec{
+				Name: stringPtr("mytool"),
+				Asset: &spec.Asset{
+					Binaries: []spec.BinaryElement{
+						{
+							Path: stringPtr("bin/tool"),
+						},
+					},
+				},
+			},
+			osName:       "linux",
+			arch:         "amd64",
+			expectedName: "mytool",
+			expectedPath: "bin/tool",
+			wantErr:      false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create temp directory to simulate extracted files
+			tmpDir := t.TempDir()
+
+			// For tests that expect success, create the binary file
+			if !tt.wantErr && tt.expectedPath != "" {
+				binaryPath := filepath.Join(tmpDir, tt.expectedPath)
+				os.MkdirAll(filepath.Dir(binaryPath), 0755)
+				os.WriteFile(binaryPath, []byte("binary"), 0755)
+			}
+
+			name, path, err := selectBinary(tt.spec, tt.osName, tt.arch, tmpDir)
+
+			if (err != nil) != tt.wantErr {
+				t.Errorf("selectBinary() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+
+			if !tt.wantErr {
+				if name != tt.expectedName {
+					t.Errorf("selectBinary() name = %v, want %v", name, tt.expectedName)
+				}
+				if path != tt.expectedPath {
+					t.Errorf("selectBinary() path = %v, want %v", path, tt.expectedPath)
+				}
+			}
+		})
+	}
+}
+
+func TestGetBinariesForPlatform(t *testing.T) {
+	tests := []struct {
+		name     string
+		spec     *spec.InstallSpec
+		osName   string
+		arch     string
+		expected int
+	}{
+		{
+			name: "Default binaries",
+			spec: &spec.InstallSpec{
+				Asset: &spec.Asset{
+					Binaries: []spec.BinaryElement{
+						{Name: stringPtr("tool")},
+					},
+				},
+			},
+			osName:   "linux",
+			arch:     "amd64",
+			expected: 1,
+		},
+		{
+			name: "Override with matching rule",
+			spec: &spec.InstallSpec{
+				Asset: &spec.Asset{
+					Binaries: []spec.BinaryElement{
+						{Name: stringPtr("tool")},
+					},
+					Rules: []spec.RuleElement{
+						{
+							When: &spec.When{
+								OS: stringPtr("darwin"),
+							},
+							Binaries: []spec.BinaryElement{
+								{Name: stringPtr("tool-mac")},
+								{Name: stringPtr("tool-helper")},
+							},
+						},
+					},
+				},
+			},
+			osName:   "darwin",
+			arch:     "amd64",
+			expected: 2,
+		},
+		{
+			name:     "No asset",
+			spec:     &spec.InstallSpec{},
+			osName:   "linux",
+			arch:     "amd64",
+			expected: 0,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			binaries := getBinariesForPlatform(tt.spec, tt.osName, tt.arch)
+			if len(binaries) != tt.expected {
+				t.Errorf("getBinariesForPlatform() returned %d binaries, want %d", len(binaries), tt.expected)
+			}
+		})
+	}
+}
+
+func TestMatchesRule(t *testing.T) {
+	tests := []struct {
+		name    string
+		when    *spec.When
+		osName  string
+		arch    string
+		matches bool
+	}{
+		{
+			name:    "Nil when matches all",
+			when:    nil,
+			osName:  "linux",
+			arch:    "amd64",
+			matches: true,
+		},
+		{
+			name: "Match OS only",
+			when: &spec.When{
+				OS: stringPtr("linux"),
+			},
+			osName:  "linux",
+			arch:    "amd64",
+			matches: true,
+		},
+		{
+			name: "Match arch only",
+			when: &spec.When{
+				Arch: stringPtr("amd64"),
+			},
+			osName:  "linux",
+			arch:    "amd64",
+			matches: true,
+		},
+		{
+			name: "Match both OS and arch",
+			when: &spec.When{
+				OS:   stringPtr("linux"),
+				Arch: stringPtr("amd64"),
+			},
+			osName:  "linux",
+			arch:    "amd64",
+			matches: true,
+		},
+		{
+			name: "OS mismatch",
+			when: &spec.When{
+				OS: stringPtr("darwin"),
+			},
+			osName:  "linux",
+			arch:    "amd64",
+			matches: false,
+		},
+		{
+			name: "Arch mismatch",
+			when: &spec.When{
+				Arch: stringPtr("arm64"),
+			},
+			osName:  "linux",
+			arch:    "amd64",
+			matches: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := matchesRule(tt.when, tt.osName, tt.arch); got != tt.matches {
+				t.Errorf("matchesRule() = %v, want %v", got, tt.matches)
+			}
+		})
+	}
+}
+
+func TestInstallBinary(t *testing.T) {
+	// Create temp directories
+	srcDir := t.TempDir()
+	destDir := t.TempDir()
+
+	// Create source binary
+	srcPath := filepath.Join(srcDir, "binary")
+	srcContent := []byte("test binary content")
+	if err := os.WriteFile(srcPath, srcContent, 0644); err != nil {
+		t.Fatalf("Failed to create source file: %v", err)
+	}
+
+	// Test successful installation
+	destPath := filepath.Join(destDir, "installed-binary")
+	err := installBinary(srcPath, destPath)
+	if err != nil {
+		t.Errorf("installBinary() error = %v", err)
+	}
+
+	// Verify file was copied
+	destContent, err := os.ReadFile(destPath)
+	if err != nil {
+		t.Fatalf("Failed to read destination file: %v", err)
+	}
+	if string(destContent) != string(srcContent) {
+		t.Errorf("File content mismatch")
+	}
+
+	// Verify file is executable
+	info, err := os.Stat(destPath)
+	if err != nil {
+		t.Fatalf("Failed to stat destination file: %v", err)
+	}
+	if info.Mode()&0755 != 0755 {
+		t.Errorf("File is not executable: %v", info.Mode())
+	}
+
+	// Test error cases
+	tests := []struct {
+		name    string
+		src     string
+		dest    string
+		wantErr bool
+	}{
+		{
+			name:    "Source file not found",
+			src:     filepath.Join(srcDir, "nonexistent"),
+			dest:    filepath.Join(destDir, "test"),
+			wantErr: true,
+		},
+		{
+			name:    "Invalid destination",
+			src:     srcPath,
+			dest:    "/invalid/path/file",
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := installBinary(tt.src, tt.dest)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("installBinary() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+// Helper function to create string pointer
+func stringPtr(s string) *string {
+	return &s
 }
