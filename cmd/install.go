@@ -6,10 +6,16 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"runtime"
 	"strings"
 
 	"github.com/apex/log"
+	"github.com/binary-install/binstaller/pkg/asset"
 	"github.com/binary-install/binstaller/pkg/httpclient"
+	"github.com/binary-install/binstaller/pkg/spec"
 	"github.com/spf13/cobra"
 )
 
@@ -113,6 +119,9 @@ func runInstall(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
+	// Apply defaults (including setting Name from Repo if not specified)
+	spec.SetDefaults()
+
 	// Get repo from spec
 	if spec.Repo == nil || *spec.Repo == "" {
 		return fmt.Errorf("GitHub repo not specified in config")
@@ -136,17 +145,130 @@ func runInstall(cmd *cobra.Command, args []string) error {
 
 	log.Infof("Resolved version: %s (tag: %s)", versionNumber, resolvedVersion)
 
+	// Phase 2: Asset Resolution and Download
+	// 5. Detect OS/Arch
+	osName, arch := detectPlatform(spec)
+	log.Infof("Detected Platform: %s/%s", osName, arch)
+
+	// 6. Generate asset filename
+	generator := asset.NewFilenameGenerator(spec, versionNumber)
+	assetFilename, err := generator.GenerateFilename(osName, arch)
+	if err != nil {
+		return fmt.Errorf("failed to generate asset filename: %w", err)
+	}
+	log.Infof("Resolved asset filename: %s", assetFilename)
+
+	// 7. Construct download URL
+	assetURL := fmt.Sprintf("https://github.com/%s/releases/download/%s/%s", repo, resolvedVersion, assetFilename)
+	log.Infof("Asset URL: %s", assetURL)
+
 	if installDryRun {
-		log.Info("Dry run mode - skipping actual installation")
-		// TODO: In future phases, validate asset URLs exist
+		// In dry-run mode, just print what would be done
+		log.Info("Dry run mode - would download from: " + assetURL)
 		return nil
 	}
 
-	// TODO: Phase 2+ implementation
-	// - Use pkg/asset.FilenameGenerator for asset resolution
-	// - Use pkg/httpclient for downloading files
-	// - Use pkg/checksums for verification
-	// - Implement extraction and installation
+	// 8. Download asset to temporary file
+	tmpDir, err := os.MkdirTemp("", "binst-")
+	if err != nil {
+		return fmt.Errorf("failed to create temp directory: %w", err)
+	}
+	defer os.RemoveAll(tmpDir)
 
-	return fmt.Errorf("installation not yet implemented (Phase 1 complete)")
+	assetPath := filepath.Join(tmpDir, assetFilename)
+	log.Infof("Downloading %s", assetURL)
+	if err := download(ctx, assetPath, assetURL); err != nil {
+		return fmt.Errorf("failed to download asset: %w", err)
+	}
+
+	// TODO: Phase 3+ implementation
+	// - Use pkg/checksums for verification
+	// - Implement extraction
+	// - Install binary
+
+	return fmt.Errorf("installation not yet implemented (Phase 2 complete)")
+}
+
+// detectPlatform detects the current OS and architecture, matching shell script logic
+func detectPlatform(spec *spec.InstallSpec) (string, string) {
+	osName := detectOS()
+	arch := detectArch()
+
+	// Handle Rosetta 2 on Apple Silicon
+	if spec.Asset != nil && spec.Asset.ArchEmulation != nil &&
+		spec.Asset.ArchEmulation.Rosetta2 != nil && *spec.Asset.ArchEmulation.Rosetta2 {
+		if runtime.GOOS == "darwin" && runtime.GOARCH == "arm64" && isRosetta2Available() {
+			log.Info("Apple Silicon with Rosetta 2 found: using amd64 as ARCH")
+			arch = "amd64"
+		}
+	}
+
+	return osName, arch
+}
+
+// detectOS detects the operating system, matching shell script logic
+func detectOS() string {
+	return runtime.GOOS
+}
+
+// detectArch detects the architecture, matching shell script logic
+func detectArch() string {
+	arch := runtime.GOARCH
+
+	// Map Go arch names to shell script conventions
+	switch arch {
+	case "arm":
+		// TODO: Handle ARM version detection properly
+		// For now, use uname to detect ARM version
+		return "armv7"
+	default:
+		return arch
+	}
+}
+
+// isRosetta2Available checks if Rosetta 2 is available on macOS
+func isRosetta2Available() bool {
+	if runtime.GOOS != "darwin" || runtime.GOARCH != "arm64" {
+		return false
+	}
+
+	// Try to run a simple x86_64 command
+	cmd := exec.Command("arch", "-arch", "x86_64", "true")
+	err := cmd.Run()
+	return err == nil
+}
+
+// download downloads a file without progress reporting
+func download(ctx context.Context, destPath, url string) error {
+	client := httpclient.NewGitHubClient()
+	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	if err != nil {
+		return fmt.Errorf("failed to create request: %w", err)
+	}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return fmt.Errorf("failed to download file: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("download failed with status %d: %s", resp.StatusCode, string(body))
+	}
+
+	// Create the destination file
+	out, err := os.Create(destPath)
+	if err != nil {
+		return fmt.Errorf("failed to create file: %w", err)
+	}
+	defer out.Close()
+
+	// Copy without progress
+	_, err = io.Copy(out, resp.Body)
+	if err != nil {
+		return fmt.Errorf("failed to write file: %w", err)
+	}
+
+	return nil
 }
