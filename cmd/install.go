@@ -398,18 +398,6 @@ func interpolateBinaryPath(path string, assetFilename string, extractDir string)
 		path = interpolated
 	}
 
-	// Special case: if path is the asset filename itself, check if it's the only file
-	if path == assetFilename {
-		files, err := archive.ListFiles(extractDir)
-		if err != nil {
-			return "", fmt.Errorf("failed to list extracted files: %w", err)
-		}
-
-		if len(files) == 1 {
-			return files[0], nil
-		}
-	}
-
 	return path, nil
 }
 
