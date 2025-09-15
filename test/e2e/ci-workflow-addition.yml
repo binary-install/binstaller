@@ -1,0 +1,35 @@
+# Add this job to .github/workflows/test.yml after the aqua-source-tests job
+
+  e2e-tests:
+    name: End-to-End Tests
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+    - name: Harden the runner (Audit all outbound calls)
+      uses: step-security/harden-runner@f4a75cfd619ee5ce8d5b864b0d183aff3c69b55a # v2.13.1
+      with:
+        egress-policy: audit
+
+    - uses: actions/checkout@v5
+
+    - uses: ./.github/actions/setup
+
+    - name: Build binst
+      run: make build
+
+    - name: Run end-to-end tests
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: make test-e2e
+
+    - name: Upload test logs on failure
+      if: failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: e2e-test-logs-${{ matrix.os }}
+        path: |
+          test/e2e/*.log
+          /tmp/binst-*
+        retention-days: 7
