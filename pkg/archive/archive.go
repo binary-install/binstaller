@@ -363,10 +363,22 @@ func validateSymlink(symlinkPath, linkTarget, destDir string) error {
 	targetPath := filepath.Join(symlinkDir, linkTarget)
 	targetPath = filepath.Clean(targetPath)
 
-	// Ensure the resolved target is within destDir
-	_, err = securePath(targetPath, destDir)
+	// Use EvalSymlinks to resolve any existing symlinks in the parent dirs
+	resolvedTargetPath, err := filepath.EvalSymlinks(targetPath)
 	if err != nil {
-		return fmt.Errorf("symlink target %q would point outside destination directory: %w", linkTarget, err)
+		// EvalSymlinks returns error if any part doesn't exist; treat as safe for new links
+		// As per security best practices, fall back to targetPath for containment check
+		resolvedTargetPath = targetPath
+	}
+
+	// Ensure the resolved target is within destDir
+	absDestDir, err := filepath.Abs(destDir)
+	if err != nil {
+		return fmt.Errorf("destination dir %q is not absolute: %w", destDir, err)
+	}
+	relPath, err := filepath.Rel(absDestDir, resolvedTargetPath)
+	if err != nil || strings.HasPrefix(filepath.Clean(relPath), "..") || filepath.IsAbs(relPath) {
+		return fmt.Errorf("symlink target %q would point outside destination directory", linkTarget)
 	}
 
 	return nil
