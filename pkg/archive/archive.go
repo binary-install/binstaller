@@ -95,11 +95,10 @@ func (e *Extractor) extractTarReader(r io.Reader, destDir string) error {
 			continue
 		}
 
-		targetPath := filepath.Join(destDir, path)
-
-		// Ensure the path is within destDir (prevent directory traversal)
-		if !strings.HasPrefix(filepath.Clean(targetPath), filepath.Clean(destDir)) {
-			return fmt.Errorf("tar entry %q attempts to write outside destination directory", header.Name)
+		// Validate and secure the target path
+		targetPath, err := securePath(path, destDir)
+		if err != nil {
+			return fmt.Errorf("tar entry %q: %w", header.Name, err)
 		}
 
 		switch header.Typeflag {
@@ -112,34 +111,17 @@ func (e *Extractor) extractTarReader(r io.Reader, destDir string) error {
 				return err
 			}
 		case tar.TypeSymlink:
-			// Resolve the symlink target to ensure it's within destDir
-			linkTarget := header.Linkname
-			if filepath.IsAbs(linkTarget) {
-				// Absolute symlinks are not allowed
-				return fmt.Errorf("absolute symlink %q not allowed", header.Name)
+			// Validate the symlink before creating it
+			if err := validateSymlink(targetPath, header.Linkname, destDir); err != nil {
+				return fmt.Errorf("tar entry %q: %w", header.Name, err)
 			}
 
-			// Calculate the real symlinkDir and destDir (resolving existing symlinks)
-			symlinkDir := filepath.Dir(targetPath)
-			realDestDir, err := filepath.EvalSymlinks(filepath.Clean(destDir))
-			if err != nil {
-				return fmt.Errorf("failed to evaluate symlinks in destination directory: %w", err)
-			}
-			realSymlinkDir, err := filepath.EvalSymlinks(symlinkDir)
-			if err != nil {
-				// If the parent doesn't exist yet (new path), fallback to using symlinkDir
-				realSymlinkDir = symlinkDir
-			}
-			finalTarget := filepath.Join(realSymlinkDir, linkTarget)
-			finalTarget = filepath.Clean(finalTarget)
-
-			// Ensure the symlink target is within destDir (after symlink resolution)
-			relPath, err := filepath.Rel(realDestDir, finalTarget)
-			if err != nil || strings.HasPrefix(relPath, "..") || filepath.IsAbs(relPath) {
-				return fmt.Errorf("symlink %q would point outside destination directory", header.Name)
+			// Create parent directory if needed
+			if err := os.MkdirAll(filepath.Dir(targetPath), 0755); err != nil {
+				return fmt.Errorf("failed to create parent directory for symlink: %w", err)
 			}
 
-			if err := os.Symlink(linkTarget, targetPath); err != nil {
+			if err := os.Symlink(header.Linkname, targetPath); err != nil {
 				return fmt.Errorf("failed to create symlink: %w", err)
 			}
 		}
@@ -183,16 +165,26 @@ func (e *Extractor) extractZip(archivePath, destDir string) error {
 			continue
 		}
 
-		targetPath := filepath.Join(destDir, path)
-
-		// Ensure the path is within destDir (prevent directory traversal)
-		if !strings.HasPrefix(filepath.Clean(targetPath), filepath.Clean(destDir)) {
-			return fmt.Errorf("zip entry %q attempts to write outside destination directory", file.Name)
+		// Validate and secure the target path
+		targetPath, err := securePath(path, destDir)
+		if err != nil {
+			return fmt.Errorf("zip entry %q: %w", file.Name, err)
 		}
 
-		if file.FileInfo().IsDir() {
+		// Check file mode to detect symlinks
+		mode := file.FileInfo().Mode()
+
+		if mode.IsDir() {
 			if err := os.MkdirAll(targetPath, file.Mode()); err != nil {
 				return fmt.Errorf("failed to create directory: %w", err)
+			}
+			continue
+		}
+
+		if mode&os.ModeSymlink != 0 {
+			// Handle symlink
+			if err := e.extractZipSymlink(file, targetPath, destDir); err != nil {
+				return err
 			}
 			continue
 		}
@@ -316,6 +308,100 @@ func (e *Extractor) stripPath(path string) string {
 	}
 
 	return filepath.Join(parts[e.stripComponents:]...)
+}
+
+// securePath validates that a path is within the destination directory
+// and returns the cleaned, absolute path. It prevents directory traversal attacks.
+func securePath(path, destDir string) (string, error) {
+	// Clean both paths
+	cleanPath := filepath.Clean(path)
+	cleanDestDir := filepath.Clean(destDir)
+
+	// Get absolute paths
+	absDestDir, err := filepath.Abs(cleanDestDir)
+	if err != nil {
+		return "", fmt.Errorf("failed to get absolute path for destination: %w", err)
+	}
+
+	// If the path is not absolute, join it with destDir
+	var targetPath string
+	if filepath.IsAbs(cleanPath) {
+		targetPath = cleanPath
+	} else {
+		targetPath = filepath.Join(absDestDir, cleanPath)
+	}
+
+	// Clean the target path again
+	targetPath = filepath.Clean(targetPath)
+
+	// Ensure the path is within destDir
+	relPath, err := filepath.Rel(absDestDir, targetPath)
+	if err != nil || strings.HasPrefix(relPath, "..") || filepath.IsAbs(relPath) {
+		return "", fmt.Errorf("path %q would be outside destination directory", path)
+	}
+
+	return targetPath, nil
+}
+
+// validateSymlink ensures that a symlink and its target are safe
+func validateSymlink(symlinkPath, linkTarget, destDir string) error {
+	// First validate the symlink path itself
+	_, err := securePath(symlinkPath, destDir)
+	if err != nil {
+		return fmt.Errorf("invalid symlink path: %w", err)
+	}
+
+	// Absolute symlinks are not allowed
+	if filepath.IsAbs(linkTarget) {
+		return fmt.Errorf("absolute symlink target %q not allowed", linkTarget)
+	}
+
+	// Get the directory where the symlink will be created
+	symlinkDir := filepath.Dir(symlinkPath)
+
+	// Resolve the target path relative to the symlink directory
+	targetPath := filepath.Join(symlinkDir, linkTarget)
+	targetPath = filepath.Clean(targetPath)
+
+	// Ensure the resolved target is within destDir
+	_, err = securePath(targetPath, destDir)
+	if err != nil {
+		return fmt.Errorf("symlink target %q would point outside destination directory: %w", linkTarget, err)
+	}
+
+	return nil
+}
+
+// extractZipSymlink extracts a symlink from a zip file
+func (e *Extractor) extractZipSymlink(file *zip.File, targetPath, destDir string) error {
+	// Read the link target from the file content
+	srcFile, err := file.Open()
+	if err != nil {
+		return fmt.Errorf("failed to open symlink in zip: %w", err)
+	}
+	defer srcFile.Close()
+
+	linkTargetBytes, err := io.ReadAll(srcFile)
+	if err != nil {
+		return fmt.Errorf("failed to read symlink target: %w", err)
+	}
+	linkTarget := string(linkTargetBytes)
+
+	// Validate the symlink before creating it
+	if err := validateSymlink(targetPath, linkTarget, destDir); err != nil {
+		return fmt.Errorf("zip entry %q: %w", file.Name, err)
+	}
+
+	// Create parent directory if needed
+	if err := os.MkdirAll(filepath.Dir(targetPath), 0755); err != nil {
+		return fmt.Errorf("failed to create parent directory for symlink: %w", err)
+	}
+
+	if err := os.Symlink(linkTarget, targetPath); err != nil {
+		return fmt.Errorf("failed to create symlink: %w", err)
+	}
+
+	return nil
 }
 
 // ListFiles returns all regular files in a directory
