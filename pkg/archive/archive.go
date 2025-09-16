@@ -9,6 +9,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/ulikunitz/xz"
 )
 
 // Extractor handles extraction of various archive formats
@@ -37,6 +39,13 @@ func (e *Extractor) Extract(archivePath, destDir string) error {
 		return e.extractGz(archivePath, destDir)
 	case ".tgz":
 		return e.extractTarGz(archivePath, destDir)
+	case ".xz":
+		// Check if it's a tar.xz
+		if strings.HasSuffix(strings.ToLower(archivePath), ".tar.xz") {
+			return e.extractTarXz(archivePath, destDir)
+		}
+		// Plain xz file (not a tar archive)
+		return e.extractXz(archivePath, destDir)
 	case ".tar":
 		return e.extractTar(archivePath, destDir)
 	case ".zip":
@@ -63,6 +72,22 @@ func (e *Extractor) extractTarGz(archivePath, destDir string) error {
 	defer gzReader.Close()
 
 	return e.extractTarReader(gzReader, destDir)
+}
+
+// extractTarXz extracts a tar.xz archive
+func (e *Extractor) extractTarXz(archivePath, destDir string) error {
+	file, err := os.Open(archivePath)
+	if err != nil {
+		return fmt.Errorf("failed to open archive: %w", err)
+	}
+	defer file.Close()
+
+	xzReader, err := xz.NewReader(file)
+	if err != nil {
+		return fmt.Errorf("failed to create xz reader: %w", err)
+	}
+
+	return e.extractTarReader(xzReader, destDir)
 }
 
 // extractTar extracts a tar archive
@@ -254,6 +279,42 @@ func (e *Extractor) extractGz(archivePath, destDir string) error {
 	defer destFile.Close()
 
 	if _, err := io.Copy(destFile, gzReader); err != nil {
+		return fmt.Errorf("failed to decompress file: %w", err)
+	}
+
+	return nil
+}
+
+// extractXz extracts a plain xz file (not tar.xz)
+func (e *Extractor) extractXz(archivePath, destDir string) error {
+	file, err := os.Open(archivePath)
+	if err != nil {
+		return fmt.Errorf("failed to open archive: %w", err)
+	}
+	defer file.Close()
+
+	xzReader, err := xz.NewReader(file)
+	if err != nil {
+		return fmt.Errorf("failed to create xz reader: %w", err)
+	}
+
+	// Ensure destination directory exists
+	if err := os.MkdirAll(destDir, 0755); err != nil {
+		return fmt.Errorf("failed to create destination directory: %w", err)
+	}
+
+	// Extract to a file with .xz extension removed
+	baseName := filepath.Base(archivePath)
+	baseName = strings.TrimSuffix(baseName, ".xz")
+
+	destPath := filepath.Join(destDir, baseName)
+	destFile, err := os.OpenFile(destPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0755)
+	if err != nil {
+		return fmt.Errorf("failed to create destination file: %w", err)
+	}
+	defer destFile.Close()
+
+	if _, err := io.Copy(destFile, xzReader); err != nil {
 		return fmt.Errorf("failed to decompress file: %w", err)
 	}
 

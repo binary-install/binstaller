@@ -111,11 +111,6 @@ func (v *Verifier) VerifyFile(ctx context.Context, filepath, filename string) er
 	return nil
 }
 
-// downloadChecksumFile downloads and parses the checksum file
-func (v *Verifier) downloadChecksumFile(ctx context.Context) (map[string]string, error) {
-	return v.downloadChecksumFileWithAssetFilename(ctx, "")
-}
-
 // downloadChecksumFileWithAssetFilename downloads and parses the checksum file with asset filename support
 func (v *Verifier) downloadChecksumFileWithAssetFilename(ctx context.Context, assetFilename string) (map[string]string, error) {
 	// Create embedder to reuse checksum template interpolation
