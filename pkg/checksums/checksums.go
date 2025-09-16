@@ -60,12 +60,12 @@ func (e *Embedder) Embed() error {
 		}
 	}
 
-	// Validate checksum template
-	// Note: ${ASSET_FILENAME} could technically be supported by looping through all supported OS/arch combinations,
-	// but this would be equivalent to using 'calculate' mode. Since there are no plans to implement this,
-	// we explicitly reject it to guide users to the appropriate solution.
-	if e.Spec.Checksums.Template != nil && strings.Contains(spec.StringValue(e.Spec.Checksums.Template), "${ASSET_FILENAME}") {
-		return fmt.Errorf("${ASSET_FILENAME} is not supported in checksum templates. Use 'binst embed-checksums --mode calculate' instead to generate checksums for all platforms")
+	// Validate checksum template for embed-checksums command
+	// Note: ${ASSET_FILENAME} is supported in runtime verification but not in embed-checksums
+	// because it would require looping through all supported OS/arch combinations,
+	// which is equivalent to using 'calculate' mode.
+	if e.Mode != "" && e.Spec.Checksums.Template != nil && strings.Contains(spec.StringValue(e.Spec.Checksums.Template), "${ASSET_FILENAME}") {
+		return fmt.Errorf("${ASSET_FILENAME} is not supported in checksum templates for embed-checksums. Use 'binst embed-checksums --mode calculate' instead to generate checksums for all platforms")
 	}
 
 	// Resolve version if it's "latest"
@@ -369,20 +369,36 @@ func (e *Embedder) interpolateTemplate(template string, additionalVars map[strin
 
 // createChecksumFilename creates the checksum filename using the template from the spec
 func (e *Embedder) createChecksumFilename() string {
+	return e.createChecksumFilenameWithAsset("")
+}
+
+// createChecksumFilenameWithAsset creates the checksum filename with optional asset filename support
+func (e *Embedder) createChecksumFilenameWithAsset(assetFilename string) string {
 	if e.Spec.Checksums == nil || spec.StringValue(e.Spec.Checksums.Template) == "" {
 		return ""
 	}
 
 	template := spec.StringValue(e.Spec.Checksums.Template)
 
-	// Check for unsupported ASSET_FILENAME variable
+	// Check for unsupported ASSET_FILENAME variable in embed-checksums mode
 	if strings.Contains(template, "${ASSET_FILENAME}") {
-		log.Errorf("${ASSET_FILENAME} is not supported in checksum templates. Use 'binst embed-checksums --mode calculate' instead.")
-		return ""
+		if e.Mode != "" {
+			log.Errorf("${ASSET_FILENAME} is not supported in checksum templates for embed-checksums. Use 'binst embed-checksums --mode calculate' instead.")
+		}
+		// Return empty string when ASSET_FILENAME is used but no asset filename is provided
+		if assetFilename == "" {
+			return ""
+		}
 	}
 
-	// Note: Checksum templates only support NAME and VERSION according to schema
-	filename, err := e.interpolateTemplate(template, nil)
+	// Build additional variables map
+	additionalVars := make(map[string]string)
+	if assetFilename != "" {
+		additionalVars["ASSET_FILENAME"] = assetFilename
+	}
+
+	// Interpolate template with available variables
+	filename, err := e.interpolateTemplate(template, additionalVars)
 	if err != nil {
 		log.Errorf("Failed to interpolate checksum template: %v", err)
 		return ""

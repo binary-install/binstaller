@@ -7,6 +7,8 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/ulikunitz/xz"
 )
 
 func TestExtractTarGz(t *testing.T) {
@@ -337,5 +339,202 @@ func createTestPlainGz(path string, content string) error {
 	defer gzWriter.Close()
 
 	_, err = gzWriter.Write([]byte(content))
+	return err
+}
+
+func TestExtractTarXz(t *testing.T) {
+	// Create a temporary directory for test files
+	tmpDir := t.TempDir()
+
+	// Create a test tar.xz file
+	tarXzPath := filepath.Join(tmpDir, "test.tar.xz")
+	if err := createTestTarXz(tarXzPath); err != nil {
+		t.Fatalf("Failed to create test tar.xz: %v", err)
+	}
+
+	// Create extractor and extract
+	extractor := NewExtractor(0)
+	destDir := filepath.Join(tmpDir, "extracted")
+	if err := extractor.Extract(tarXzPath, destDir); err != nil {
+		t.Fatalf("Failed to extract tar.xz: %v", err)
+	}
+
+	// Verify extracted files
+	expectedFiles := []string{
+		"dir1/file1.txt",
+		"dir1/file2.txt",
+		"file3.txt",
+	}
+
+	for _, expectedFile := range expectedFiles {
+		path := filepath.Join(destDir, expectedFile)
+		if _, err := os.Stat(path); os.IsNotExist(err) {
+			t.Errorf("Expected file %s not found", expectedFile)
+		}
+	}
+}
+
+func TestExtractTarXzWithStripComponents(t *testing.T) {
+	// Create a temporary directory for test files
+	tmpDir := t.TempDir()
+
+	// Create a test tar.xz file with nested structure
+	tarXzPath := filepath.Join(tmpDir, "test.tar.xz")
+	if err := createTestTarXzNested(tarXzPath); err != nil {
+		t.Fatalf("Failed to create test tar.xz: %v", err)
+	}
+
+	// Create extractor with strip_components=1
+	extractor := NewExtractor(1)
+	destDir := filepath.Join(tmpDir, "extracted")
+	if err := extractor.Extract(tarXzPath, destDir); err != nil {
+		t.Fatalf("Failed to extract tar.xz: %v", err)
+	}
+
+	// Verify that the root directory was stripped
+	// Instead of root/dir1/file1.txt, we should have dir1/file1.txt
+	expectedFiles := []string{
+		"dir1/file1.txt",
+		"dir1/file2.txt",
+		"file3.txt",
+	}
+
+	for _, expectedFile := range expectedFiles {
+		path := filepath.Join(destDir, expectedFile)
+		if _, err := os.Stat(path); os.IsNotExist(err) {
+			t.Errorf("Expected file %s not found", expectedFile)
+		}
+	}
+
+	// Verify that root directory was stripped
+	rootPath := filepath.Join(destDir, "root")
+	if _, err := os.Stat(rootPath); !os.IsNotExist(err) {
+		t.Error("Root directory should have been stripped")
+	}
+}
+
+func TestExtractPlainXz(t *testing.T) {
+	// Create a temporary directory for test files
+	tmpDir := t.TempDir()
+
+	// Create a test plain xz file (not tar.xz)
+	xzPath := filepath.Join(tmpDir, "binary.xz")
+	if err := createTestPlainXz(xzPath, "binary content"); err != nil {
+		t.Fatalf("Failed to create test xz: %v", err)
+	}
+
+	// Create extractor and extract
+	extractor := NewExtractor(0)
+	destDir := filepath.Join(tmpDir, "extracted")
+	if err := extractor.Extract(xzPath, destDir); err != nil {
+		t.Fatalf("Failed to extract xz: %v", err)
+	}
+
+	// Verify extracted file
+	extractedPath := filepath.Join(destDir, "binary")
+	content, err := os.ReadFile(extractedPath)
+	if err != nil {
+		t.Fatalf("Failed to read extracted file: %v", err)
+	}
+
+	if string(content) != "binary content" {
+		t.Errorf("Expected content 'binary content', got '%s'", string(content))
+	}
+}
+
+func createTestTarXz(path string) error {
+	file, err := os.Create(path)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	xzWriter, err := xz.NewWriter(file)
+	if err != nil {
+		return err
+	}
+	defer xzWriter.Close()
+
+	tarWriter := tar.NewWriter(xzWriter)
+	defer tarWriter.Close()
+
+	// Add some test files
+	files := map[string]string{
+		"dir1/file1.txt": "content1",
+		"dir1/file2.txt": "content2",
+		"file3.txt":      "content3",
+	}
+
+	for name, content := range files {
+		header := &tar.Header{
+			Name: name,
+			Mode: 0644,
+			Size: int64(len(content)),
+		}
+		if err := tarWriter.WriteHeader(header); err != nil {
+			return err
+		}
+		if _, err := tarWriter.Write([]byte(content)); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func createTestTarXzNested(path string) error {
+	file, err := os.Create(path)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	xzWriter, err := xz.NewWriter(file)
+	if err != nil {
+		return err
+	}
+	defer xzWriter.Close()
+
+	tarWriter := tar.NewWriter(xzWriter)
+	defer tarWriter.Close()
+
+	// Add some test files with a root directory
+	files := map[string]string{
+		"root/dir1/file1.txt": "content1",
+		"root/dir1/file2.txt": "content2",
+		"root/file3.txt":      "content3",
+	}
+
+	for name, content := range files {
+		header := &tar.Header{
+			Name: name,
+			Mode: 0644,
+			Size: int64(len(content)),
+		}
+		if err := tarWriter.WriteHeader(header); err != nil {
+			return err
+		}
+		if _, err := tarWriter.Write([]byte(content)); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func createTestPlainXz(path string, content string) error {
+	file, err := os.Create(path)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	xzWriter, err := xz.NewWriter(file)
+	if err != nil {
+		return err
+	}
+	defer xzWriter.Close()
+
+	_, err = xzWriter.Write([]byte(content))
 	return err
 }
