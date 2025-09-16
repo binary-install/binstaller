@@ -80,8 +80,8 @@ github.com/cavaliergopher/cpio v1.0.1/go.mod h1:pBdaqQjnvXxdS/6CvNDwIANIFSP0xRKI
 github.com/census-instrumentation/opencensus-proto v0.2.1/go.mod h1:f6KPmirojxKA12rnyqOA5BBL4O983OfeGPqjHWSTneU=
 github.com/charmbracelet/colorprofile v0.3.2 h1:9J27WdztfJQVAQKX2WOlSSRB+5gaKqqITmrvb1uTIiI=
 github.com/charmbracelet/colorprofile v0.3.2/go.mod h1:mTD5XzNeWHj8oqHb+S1bssQb7vIHbepiebQ2kPKVKbI=
-github.com/charmbracelet/fang v0.4.0 h1:boBxmdcFghTeotqkD2itXi7SMBozdIlcslRqjboSJDg=
-github.com/charmbracelet/fang v0.4.0/go.mod h1:9gCUAHmVx5BwSafeyNr3GI0GgvlB1WYjL21SkPp1jyU=
+github.com/charmbracelet/fang v0.4.1 h1:NC0Y4oqg7YuZcBg/KKsHy8DSow0ZDjF4UJL7LwtA0dE=
+github.com/charmbracelet/fang v0.4.1/go.mod h1:9gCUAHmVx5BwSafeyNr3GI0GgvlB1WYjL21SkPp1jyU=
 github.com/charmbracelet/lipgloss v1.1.0 h1:vYXsiLHVkK7fp74RkV7b2kq9+zDLoEU4MZoFqR/noCY=
 github.com/charmbracelet/lipgloss v1.1.0/go.mod h1:/6Q8FR2o+kj8rz4Dq0zQc3vYf7X+B0binUUBwA0aL30=
 github.com/charmbracelet/lipgloss/v2 v2.0.0-beta1 h1:SOylT6+BQzPHEjn15TIzawBPVD0QmhKXbcb3jY0ZIKU=

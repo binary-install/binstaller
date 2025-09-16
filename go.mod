@@ -7,7 +7,7 @@ require (
 	github.com/aquaproj/aqua/v2 v2.54.1
 	github.com/buildkite/interpolate v0.1.5
 	github.com/charmbracelet/colorprofile v0.3.2
-	github.com/charmbracelet/fang v0.4.0
+	github.com/charmbracelet/fang v0.4.1
 	github.com/charmbracelet/lipgloss v1.1.0
 	github.com/goccy/go-yaml v1.18.0
 	github.com/google/go-cmp v0.7.0
@@ -15,6 +15,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/cobra v1.10.1
+	github.com/ulikunitz/xz v0.5.15
 	golang.org/x/term v0.35.0
 )
 
@@ -124,7 +125,6 @@ require (
 	github.com/suzuki-shunsuke/slog-error v0.2.0 // indirect
 	github.com/suzuki-shunsuke/slog-logrus v0.1.0 // indirect
 	github.com/suzuki-shunsuke/urfave-cli-v3-util v0.0.7 // indirect
-	github.com/ulikunitz/xz v0.5.15 // indirect
 	github.com/wk8/go-ordered-map/v2 v2.1.8 // indirect
 	github.com/xanzy/ssh-agent v0.3.3 // indirect
 	github.com/xo/terminfo v0.0.0-20220910002029-abceb7e1c41e // indirect
