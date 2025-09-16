@@ -393,7 +393,7 @@ func (e *Embedder) createChecksumFilenameWithAsset(assetFilename string) string 
 
 	// Build additional variables map
 	additionalVars := make(map[string]string)
-	if assetFilename != "" && strings.Contains(template, "${ASSET_FILENAME}") {
+	if assetFilename != "" {
 		additionalVars["ASSET_FILENAME"] = assetFilename
 	}
 
