@@ -66,7 +66,10 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: snapshot
-          path: ./dist
+          path: |
+            ./dist/*Darwin*arm64*.tar.gz*
+            ./dist/*Linux*arm64*.tar.gz*
+            ./dist/checksums*
 
   verify-releaser:
     needs: [release-pr]
