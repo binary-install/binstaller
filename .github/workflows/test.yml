@@ -3,12 +3,18 @@ on:
   push:
     branches: [ main ]
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+  workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
   ci:
+    if: &cond |
+      !github.event.pull_request.draft ||
+      (github.event.action == 'ready_for_review' &&
+       github.event.pull_request.user.login == 'github-actions[bot]')
     name: CI Checks
     runs-on: ubuntu-latest
     steps:
@@ -42,6 +48,7 @@ jobs:
         fi
 
   integration-tests:
+    if: *cond
     name: Integration Tests
     runs-on: ubuntu-latest
     steps:
@@ -78,6 +85,7 @@ jobs:
         fi
 
   platform-tests:
+    if: *cond
     name: Platform Tests
     runs-on: ubuntu-latest
     steps:
@@ -94,6 +102,7 @@ jobs:
       run: make test-all-platforms
 
   aqua-source-tests:
+    if: *cond
     name: Aqua Source Tests
     runs-on: ubuntu-latest
     steps:
