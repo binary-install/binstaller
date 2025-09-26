@@ -5,14 +5,71 @@ on:
     branches:
       - main  # Only run on main branch pushes (PR merges)
   pull_request:
-    types:
-      - labeled  # Run when PRs are labeled
+    types: [ opened, synchronize, reopened, labeled, unlabeled ]
 
-permissions:
-  contents: read
+permissions: {}
 
 jobs:
+  release-pr:
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+      statuses: write
+    runs-on: ubuntu-latest
+    outputs:
+      release_pr: ${{ toJSON(steps.release-pr.outputs) }}
+    steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@f4a75cfd619ee5ce8d5b864b0d183aff3c69b55a # v2.13.1
+        with:
+          egress-policy: audit
+
+      - name: Checkout
+        uses: actions/checkout@v5
+      - uses: actionutils/trusted-tag-verifier@68bef2f18f8ceb5c4dccc5542cadcfbc82ed4656 # v0.5.0
+        with:
+          verify: 'actionutils/create-release-pr'
+      - uses: actionutils/create-release-pr@v0
+        id: release-pr
+
+  update-release-pr:
+    needs: [release-pr]
+    if: fromJSON(needs.release-pr.outputs.release_pr).state == 'release_pr_open'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      id-token: write # Required for OIDC token exchange
+    steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@f4a75cfd619ee5ce8d5b864b0d183aff3c69b55a # v2.13.1
+        with:
+          egress-policy: audit
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ fromJSON(needs.release-pr.outputs.release_pr).pr_branch }}
+      - uses: actions/dependency-review-action@v4
+        id: dependency-review
+        with:
+          base-ref: ${{ fromJSON(needs.release-pr.outputs.release_pr).current_tag }}
+          head-ref: main
+
+      - uses: sigstore/cosign-installer@v3.9.2 # installs cosign
+      - uses: anchore/sbom-action/download-syft@v0.20.5 # installs syft
+      - uses: goreleaser/goreleaser-action@v6
+        id: goreleaser
+        with:
+          version: '~> v2'
+          args: release --clean --draft --snapshot --skip publish
+      - uses: actions/upload-artifact@v4
+        with:
+          name: snapshot
+          path: ./dist
+
   verify-releaser:
+    needs: [release-pr]
+    if: fromJSON(needs.release-pr.outputs.release_pr).state == 'release_required'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -21,62 +78,23 @@ jobs:
         uses: step-security/harden-runner@f4a75cfd619ee5ce8d5b864b0d183aff3c69b55a # v2.13.1
         with:
           egress-policy: audit
-
       - name: Verify Trusted Tag Releaser
-        uses: actionutils/trusted-tag-verifier@v0
+        uses: actionutils/trusted-tag-verifier@68bef2f18f8ceb5c4dccc5542cadcfbc82ed4656 # v0.5.0
         with:
-          verify: 'actionutils/trusted-go-releaser@v0'
+          verify: 'actionutils/trusted-go-releaser@v1'
 
-  # Post version bump information comment on PR when labeled
-  release-preview-comment:
-    needs: [verify-releaser]
-    if: github.event.action == 'labeled'
-    permissions:
-      pull-requests: write
-    uses: actionutils/trusted-go-releaser/.github/workflows/release-preview-comment.yml@v0
-    secrets:
-      github-token: ${{ secrets.GITHUB_TOKEN }}
-
-  # First check if a release is needed
-  release-check:
-    needs: [verify-releaser]
-    if: github.event.action != 'labeled'
-    permissions:
-      contents: write # Required for GitHub's generate-release-note API (notes are only displayed in job summary, not written to any file)
-      pull-requests: read
-    uses: actionutils/trusted-go-releaser/.github/workflows/release-check.yml@v0
-
-  # Environment protection job
-  release-approval:
-    needs: [verify-releaser, release-check]
-    if: github.event.action != 'labeled' && needs.release-check.outputs.skip != 'true'
-    runs-on: ubuntu-latest
-    environment: release
-    concurrency:
-      group: "release-approval"
-      cancel-in-progress: true
-    steps:
-      - name: Harden the runner (Audit all outbound calls)
-        uses: step-security/harden-runner@f4a75cfd619ee5ce8d5b864b0d183aff3c69b55a # v2.13.1
-        with:
-          egress-policy: audit
-
-      - name: Approve release
-        run: echo "Release approved in the release environment"
-
-  # Use the reusable trusted tag workflow for releases if approved
   release:
-    needs: [verify-releaser, release-check, release-approval]
-    if: github.event.action != 'labeled' && needs.release-check.outputs.skip != 'true'
-    concurrency:
-      group: "release"
-      cancel-in-progress: false
+    needs: [verify-releaser, release-pr]
+    if: fromJSON(needs.release-pr.outputs.release_pr).state == 'release_required'
     permissions:
-      id-token: write    # Required for SLSA provenance
+      id-token: write    # Required for signed tags
       contents: write    # Required for release and tag creation
       pull-requests: write # Required for bumpr commenting
-      actions: read      # Required for SLSA generator
       attestations: write # Required for build provenance attestation
-    uses: actionutils/trusted-go-releaser/.github/workflows/trusted-release-workflow.yml@v0
+      actions: read      # Required for SLSA generator
+    uses: actionutils/trusted-go-releaser/.github/workflows/trusted-release-workflow.yml@v1
+    with:
+      environment: release
+      release-notes: ${{ fromJSON(needs.release-pr.outputs.release_pr).release_notes }}
     secrets:
       github-token: ${{ secrets.GITHUB_TOKEN }}
