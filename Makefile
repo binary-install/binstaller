@@ -184,6 +184,8 @@ test-target-version: binst ## Test target version functionality
 test-runner-mode: binst ## Test runner mode functionality
 	@echo "Testing runner mode functionality..."
 	@./test/runner_mode.sh
+	@echo "Testing runner argument handling with spaces..."
+	@./test/runner_args_spaces.sh
 
 # End-to-end tests for binst install command
 test-e2e-parity: binst ## Test parity between binst install and generated scripts
