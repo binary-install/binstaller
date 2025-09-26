@@ -12,9 +12,8 @@ permissions:
 jobs:
   ci:
     if: &cond |
-      !github.event.pull_request.draft ||
-      (github.event.action == 'ready_for_review' &&
-       github.event.pull_request.user.login == 'github-actions[bot]')
+      !(github.event.action == 'ready_for_review' &&
+        github.event.pull_request.user.login != 'github-actions[bot]')
     name: CI Checks
     runs-on: ubuntu-latest
     steps:
