@@ -118,15 +118,22 @@ parse_args() {
 
 {{- define "parse_args_runner" }}
 parse_args() {
-  SEPARATOR_FOUND=0
-  TOOL_ARGS=""
+  PARSE_CONSUMED=0
   while [ $# -gt 0 ]; do
     case "$1" in
-    -d) log_set_priority 10 ;;
-    -h | --help | \?) usage "$0" ;;
-    -x) set -x ;;
+    -d)
+      log_set_priority 10
+      PARSE_CONSUMED=$((PARSE_CONSUMED+1))
+      ;;
+    -h | --help | \?)
+      usage "$0"
+      ;;
+    -x)
+      set -x
+      PARSE_CONSUMED=$((PARSE_CONSUMED+1))
+      ;;
     --)
-      SEPARATOR_FOUND=1
+      PARSE_CONSUMED=$((PARSE_CONSUMED+1))
       shift
       break
       ;;
@@ -134,25 +141,16 @@ parse_args() {
       usage "$0"
       ;;
     *)
-      if [ $SEPARATOR_FOUND -eq 0 ]; then
-        {{- if .TargetVersion }}
-        # Target version is fixed, treat as tool argument
-        TOOL_ARGS="$1 $TOOL_ARGS"
-        {{- else }}
-        # First non-flag argument is the tag/version
-        TAG="$1"
-        {{- end }}
-      else
-        TOOL_ARGS="$1 $TOOL_ARGS"
-      fi
+      {{- if .TargetVersion }}
+      # Target version is fixed, stop parsing wrapper args
+      break
+      {{- else }}
+      # First non-flag argument is the tag/version
+      TAG="$1"
+      PARSE_CONSUMED=$((PARSE_CONSUMED+1))
+      {{- end }}
       ;;
     esac
-    shift
-  done
-
-  # Collect remaining arguments after --
-  while [ $# -gt 0 ]; do
-    TOOL_ARGS="$TOOL_ARGS $1"
     shift
   done
 
@@ -342,9 +340,13 @@ cleanup() {
 {{- define "execute_run" }}
   # Make binary executable for runner script
   chmod +x "${BINARY_PATH}"
-  # Run the binary directly with provided arguments
-  log_info "Running ${BINARY_NAME}${TOOL_ARGS:+ with arguments:$TOOL_ARGS}"
-  exec "${BINARY_PATH}" $TOOL_ARGS
+  # Run the binary directly with provided arguments (already shifted)
+  if [ $# -gt 0 ]; then
+    log_info "Running ${BINARY_NAME} with $# argument(s)"
+  else
+    log_info "Running ${BINARY_NAME}"
+  fi
+  exec "${BINARY_PATH}" "$@"
 {{- end }}
 
 execute() {
@@ -407,6 +409,11 @@ log_set_priority 3
 
 parse_args "$@"
 
+{{- if eq .ScriptType "runner" }}
+# Now shift the consumed arguments for runner script
+shift "$PARSE_CONSUMED"
+{{- end }}
+
 # --- Determine target platform ---
 OS="${BINSTALLER_OS:-$(uname_os)}"
 UNAME_OS="${OS}"
@@ -435,4 +442,9 @@ tag_to_version
 
 resolve_asset_filename
 
+{{- if eq .ScriptType "runner" }}
+# Pass remaining arguments to execute for runner script
+execute "$@"
+{{- else }}
 execute
+{{- end }}

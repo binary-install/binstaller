@@ -535,5 +535,4 @@ uname_arch_check "$ARCH"
 tag_to_version
 
 resolve_asset_filename
-
 execute

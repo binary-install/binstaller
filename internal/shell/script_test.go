@@ -518,7 +518,7 @@ func TestGenerateRunner(t *testing.T) {
 			targetVersion: "",
 			wantSubstrings: []string{
 				`# This script runs test-tool directly without installing`,
-				`exec "${BINARY_PATH}" $TOOL_ARGS`,
+				`exec "${BINARY_PATH}" "$@"`,
 				`cleanup() {`,
 				`trap cleanup EXIT HUP INT TERM`,
 				`chmod +x "${BINARY_PATH}"`,
@@ -543,7 +543,7 @@ func TestGenerateRunner(t *testing.T) {
 			wantSubstrings: []string{
 				`# This script runs test-tool directly without installing`,
 				`TAG="v1.2.3"`,
-				`exec "${BINARY_PATH}" $TOOL_ARGS`,
+				`exec "${BINARY_PATH}" "$@"`,
 				`chmod +x "${BINARY_PATH}"`,
 			},
 			wantNotContain: []string{
@@ -639,7 +639,7 @@ func TestGenerateWithScriptType(t *testing.T) {
 			scriptType: "runner",
 			wantError:  false,
 			checkFunc: func(script string) bool {
-				return strings.Contains(script, `exec "${BINARY_PATH}" $TOOL_ARGS`) &&
+				return strings.Contains(script, `exec "${BINARY_PATH}" "$@"`) &&
 					strings.Contains(script, `chmod +x "${BINARY_PATH}"`)
 			},
 		},
