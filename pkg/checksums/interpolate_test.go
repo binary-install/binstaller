@@ -210,6 +210,31 @@ func TestEmbedAssetFilenameValidation(t *testing.T) {
 	}
 }
 
+func TestEmbedAssetFilenameCalculateMode(t *testing.T) {
+	spec := &spec.InstallSpec{
+		Name: spec.StringPtr("mytool"),
+		Repo: spec.StringPtr("owner/mytool"),
+		Checksums: &spec.ChecksumConfig{
+			Template: spec.StringPtr("${ASSET_FILENAME}.sha256"),
+		},
+	}
+
+	// Test that calculate mode does not error with ASSET_FILENAME
+	e := &Embedder{
+		Spec:    spec,
+		Version: "v1.2.3",
+		Mode:    EmbedModeCalculate,
+	}
+
+	// This test doesn't actually perform the full embed (which would require network access)
+	// but validates that the error checking doesn't trigger for calculate mode
+	err := e.Embed()
+	// We expect an error from not having release assets, NOT from ASSET_FILENAME validation
+	if err != nil && strings.Contains(err.Error(), "${ASSET_FILENAME} is not supported") {
+		t.Errorf("calculate mode should allow ASSET_FILENAME in templates, got error: %v", err)
+	}
+}
+
 func TestGenerateAssetFilename_Interpolation(t *testing.T) {
 	tests := []struct {
 		name        string

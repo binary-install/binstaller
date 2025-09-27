@@ -61,10 +61,10 @@ func (e *Embedder) Embed() error {
 	}
 
 	// Validate checksum template for embed-checksums command
-	// Note: ${ASSET_FILENAME} is supported in runtime verification but not in embed-checksums
-	// because it would require looping through all supported OS/arch combinations,
-	// which is equivalent to using 'calculate' mode.
-	if e.Mode != "" && e.Spec.Checksums.Template != nil && strings.Contains(spec.StringValue(e.Spec.Checksums.Template), "${ASSET_FILENAME}") {
+	// Note: ${ASSET_FILENAME} is supported in runtime verification and in calculate mode
+	// but not in download or checksum-file modes because those modes work with a single
+	// checksum file that doesn't have per-asset filenames
+	if e.Mode != "" && e.Mode != EmbedModeCalculate && e.Spec.Checksums.Template != nil && strings.Contains(spec.StringValue(e.Spec.Checksums.Template), "${ASSET_FILENAME}") {
 		return fmt.Errorf("${ASSET_FILENAME} is not supported in checksum templates for embed-checksums. Use 'binst embed-checksums --mode calculate' instead to generate checksums for all platforms")
 	}
 
