@@ -20,16 +20,16 @@ echo "✓ Runner script generated correctly"
 
 echo ""
 echo "=== Test 2: Test runner script commands ==="
-# Test runner script with help command
-if ! "$TEST_DIR/run-binst.sh" -- help > /dev/null 2>&1; then
+# Test runner script with help command (all args pass through)
+if ! "$TEST_DIR/run-binst.sh" help > /dev/null 2>&1; then
     echo "ERROR: Runner script failed to execute 'binst help'"
     exit 1
 fi
 
 echo "✓ Runner script 'help' command executed successfully"
 
-# Test runner script with check command
-if ! "$TEST_DIR/run-binst.sh" -d -- check --help | grep '✓ EXISTS'; then
+# Test runner script with check command (use BINSTALLER_DEBUG for debug output)
+if ! BINSTALLER_DEBUG=1 "$TEST_DIR/run-binst.sh" check --help | grep '✓ EXISTS'; then
     echo "ERROR: Runner script failed to execute 'binst check --help' or output missing expected content"
     exit 1
 fi
