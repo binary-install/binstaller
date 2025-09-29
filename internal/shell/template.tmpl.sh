@@ -402,10 +402,10 @@ log_prefix() {
 }
 
 {{- if eq .ScriptType "runner" }}
-# Configure from environment variables (no argument parsing for runner scripts)
+{{- /* Runner scripts configure from environment variables */ -}}
 configure_from_env
 {{- else }}
-# Parse command-line arguments for installer script
+{{- /* Installer scripts parse command-line arguments */ -}}
 parse_args "$@"
 {{- end }}
 
