@@ -126,10 +126,13 @@ parse_args() {
 }
 {{- end }}
 
-{{- define "parse_args_runner" }}
-parse_args() {
-  # Runner scripts pass ALL arguments to the binary
-  # Configuration is done exclusively through environment variables
+{{- define "configure_from_env_runner" }}
+configure_from_env() {
+  # Runner scripts use environment variables for all configuration
+  # All command-line arguments are passed directly to the binary
+
+  # Set default log priority to warning for runner script (suppress info logs)
+  log_set_priority 3
 
   # Check if help is requested via environment variable
   if [ "${BINSTALLER_SHOW_HELP}" = "1" ] || [ "${BINSTALLER_SHOW_HELP}" = "true" ]; then
@@ -144,7 +147,7 @@ parse_args() {
   TAG="{{ .TargetVersion }}"
   {{- end }}
 
-  # Apply environment variable settings for logging
+  # Override log level if explicitly set via environment variables
   if [ "${BINSTALLER_DEBUG}" = "1" ] || [ "${BINSTALLER_DEBUG}" = "true" ]; then
     log_set_priority 10
   elif [ "${BINSTALLER_QUIET}" = "1" ] || [ "${BINSTALLER_QUIET}" = "true" ]; then
@@ -156,7 +159,7 @@ parse_args() {
 {{- if eq .ScriptType "installer" }}
 {{- template "parse_args_installer" . }}
 {{- else }}
-{{- template "parse_args_runner" . }}
+{{- template "configure_from_env_runner" . }}
 {{- end }}
 
 {{- define "tag_to_version" }}
@@ -394,14 +397,12 @@ log_prefix() {
 }
 
 {{- if eq .ScriptType "runner" }}
-# Set default log priority to warning for runner script (suppress info logs)
-# unless BINSTALLER_DEBUG is set
-if [ -z "${BINSTALLER_DEBUG}" ] && [ -z "${BINSTALLER_QUIET}" ]; then
-  log_set_priority 3
-fi
-{{- end }}
-
+# Configure from environment variables (no argument parsing for runner scripts)
+configure_from_env
+{{- else }}
+# Parse command-line arguments for installer script
 parse_args "$@"
+{{- end }}
 
 # --- Determine target platform ---
 OS="${BINSTALLER_OS:-$(uname_os)}"
