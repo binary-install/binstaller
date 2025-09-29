@@ -320,5 +320,9 @@ repo: owner/repo
 10. **Use runner mode**: For temporary execution without installation:
     ```bash
     binst gen --type=runner -o run.sh
-    ./run.sh -- --help  # Run the binary directly
+    ./run.sh --help  # All arguments pass directly to the binary
+
+    # Control runner behavior with environment variables:
+    BINSTALLER_TARGET_TAG=v1.2.3 ./run.sh --help  # Use specific version
+    BINSTALLER_SHOW_HELP=1 ./run.sh                # Show script help
     ```

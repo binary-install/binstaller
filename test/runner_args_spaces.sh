@@ -23,7 +23,7 @@ chmod +x "$TEMP_DIR/jq-runner.sh"
 
 # Test 1: Simple jq filter with spaces in string literal
 echo "Test 1: Filter with spaces in string literal"
-result=$(echo '{"name": "John Doe", "age": 30}' | "$TEMP_DIR/jq-runner.sh" -- '.name == "John Doe"')
+result=$(echo '{"name": "John Doe", "age": 30}' | "$TEMP_DIR/jq-runner.sh" '.name == "John Doe"')
 if [ "$result" = "true" ]; then
     echo "  ✓ Passed: String with spaces preserved"
 else
@@ -33,7 +33,7 @@ fi
 
 # Test 2: jq with --arg containing spaces
 echo "Test 2: --arg parameter with spaces"
-result=$(echo '{"greeting": "Hello World"}' | "$TEMP_DIR/jq-runner.sh" -- --arg msg 'Hello World' '.greeting == $msg')
+result=$(echo '{"greeting": "Hello World"}' | "$TEMP_DIR/jq-runner.sh" --arg msg 'Hello World' '.greeting == $msg')
 if [ "$result" = "true" ]; then
     echo "  ✓ Passed: --arg with spaces preserved"
 else
@@ -44,7 +44,7 @@ fi
 # Test 3: Complex jq expression with spaces and pipes
 echo "Test 3: Complex expression with pipes and spaces"
 result=$(echo '[{"name": "Alice Smith"}, {"name": "Bob Jones"}]' | \
-    "$TEMP_DIR/jq-runner.sh" -- '.[] | select(.name | contains("Smith"))' | \
+    "$TEMP_DIR/jq-runner.sh" '.[] | select(.name | contains("Smith"))' | \
     jq -r '.name')
 if [ "$result" = "Alice Smith" ]; then
     echo "  ✓ Passed: Complex expression preserved"
@@ -56,7 +56,7 @@ fi
 # Test 4: Template-like expression (simulating github-comment case)
 echo "Test 4: Template-like expression with special characters"
 result=$(echo '{"content": "test data"}' | \
-    "$TEMP_DIR/jq-runner.sh" -- --arg template '{{ .Vars.content | AvoidHTMLEscape }}' \
+    "$TEMP_DIR/jq-runner.sh" --arg template '{{ .Vars.content | AvoidHTMLEscape }}' \
     '{template: $template}' | jq -r '.template')
 if [ "$result" = "{{ .Vars.content | AvoidHTMLEscape }}" ]; then
     echo "  ✓ Passed: Template expression preserved"
@@ -70,7 +70,7 @@ fi
 # Test 5: Multiple arguments with varying content
 echo "Test 5: Multiple mixed arguments"
 result=$(echo '{}' | \
-    "$TEMP_DIR/jq-runner.sh" -- \
+    "$TEMP_DIR/jq-runner.sh" \
     --arg a 'first arg' \
     --arg b 'second arg with more spaces' \
     --arg c 'third' \
@@ -87,7 +87,7 @@ fi
 # Test 6: Arguments with special shell characters
 echo "Test 6: Arguments with special shell characters"
 result=$(echo '{}' | \
-    "$TEMP_DIR/jq-runner.sh" -- \
+    "$TEMP_DIR/jq-runner.sh" \
     --arg special '$HOME/*.txt' \
     '{special: $special}' | jq -r '.special')
 if [ "$result" = '$HOME/*.txt' ]; then
@@ -102,7 +102,7 @@ fi
 # Test 7: Empty string and whitespace-only arguments
 echo "Test 7: Empty and whitespace-only arguments"
 result=$(echo '{}' | \
-    "$TEMP_DIR/jq-runner.sh" -- \
+    "$TEMP_DIR/jq-runner.sh" \
     --arg empty '' \
     --arg spaces '   ' \
     '{empty: $empty, spaces: $spaces, empty_len: ($empty | length), spaces_len: ($spaces | length)}' | \

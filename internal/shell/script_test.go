@@ -563,10 +563,12 @@ func TestGenerateRunner(t *testing.T) {
 			},
 			targetVersion: "",
 			wantSubstrings: []string{
-				`Usage: $this [-d]`,
+				`Usage: $this [binary arguments]`,
 				`This script downloads and runs test-tool directly`,
-				`Pass arguments after --:`,
-				`$this -- --help`,
+				`ALL arguments are passed directly to the binary`,
+				`$this --help`,
+				`BINSTALLER_TARGET_TAG=...  Specify tag to run`,
+				`BINSTALLER_DEBUG=1         Enable debug logging`,
 			},
 			wantNotContain: []string{
 				`[-b bindir]`,
