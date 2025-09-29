@@ -144,6 +144,11 @@ configure_from_env() {
   TAG="${BINSTALLER_TARGET_TAG:-{{- deref .DefaultVersion | default "latest" -}}}"
   {{- else }}
   # Target version is fixed at generation time
+  if [ -n "${BINSTALLER_TARGET_TAG}" ]; then
+    log_crit "BINSTALLER_TARGET_TAG is set but this script is configured for {{ .TargetVersion }} only"
+    log_crit "Remove BINSTALLER_TARGET_TAG environment variable to use this script"
+    exit 1
+  fi
   TAG="{{ .TargetVersion }}"
   {{- end }}
 
