@@ -153,8 +153,13 @@ generates a POSIX-compatible shell installer script.`,
   # Generate runner for specific binary (when multiple binaries exist)
   binst gen --type=runner --binary=mytool-helper -o run-helper.sh
 
-  # Run binary directly using runner script
-  ./run.sh -- --help
+  # Run binary directly using runner script (all arguments pass to binary)
+  ./run.sh --help
+  ./run.sh --version
+
+  # Control runner script with environment variables
+  BINSTALLER_TARGET_TAG=v1.2.3 ./run.sh --help  # Use specific version
+  BINSTALLER_SHOW_HELP=1 ./run.sh                # Show script help
 
   # Generate installer from specific config file
   binst gen --config myapp.binstaller.yml -o myapp-install.sh
@@ -183,6 +188,9 @@ generates a POSIX-compatible shell installer script.`,
 
   # Install specific version
   binst gen | sh -s -- v1.2.3
+
+  # Run generated runner script with environment control
+  binst gen --type=runner | BINSTALLER_TARGET_TAG=v1.2.3 sh
 
   # Test installer with dry run mode
   binst gen | sh -s -- -n`,
