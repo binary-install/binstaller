@@ -400,12 +400,9 @@ EXT='{{ deref .Asset.DefaultExtension }}'
 log_prefix() {
   echo "${REPO}"
 }
-
-{{- if eq .ScriptType "runner" }}
-{{- /* Runner scripts configure from environment variables */ -}}
+{{ if eq .ScriptType "runner" }}
 configure_from_env
 {{- else }}
-{{- /* Installer scripts parse command-line arguments */ -}}
 parse_args "$@"
 {{- end }}
 
