@@ -207,8 +207,8 @@ github.com/goreleaser/chglog v0.7.3 h1:eCKJrvsDgG+F1F2fhwM6qX+S5yMiZgsQ4VNTPFl9q
 github.com/goreleaser/chglog v0.7.3/go.mod h1:HXPf4avc1kTD00a46LuTEH0i1dZctLq8Xs2BxUfROnY=
 github.com/goreleaser/fileglob v1.3.0 h1:/X6J7U8lbDpQtBvGcwwPS6OpzkNVlVEsFUVRx9+k+7I=
 github.com/goreleaser/fileglob v1.3.0/go.mod h1:Jx6BoXv3mbYkEzwm9THo7xbr5egkAraxkGorbJb4RxU=
-github.com/goreleaser/goreleaser/v2 v2.12.3 h1:hyfPSMKlqwm2t5PVO7ahHR+kcxR59wu8ErdL6YGU/Uw=
-github.com/goreleaser/goreleaser/v2 v2.12.3/go.mod h1:5s2g/XPXi06XcnbyVcOmj57dm9r18jSNBeji1e4dCwo=
+github.com/goreleaser/goreleaser/v2 v2.12.5 h1:hPlijBXQhZ2F0aQv+oPHCuwLarq18EK/1Y20BngR690=
+github.com/goreleaser/goreleaser/v2 v2.12.5/go.mod h1:IEZXddhYU1jEMP5PuTvUm3XniTWZB2i81bSLIyXPxxs=
 github.com/goreleaser/nfpm/v2 v2.43.1 h1:y7i+5wlAuBqUEsTL4cZp0FjnNStoA/to9Yuju+MqZpc=
 github.com/goreleaser/nfpm/v2 v2.43.1/go.mod h1:3sDxZIYoMCd3FPa44PuxWnhMtOUHEDBhsmddHAcfySw=
 github.com/hashicorp/go-cleanhttp v0.5.2 h1:035FKYIWjmULyFRBKPs8TBQoi0x6d9G4xc9neXJWAZQ=
