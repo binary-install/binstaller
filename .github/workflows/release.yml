@@ -28,7 +28,7 @@ jobs:
 
       - name: Checkout
         uses: actions/checkout@v5
-      - uses: actionutils/trusted-tag-verifier@68bef2f18f8ceb5c4dccc5542cadcfbc82ed4656 # v0.5.0
+      - uses: actionutils/trusted-tag-verifier@95f88dda1c54c11d1ad9428998be8b068443fa07 # v0.5.1
         with:
           verify: 'actionutils/create-release-pr'
       - uses: actionutils/create-release-pr@v0
@@ -83,7 +83,7 @@ jobs:
         with:
           egress-policy: audit
       - name: Verify Trusted Tag Releaser
-        uses: actionutils/trusted-tag-verifier@68bef2f18f8ceb5c4dccc5542cadcfbc82ed4656 # v0.5.0
+        uses: actionutils/trusted-tag-verifier@95f88dda1c54c11d1ad9428998be8b068443fa07 # v0.5.1
         with:
           verify: 'actionutils/trusted-go-releaser@v1'
 
