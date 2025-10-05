@@ -185,6 +185,7 @@ hash_compute() {
 }
 
 
+# shellcheck shell=sh
 # Terminal progress reporting functions
 progress_init() {
   # Only show progress on interactive terminals and when not disabled
@@ -196,6 +197,7 @@ progress_init() {
     # ESC characters in the wrapped sequence must be doubled
     # Format: ESC P tmux; ESC ESC ] 9;4; ... ESC ESC \ ESC \
     PROGRESS_START=$(printf '\033Ptmux;\033\033]9;4;')
+    # shellcheck disable=SC1003
     PROGRESS_END=$(printf '\033\033\\\033\\')
   else
     # Direct OSC 9;4 - terminals that don't support it will safely ignore
