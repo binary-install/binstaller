@@ -1,3 +1,47 @@
+# shellcheck shell=sh
+# Terminal progress reporting functions
+progress_init() {
+  # Only show progress on interactive terminals and when not disabled
+  if [ ! -t 2 ] || [ "${BINSTALLER_NO_PROGRESS}" = "1" ]; then
+    return 0
+  fi
+  # OSC 9;4 sequences are safely ignored by unsupporting terminals
+  # Only need special handling for tmux passthrough
+  if [ -n "$TMUX" ]; then
+    # Tmux passthrough: DCS tmux; <doubled ESC sequence> ST
+    # ESC characters in the wrapped sequence must be doubled
+    # Format: ESC P tmux; ESC ESC ] 9;4; ... ESC ESC \ ESC \
+    PROGRESS_START=$(printf '\033Ptmux;\033\033]9;4;')
+    # shellcheck disable=SC1003
+    PROGRESS_END=$(printf '\033\033\\\033\\')
+  else
+    # Direct OSC 9;4 - terminals that don't support it will safely ignore
+    PROGRESS_START=$(printf '\033]9;4;')
+    PROGRESS_END=$(printf '\007')
+  fi
+}
+
+# Start pulsing progress animation
+progress_pulse_start() {
+  # Only show progress on interactive terminals and when not disabled
+  if [ ! -t 2 ] || [ "${BINSTALLER_NO_PROGRESS}" = "1" ]; then
+    return 0
+  fi
+
+  # Send OSC 9;4 with state 3 (indeterminate/pulsing) once
+  # The terminal will handle the continuous animation
+  printf "%s3%s" "$PROGRESS_START" "$PROGRESS_END" >&2
+}
+
+# Clear progress indicator
+progress_clear() {
+  # Only show progress on interactive terminals and when not disabled
+  if [ ! -t 2 ] || [ "${BINSTALLER_NO_PROGRESS}" = "1" ]; then
+    return 0
+  fi
+  printf "%s0;%s" "$PROGRESS_START" "$PROGRESS_END" >&2
+}
+
 untar() {
   tarball=$1
   strip_components=${2:-0} # default 0
