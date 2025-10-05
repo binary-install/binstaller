@@ -6,12 +6,12 @@ progress_init() {
     # Tmux passthrough: DCS tmux; <doubled ESC sequence> ST
     # ESC characters in the wrapped sequence must be doubled
     # Format: ESC P tmux; ESC ESC ] 9;4; ... ESC ESC \ ESC \
-    PROGRESS_START=$'\033Ptmux;\033\033]9;4;'
-    PROGRESS_END=$'\033\033\\\033\\'
+    PROGRESS_START=$(printf '\033Ptmux;\033\033]9;4;')
+    PROGRESS_END=$(printf '\033\033\\\033\\')
   else
     # Direct OSC 9;4 - terminals that don't support it will safely ignore
-    PROGRESS_START=$'\033]9;4;'
-    PROGRESS_END=$'\007'
+    PROGRESS_START=$(printf '\033]9;4;')
+    PROGRESS_END=$(printf '\007')
   fi
 }
 
@@ -22,14 +22,14 @@ progress_pulse_start() {
 
   # Send OSC 9;4 with state 3 (indeterminate/pulsing) once
   # The terminal will handle the continuous animation
-  printf "%s3%s" "$PROGRESS_START" "$PROGRESS_END"
+  printf "%s3%s" "$PROGRESS_START" "$PROGRESS_END" >&2
 }
 
 # Clear progress indicator
 progress_clear() {
   # Skip if explicitly disabled
   [ "${BINSTALLER_NO_PROGRESS}" = "1" ] && return
-  printf "%s0;%s" "$PROGRESS_START" "$PROGRESS_END"
+  printf "%s0;%s" "$PROGRESS_START" "$PROGRESS_END" >&2
 }
 
 untar() {

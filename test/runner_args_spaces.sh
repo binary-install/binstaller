@@ -13,6 +13,9 @@ trap 'rm -rf -- "$TEMP_DIR"' EXIT
 
 cd "$PROJECT_ROOT"
 
+# Disable progress OSC sequences to avoid polluting stdout
+export BINSTALLER_NO_PROGRESS=1
+
 echo "=== Testing runner script with arguments containing spaces ==="
 echo ""
 
