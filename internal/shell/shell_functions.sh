@@ -1,5 +1,7 @@
 # Terminal progress reporting functions
 progress_init() {
+  # Only show progress on interactive terminals and when not disabled
+  [ -t 2 ] && [ "${BINSTALLER_NO_PROGRESS}" != "1" ] || return
   # OSC 9;4 sequences are safely ignored by unsupporting terminals
   # Only need special handling for tmux passthrough
   if [ -n "$TMUX" ]; then
@@ -17,8 +19,8 @@ progress_init() {
 
 # Start pulsing progress animation
 progress_pulse_start() {
-  # Skip if explicitly disabled via environment variable
-  [ "${BINSTALLER_NO_PROGRESS}" = "1" ] && return
+  # Only show progress on interactive terminals and when not disabled
+  [ -t 2 ] && [ "${BINSTALLER_NO_PROGRESS}" != "1" ] || return
 
   # Send OSC 9;4 with state 3 (indeterminate/pulsing) once
   # The terminal will handle the continuous animation
@@ -27,8 +29,8 @@ progress_pulse_start() {
 
 # Clear progress indicator
 progress_clear() {
-  # Skip if explicitly disabled
-  [ "${BINSTALLER_NO_PROGRESS}" = "1" ] && return
+  # Only show progress on interactive terminals and when not disabled
+  [ -t 2 ] && [ "${BINSTALLER_NO_PROGRESS}" != "1" ] || return
   printf "%s0;%s" "$PROGRESS_START" "$PROGRESS_END" >&2
 }
 
