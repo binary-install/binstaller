@@ -56,7 +56,7 @@ jobs:
           base-ref: ${{ fromJSON(needs.release-pr.outputs.release_pr).current_tag }}
           head-ref: main
 
-      - uses: sigstore/cosign-installer@v3.10.0 # installs cosign
+      - uses: sigstore/cosign-installer@v4.0.0 # installs cosign
       - uses: anchore/sbom-action/download-syft@v0.20.9 # installs syft
       - uses: goreleaser/goreleaser-action@v6
         id: goreleaser
