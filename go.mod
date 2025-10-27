@@ -1,10 +1,10 @@
 module github.com/binary-install/binstaller
 
-go 1.25.1
+go 1.25.3
 
 require (
 	github.com/apex/log v1.9.0
-	github.com/aquaproj/aqua/v2 v2.55.0
+	github.com/aquaproj/aqua/v2 v2.55.1
 	github.com/buildkite/interpolate v0.1.5
 	github.com/charmbracelet/colorprofile v0.3.2
 	github.com/charmbracelet/fang v0.4.3
@@ -50,7 +50,7 @@ require (
 	github.com/emirpasic/gods v1.18.1 // indirect
 	github.com/expr-lang/expr v1.17.6 // indirect
 	github.com/fatih/color v1.18.0 // indirect
-	github.com/forPelevin/gomoji v1.3.1 // indirect
+	github.com/forPelevin/gomoji v1.4.1 // indirect
 	github.com/gdamore/encoding v1.0.1 // indirect
 	github.com/gdamore/tcell/v2 v2.9.0 // indirect
 	github.com/go-git/gcfg v1.5.1-0.20230307220236-3a3c6141e376 // indirect
@@ -60,6 +60,7 @@ require (
 	github.com/godbus/dbus/v5 v5.1.0 // indirect
 	github.com/golang/groupcache v0.0.0-20241129210726-2c02b8208cf8 // indirect
 	github.com/google/go-github/v74 v74.0.0 // indirect
+	github.com/google/go-github/v76 v76.0.0 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/google/wire v0.7.0 // indirect
@@ -83,7 +84,7 @@ require (
 	github.com/mattn/go-colorable v0.1.14 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mattn/go-runewidth v0.0.16 // indirect
-	github.com/mholt/archives v0.1.4 // indirect
+	github.com/mholt/archives v0.1.5 // indirect
 	github.com/mikelolasagasti/xz v1.0.1 // indirect
 	github.com/minio/minlz v1.0.1 // indirect
 	github.com/mitchellh/colorstring v0.0.0-20190213212951-d06e56a500db // indirect
@@ -96,7 +97,7 @@ require (
 	github.com/muesli/roff v0.1.0 // indirect
 	github.com/muesli/termenv v0.16.0 // indirect
 	github.com/nsf/termbox-go v1.1.1 // indirect
-	github.com/nwaples/rardecode/v2 v2.1.1 // indirect
+	github.com/nwaples/rardecode/v2 v2.2.0 // indirect
 	github.com/otiai10/copy v1.14.1 // indirect
 	github.com/otiai10/mint v1.6.3 // indirect
 	github.com/pierrec/lz4/v4 v4.1.22 // indirect
@@ -117,7 +118,7 @@ require (
 	github.com/suzuki-shunsuke/go-exec v0.0.1 // indirect
 	github.com/suzuki-shunsuke/go-findconfig v1.2.0 // indirect
 	github.com/suzuki-shunsuke/go-osenv v0.1.0 // indirect
-	github.com/suzuki-shunsuke/go-retryablehttp v0.7.8-1 // indirect
+	github.com/suzuki-shunsuke/go-retryablehttp v0.7.8-2 // indirect
 	github.com/suzuki-shunsuke/go-retryablehttp-logrus v0.0.1 // indirect
 	github.com/suzuki-shunsuke/logrus-error v0.1.4 // indirect
 	github.com/suzuki-shunsuke/slog-error v0.2.0 // indirect
