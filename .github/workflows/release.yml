@@ -57,7 +57,7 @@ jobs:
           head-ref: main
 
       - uses: sigstore/cosign-installer@v3.10.0 # installs cosign
-      - uses: anchore/sbom-action/download-syft@v0.20.9 # installs syft
+      - uses: anchore/sbom-action/download-syft@v0.20.10 # installs syft
       - uses: goreleaser/goreleaser-action@v6
         id: goreleaser
         with:
