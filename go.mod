@@ -1,6 +1,6 @@
 module github.com/binary-install/binstaller
 
-go 1.25.4
+go 1.25.5
 
 require (
 	github.com/apex/log v1.9.0
@@ -11,7 +11,7 @@ require (
 	github.com/charmbracelet/lipgloss v1.1.0
 	github.com/goccy/go-yaml v1.19.0
 	github.com/google/go-cmp v0.7.0
-	github.com/goreleaser/goreleaser/v2 v2.13.0
+	github.com/goreleaser/goreleaser/v2 v2.13.1
 	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/cobra v1.10.2
@@ -69,7 +69,7 @@ require (
 	github.com/google/wire v0.7.0 // indirect
 	github.com/goreleaser/chglog v0.7.3 // indirect
 	github.com/goreleaser/fileglob v1.4.0 // indirect
-	github.com/goreleaser/nfpm/v2 v2.43.4 // indirect
+	github.com/goreleaser/nfpm/v2 v2.44.0 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
 	github.com/hashicorp/go-version v1.7.0 // indirect
 	github.com/hashicorp/golang-lru/v2 v2.0.7 // indirect
@@ -78,7 +78,7 @@ require (
 	github.com/invopop/jsonschema v0.13.0 // indirect
 	github.com/jbenet/go-context v0.0.0-20150711004518-d14ea06fba99 // indirect
 	github.com/kevinburke/ssh_config v1.2.0 // indirect
-	github.com/klauspost/compress v1.18.1 // indirect
+	github.com/klauspost/compress v1.18.2 // indirect
 	github.com/klauspost/pgzip v1.2.6 // indirect
 	github.com/ktr0731/go-ansisgr v0.1.0 // indirect
 	github.com/ktr0731/go-fuzzyfinder v0.9.0 // indirect
