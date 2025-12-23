@@ -4,7 +4,7 @@ go 1.25.5
 
 require (
 	github.com/apex/log v1.9.0
-	github.com/aquaproj/aqua/v2 v2.55.3
+	github.com/aquaproj/aqua/v2 v2.56.0
 	github.com/buildkite/interpolate v0.1.5
 	github.com/charmbracelet/colorprofile v0.3.3
 	github.com/charmbracelet/fang v0.4.3
@@ -51,7 +51,7 @@ require (
 	github.com/danieljoos/wincred v1.2.3 // indirect
 	github.com/dsnet/compress v0.0.2-0.20230904184137-39efe44ab707 // indirect
 	github.com/emirpasic/gods v1.18.1 // indirect
-	github.com/expr-lang/expr v1.17.6 // indirect
+	github.com/expr-lang/expr v1.17.7 // indirect
 	github.com/fatih/color v1.18.0 // indirect
 	github.com/forPelevin/gomoji v1.4.1 // indirect
 	github.com/gdamore/encoding v1.0.1 // indirect
@@ -62,7 +62,6 @@ require (
 	github.com/gobwas/glob v0.2.3 // indirect
 	github.com/godbus/dbus/v5 v5.2.0 // indirect
 	github.com/golang/groupcache v0.0.0-20241129210726-2c02b8208cf8 // indirect
-	github.com/google/go-github/v74 v74.0.0 // indirect
 	github.com/google/go-github/v80 v80.0.0 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
@@ -116,7 +115,7 @@ require (
 	github.com/spf13/afero v1.15.0 // indirect
 	github.com/spf13/cast v1.7.1 // indirect
 	github.com/spf13/pflag v1.0.9 // indirect
-	github.com/suzuki-shunsuke/ghtkn-go-sdk v0.2.1 // indirect
+	github.com/suzuki-shunsuke/ghtkn-go-sdk v0.2.2 // indirect
 	github.com/suzuki-shunsuke/go-error-with-exit-code v1.0.0 // indirect
 	github.com/suzuki-shunsuke/go-exec v0.0.1 // indirect
 	github.com/suzuki-shunsuke/go-findconfig v1.2.0 // indirect
@@ -124,7 +123,7 @@ require (
 	github.com/suzuki-shunsuke/go-retryablehttp v0.7.8-2 // indirect
 	github.com/suzuki-shunsuke/go-retryablehttp-logrus v0.0.1 // indirect
 	github.com/suzuki-shunsuke/logrus-error v0.1.4 // indirect
-	github.com/suzuki-shunsuke/slog-error v0.2.0 // indirect
+	github.com/suzuki-shunsuke/slog-error v0.2.1 // indirect
 	github.com/suzuki-shunsuke/slog-logrus v0.1.0 // indirect
 	github.com/suzuki-shunsuke/urfave-cli-v3-util v0.0.7 // indirect
 	github.com/wk8/go-ordered-map/v2 v2.1.8 // indirect
