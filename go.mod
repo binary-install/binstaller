@@ -4,7 +4,7 @@ go 1.25.5
 
 require (
 	github.com/apex/log v1.9.0
-	github.com/aquaproj/aqua/v2 v2.56.0
+	github.com/aquaproj/aqua/v2 v2.56.1
 	github.com/buildkite/interpolate v0.1.5
 	github.com/charmbracelet/colorprofile v0.3.3
 	github.com/charmbracelet/fang v0.4.3
