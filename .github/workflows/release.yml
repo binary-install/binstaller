@@ -27,7 +27,7 @@ jobs:
           egress-policy: audit
 
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
       - uses: actionutils/trusted-tag-verifier@95f88dda1c54c11d1ad9428998be8b068443fa07 # v0.5.1
         with:
           verify: 'actionutils/create-release-pr'
@@ -47,7 +47,7 @@ jobs:
         uses: step-security/harden-runner@95d9a5deda9de15063e7595e9719c11c38c90ae2 # v2.13.2
         with:
           egress-policy: audit
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           ref: ${{ fromJSON(needs.release-pr.outputs.release_pr).pr_branch }}
       - uses: actions/dependency-review-action@v4
