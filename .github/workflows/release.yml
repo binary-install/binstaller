@@ -63,7 +63,7 @@ jobs:
         with:
           version: '~> v2'
           args: release --clean --draft --snapshot --skip publish
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: snapshot
           path: |
